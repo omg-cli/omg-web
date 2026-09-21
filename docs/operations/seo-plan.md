@@ -118,3 +118,62 @@ The 2026-09-01 shadow sample used managed Chrome without throttling. It recorded
 - Do not chase the generic query `package manager` as the primary target.
 - Do not publish comparison or speed claims without a reproducible benchmark.
 - Validate keyword-volume claims in a reputable keyword tool before funding a large content program.
+
+## Applied 2026-09-21 (follow-up live audit)
+
+A read-only audit of the deployed site (headers, redirects, rendered HTML, structured
+data, and a 17-user-agent crawl matrix) produced these changes, all verified on the live
+origin with a cache-busting query string.
+
+Crawl and preview
+
+- `SeoHead` now selects social artwork from one table that also carries its real
+  dimensions, so `og:image:width`/`height` cannot drift from the served file. The default
+  is the 1200x630 card (`/og/omg-og.png`, 76 KB) instead of the 1,734x909 launch image
+  (1.03 MB); pages may opt back into the wide artwork with the `image` prop. `og:image:secure_url`
+  was added.
+- `/sitemap.xml` no longer sends `X-Robots-Tag: noindex`. The header was an untested
+  variable in the unresolved Search Console "Sitemap could not be read" report.
+- `robots.txt` carries `Content-Signal: search=yes, ai-train=no`, matching `llms.txt`.
+- `/health` sends `X-Robots-Tag: noindex` so a JSON probe never enters an index.
+- `/security/` advertises `/security/feed.json` with `rel="alternate"`.
+
+Rendering and caching
+
+- `prerender = true` for `/`, `/privacy/`, `/terms/`, and `/updates/`. A build now emits
+  23 prerendered pages instead of 19.
+- `withDocsRouteCache` became `withPublicHtmlCache`: any successful public HTML response
+  keeps client revalidation and gains `s-maxage=600, stale-while-revalidate=86400`.
+  Admin, dashboard, auth-entry, API, markdown, and health paths are excluded by pattern,
+  so authenticated or non-HTML responses are never given a shared cache policy.
+
+Structured data and freshness
+
+- Learning indexes: `CollectionPage` + `BreadcrumbList` + `ItemList`.
+- Legal pages: `WebPage` with the publisher reference.
+- Security page: `CollectionPage` with `dateModified` from the feed's `syncedAt`.
+- Release index: `CollectionPage` + `BreadcrumbList` + `ItemList`, a stable anchor per
+  version, and a heading per release entry.
+- `article:modified_time` now comes from the dates the site already trusts: docs
+  provenance (`reviewedAt`) and learn page `modified`.
+- `/updates/` carries a `lastmod` in the sitemap taken from the newest release date.
+
+Two items need an operator action, both verified as origin-ready:
+
+1. **Edge cache refresh.** `robots.txt` (up to 7 days of `s-maxage`) and `sitemap.xml`
+   (24 hours) still serve the previous copies from the Cloudflare edge. The deployed
+   credential is an OAuth grant without `Cache Purge`, so `POST /zones/{id}/purge_cache`
+   returns `10000 Authentication error` (zone `fb74005c3f17bc04cff822a8117643ea`). Purge
+   the changed URLs from the dashboard, or grant the credential `Cache Purge` and re-run
+   the purge for the 26 sitemap URLs plus `/robots.txt`.
+2. **Prerendered asset headers.** `withPublicHtmlCache` applies to dynamic HTML (verified
+   on `/security/`, which now returns the new policy). Prerendered pages are served from
+   the Workers assets store and keep Cloudflare's default
+   `public, max-age=0, must-revalidate`, so the longer shared-cache policy does not reach
+   them. To extend it, add a `_headers` rule for the prerendered HTML paths and confirm it
+   survives the adapter's generated `_headers` merge before relying on it.
+
+Open items from the earlier plan that this audit did not close: the Search Console
+sitemap fetch warning (now testable without the `noindex` header), Change of Address,
+Bing processing, the unshipped "Version managers compared" page, IndexNow key
+provisioning, and `Dynamic URL Redirects Write` for per-URL legacy redirects.
