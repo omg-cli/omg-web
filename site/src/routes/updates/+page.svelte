@@ -22,7 +22,7 @@
     </nav>
   </header>
   <aside aria-label="Release compatibility">
-    OMG is alpha software. Commands, flags, and on-disk formats can change. These summaries are
+    OMG is approaching beta. Commands, flags, and on-disk formats can change. These summaries are
     reviewed selections, not the complete release notes. Check the full notes before updating
     important environments.
   </aside>
@@ -38,7 +38,7 @@
           <ul>
             {#each release.changes as change (change)}<li>{change}</li>{/each}
           </ul>
-          <a href={`https://github.com/PyRo1121/omg/releases/tag/${release.version}`}
+          <a href={`https://github.com/omg-cli/omg/releases/tag/${release.version}`}
             >Full {release.version} release notes <span aria-hidden="true">↗</span></a
           >
         </div>

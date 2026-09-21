@@ -18,8 +18,8 @@ interface DocsTopicMeta {
   readonly source: DocsSourceProvenance;
 }
 
-const reviewedCommit = '2bb910395ed5f7bd1a40cbf431fde032e876140e';
-const reviewedAt = '2026-09-03';
+const reviewedCommit = '2401eb61521055119b2e9238b83567a8bcaa13ad';
+const reviewedAt = '2026-09-21';
 
 const REGISTRY = {
   installation: {
@@ -29,7 +29,7 @@ const REGISTRY = {
     summary:
       'Install OMG on Arch, Debian, Ubuntu, Fedora, and macOS, enable shell integration, update, and uninstall cleanly.',
     source: {
-      repo: 'PyRo1121/omg',
+      repo: 'omg-cli/omg',
       path: 'docs/installation.md',
       reviewedCommit,
       reviewedAt,
@@ -42,7 +42,7 @@ const REGISTRY = {
     summary:
       'Every OMG command for packages, runtimes, audits, environments, and maintenance, with the options that matter day to day.',
     source: {
-      repo: 'PyRo1121/omg',
+      repo: 'omg-cli/omg',
       path: 'docs/cli.md',
       reviewedCommit,
       reviewedAt,
@@ -55,7 +55,7 @@ const REGISTRY = {
     summary:
       'Configure OMG through config.toml and policy.toml. Learn file locations, security grades, version files, and environment variables.',
     source: {
-      repo: 'PyRo1121/omg',
+      repo: 'omg-cli/omg',
       path: 'docs/configuration.md',
       reviewedCommit,
       reviewedAt,
@@ -66,9 +66,9 @@ const REGISTRY = {
     navLabel: 'Runtimes',
     title: 'Runtime management',
     summary:
-      'Install and switch Node.js, Python, Go, Rust, Ruby, Java, Bun, Deno, and Pi versions with version-file auto-detection.',
+      'Install and switch Node.js, Python, Go, Rust, Ruby, Java, Bun, Deno, Pi, Zig, .NET, Erlang, PHP, and Swift versions with version-file auto-detection.',
     source: {
-      repo: 'PyRo1121/omg',
+      repo: 'omg-cli/omg',
       path: 'docs/runtimes.md',
       reviewedCommit,
       reviewedAt,
@@ -81,7 +81,7 @@ const REGISTRY = {
     summary:
       'Daily development, team onboarding, CI pipelines, and maintenance routines built on OMG lockfiles and commands.',
     source: {
-      repo: 'PyRo1121/omg',
+      repo: 'omg-cli/omg',
       path: 'docs/workflows.md',
       reviewedCommit,
       reviewedAt,
@@ -94,7 +94,7 @@ const REGISTRY = {
     summary:
       'Package policy, vulnerability and secret scanning, SBOM export, Sigstore checks, telemetry, and the tamper-evident audit log.',
     source: {
-      repo: 'PyRo1121/omg',
+      repo: 'omg-cli/omg',
       path: 'docs/security.md',
       reviewedCommit,
       reviewedAt,
@@ -107,7 +107,7 @@ const REGISTRY = {
     summary:
       'Fix daemon, shell hook, policy, cache, and rollback problems with the diagnostics OMG ships for each failure mode.',
     source: {
-      repo: 'PyRo1121/omg',
+      repo: 'omg-cli/omg',
       path: 'docs/troubleshooting.md',
       reviewedCommit,
       reviewedAt,
@@ -120,7 +120,7 @@ const REGISTRY = {
     summary:
       'How the omg CLI, omgd daemon, and omg-fast prompt binary cooperate through caching, IPC, and background workers.',
     source: {
-      repo: 'PyRo1121/omg',
+      repo: 'omg-cli/omg',
       path: 'docs/architecture.md',
       reviewedCommit,
       reviewedAt,

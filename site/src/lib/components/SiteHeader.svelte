@@ -26,7 +26,7 @@
           <li><a href={link.href}>{link.label}</a></li>
         {/each}
         <li>
-          <a href="https://github.com/PyRo1121/omg/" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/omg-cli/omg/" target="_blank" rel="noopener noreferrer">
             GitHub
           </a>
         </li>
@@ -41,7 +41,7 @@
         {/each}
         <li><a href="/compare/" onclick={closeMenu}>Comparisons</a></li>
         <li><a href="/dashboard/" onclick={closeMenu}>Account</a></li>
-        <li><a href="https://github.com/PyRo1121/omg/">GitHub</a></li>
+        <li><a href="https://github.com/omg-cli/omg/">GitHub</a></li>
       </ul>
     </details>
 

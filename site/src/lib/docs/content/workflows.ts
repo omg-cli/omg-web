@@ -1,5 +1,5 @@
 /**
- * Curated workflows handbook. Reviewed against the PyRo1121/omg implementation and
+ * Curated workflows handbook. Reviewed against the omg-cli/omg implementation and
  * docs/workflows.md at the commit recorded in the topic registry.
  */
 import type { DocsTopic } from '../topic';

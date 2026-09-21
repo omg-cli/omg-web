@@ -1,5 +1,5 @@
 /**
- * Curated configuration handbook. Reviewed against the PyRo1121/omg implementation
+ * Curated configuration handbook. Reviewed against the omg-cli/omg implementation
  * and docs/configuration.md at the commit recorded in the topic registry.
  */
 import type { DocsTopic } from '../topic';

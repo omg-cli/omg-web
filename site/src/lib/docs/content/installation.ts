@@ -1,5 +1,5 @@
 /**
- * Curated installation handbook. Reviewed against the PyRo1121/omg implementation
+ * Curated installation handbook. Reviewed against the omg-cli/omg implementation
  * and docs/installation.md at the commit recorded in the topic registry.
  */
 import { SITE_ORIGIN } from '../../../../../shared/public-site';
@@ -30,7 +30,7 @@ export const installationTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'info',
-          text: 'Native Windows is not supported. Run the same installer inside a WSL distribution, and OMG will use the package backend of that distribution.',
+          text: 'Native Windows is not supported. Run the same installer inside WSL2 on Arch, Debian, Ubuntu, or Fedora, and OMG will use the package backend of that Linux guest.',
         },
       ],
     },
@@ -48,15 +48,28 @@ export const installationTopic: DocsTopic = {
               'Debian and Ubuntu',
               'Universal installer, or download a release tarball and copy the binary to /usr/local/bin',
             ],
-            ['Fedora and RHEL', 'Universal installer'],
+            ['Fedora', 'Universal installer or a matching Fedora release archive'],
             ['macOS', 'Universal installer. Homebrew packaging is not available yet'],
-            ['Windows', 'WSL only, using the universal installer inside the distribution'],
+            ['Windows', 'WSL2 only on Arch, Debian, Ubuntu, or Fedora, using the universal installer inside the distribution'],
           ],
         },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Release binaries support x86_64 Linux and Apple Silicon macOS. Intel macOS and native Windows are unsupported. The supported installation channels are the universal installer and GitHub release downloads.',
+            'Release binaries support x86_64 Linux and Apple Silicon macOS. Linux archives are backend-specific for Arch, Debian/Ubuntu, and Fedora. Intel macOS, Linux ARM64, 32-bit x86, ARMv7 release installs, and native Windows are unsupported. The installer maps RHEL/CentOS-family identification to the Fedora artifact as a best-effort fallback, but Fedora evidence does not establish RHEL compatibility. The supported installation channels are the universal installer and GitHub release downloads.',
+          ],
+        },
+        {
+          kind: 'table',
+          title: 'Backend and feature matrix',
+          columns: ['Backend', 'What it means'],
+          rows: [
+            ['Arch (`arch`)', 'libalpm plus AUR workflows; the default source-build feature set'],
+            ['Debian/Ubuntu (`debian`)', 'Native APT operations; source builds need libapt-pkg-dev and native build headers'],
+            ['Fedora (`fedora`)', 'DNF/RPM operations; source builds use the pure-Rust RPM database path'],
+            ['Apple Silicon macOS (`macos`)', 'Homebrew package operations; published macOS binaries are ARM64'],
+            ['Debian index/test (`debian-pure`)', 'Pure-Rust index fixtures only; refuses live package mutations'],
+            ['Windows', 'No native backend or binary; install inside WSL and use the guest distribution backend'],
           ],
         },
       ],
@@ -106,7 +119,7 @@ export const installationTopic: DocsTopic = {
           rows: [
             ['OMG_NO_TELEMETRY=1', 'Skip the telemetry consent prompt and keep telemetry disabled'],
             ['OMG_SKIP_SHELL=1', 'Skip shell integration setup'],
-            ['OMG_VERSION=v0.1.215', 'Install a specific release'],
+            ['OMG_VERSION=v0.1.223', 'Install a specific release'],
             ['INSTALL_DIR=~/.omg/bin', 'Install to a custom directory'],
           ],
         },
@@ -143,6 +156,51 @@ export const installationTopic: DocsTopic = {
           kind: 'note',
           tone: 'warning',
           text: 'On Linux and WSL, removing ~/.local/share/omg or ~/.config/omg deletes installed runtimes, tools, history, policy, and settings. On macOS, data and configuration default to ~/Library/Application Support/omg. Back up state before deleting it.',
+        },
+      ],
+    },
+    {
+      id: 'source-builds',
+      heading: 'Build from source',
+      blocks: [
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'Source builds use the Rust toolchain pinned by the repository. Select exactly one package backend with `--no-default-features`; feature names are additive. A source build is not the same trust path as a release archive and should come from a reviewed checkout.',
+          ],
+        },
+        {
+          kind: 'commands',
+          title: 'Backend-specific builds',
+          commands: [
+            'cargo build --release --locked --no-default-features --features arch,pgp,license',
+            'cargo build --release --locked --no-default-features --features debian,pgp,license',
+            'cargo build --release --locked --no-default-features --features fedora,pgp,license',
+            'cargo build --release --locked --no-default-features --features macos,pgp,license',
+            'cargo build --release --locked --no-default-features --features debian-pure,pgp,license',
+          ],
+        },
+        {
+          kind: 'note',
+          tone: 'warning',
+          text: 'The optional license feature gates only `omg account`. It is not a local paywall. The `debian-pure` feature is for indexing and test fixtures and refuses live Debian or Ubuntu mutations. Native Windows has no Cargo backend feature.',
+        },
+      ],
+    },
+    {
+      id: 'daemon',
+      heading: 'Daemon and release pairing',
+      blocks: [
+        {
+          kind: 'commands',
+          title: 'Check and start the daemon',
+          commands: ['omg daemon-status', 'omg daemon --foreground', 'omg daemon'],
+        },
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'Release archives pair `omg` with `omgd` on supported Linux and macOS targets. Restart a running daemon after `omg self-update` so it loads the new binary. Most commands have a direct fallback path, but metrics and some audit exports require Unix daemon support.',
+          ],
         },
       ],
     },

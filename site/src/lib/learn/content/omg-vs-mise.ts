@@ -10,7 +10,7 @@ export const content: LearningContent = {
           kind: 'paragraphs',
           paragraphs: [
             'OMG brings supported system package operations, language runtime selection, and environment capture/check workflows into one CLI. mise manages development tools and runtimes, environment variables, and tasks. Both can help a developer maintain multiple projects.',
-            'This comparison was reviewed on September 14, 2026 against the linked documentation. It is a feature and workflow comparison, not an independently executed speed benchmark. OMG is alpha software; validate the commands and platform support your projects need before changing their toolchain.',
+            'This comparison was reviewed on September 14, 2026 against the linked documentation. It is a feature and workflow comparison, not an independently executed speed benchmark. OMG is approaching beta; validate the commands and platform support your projects need before changing their toolchain.',
           ],
         },
       ],

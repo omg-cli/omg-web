@@ -105,13 +105,13 @@ describe('docs handbook content', () => {
   it.each(TOPICS.map(topic => [topic.slug, topic] as const))(
     'pins verifiable provenance for %s',
     (_, topic) => {
-      expect(topic.source.repo).toBe('PyRo1121/omg');
+      expect(topic.source.repo).toBe('omg-cli/omg');
       expect(topic.source.path).toMatch(/^docs\/[a-z0-9-]+\.md$/u);
       expect(topic.source.reviewedCommit).toMatch(HEX_COMMIT);
       expect(topic.source.reviewedAt).toMatch(ISO_DATE);
       expect(Number.isNaN(Date.parse(topic.source.reviewedAt))).toBe(false);
       expect(docsSourceHref(topic.source)).toBe(
-        `https://github.com/PyRo1121/omg/blob/${topic.source.reviewedCommit}/${topic.source.path}`
+        `https://github.com/omg-cli/omg/blob/${topic.source.reviewedCommit}/${topic.source.path}`
       );
     }
   );
@@ -163,7 +163,7 @@ describe('docs handbook content', () => {
 
     expect(runtimeGuide).toContain('Deno');
     expect(runtimeGuide).toContain('omg use deno latest');
-    expect(runtimeGuide).toContain('.node-version, .nvmrc, .tool-versions, then package.json');
+    expect(runtimeGuide).toContain('.node-version, .nvmrc, package.json, then .tool-versions');
     expect(runtimeGuide).toContain('.python-version, pyproject.toml, then .tool-versions');
     expect(runtimeGuide).not.toContain('bunx');
   });

@@ -6,7 +6,7 @@ import { Schema } from 'effect';
 const docsDirectory = fileURLToPath(new URL('../src/lib/docs/', import.meta.url));
 const routesDirectory = fileURLToPath(new URL('../src/routes/docs/', import.meta.url));
 const CONTENT_DIRECTORY = 'content';
-const UPSTREAM_REPO = 'PyRo1121/omg';
+const UPSTREAM_REPO = 'omg-cli/omg';
 
 const RegistryTopicSchema = Schema.Struct({
   key: Schema.String,

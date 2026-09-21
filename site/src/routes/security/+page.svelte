@@ -133,12 +133,12 @@
   </section>
 
   <p class="feed-note">
-    These protections are implemented in <a href="https://github.com/PyRo1121/omg/pull/399"
+    These protections are implemented in <a href="https://github.com/omg-cli/omg/pull/399"
       >PR #399</a
     >; check release notes for your installed version. They apply to OMG-managed operations,
     including
     <code>omg tool install</code>. Selecting Node with OMG does not change direct npm commands.
-    <a href="https://github.com/PyRo1121/omg/blob/main/docs/omarchy.md#compare-the-actual-defaults"
+    <a href="https://github.com/omg-cli/omg/blob/main/docs/omarchy.md#compare-the-actual-defaults"
       >Compare the defaults and evidence</a
     >.
   </p>
@@ -149,7 +149,7 @@
         <p class="eyebrow">The ongoing work</p>
         <h2 id="updates-heading">A record you can read.</h2>
       </div>
-      <a href="https://github.com/PyRo1121/omg/pull/399"
+      <a href="https://github.com/omg-cli/omg/pull/399"
         >Release hardening PR <span aria-hidden="true">↗</span></a
       >
     </div>
@@ -186,7 +186,7 @@
       {visible.length} updates <span>· Review and merge status are labeled individually.</span>
     </p>
     <p class="feed-note">
-      The hardening in <a href="https://github.com/PyRo1121/omg/pull/399">PR #399</a> is merged.
+      The hardening in <a href="https://github.com/omg-cli/omg/pull/399">PR #399</a> is merged.
       This feed follows main in both repositories. On main means merged; it does not imply the fix
       is in your installed release. Check the <a href="/updates/">release notes</a> for the tagged build
       you use.

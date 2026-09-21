@@ -12,4 +12,4 @@ Website, documentation site, and web workers for OMG.
 
 Core Rust CLI and daemon live in:
 
-- `https://github.com/PyRo1121/omg`
+- `https://github.com/omg-cli/omg`

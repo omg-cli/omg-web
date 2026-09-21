@@ -2,7 +2,7 @@
  * Typed model for the curated native documentation handbook.
  *
  * A docs page is a distillation of one upstream markdown file in the
- * PyRo1121/omg CLI repository. Every renderable unit is a typed value; no
+ * omg-cli/omg CLI repository. Every renderable unit is a typed value; no
  * variant carries markup, so the renderer can only emit escaped text.
  */
 
@@ -20,7 +20,7 @@ export type DocsTopicSlug =
 /** Provenance of one curated topic: the upstream truth it was reviewed against. */
 export interface DocsSourceProvenance {
   /** Upstream repository that owns the canonical documentation. */
-  readonly repo: 'PyRo1121/omg';
+  readonly repo: 'omg-cli/omg';
   /** Upstream markdown file this topic distills, relative to the repository root. */
   readonly path: `docs/${string}.md`;
   /** Upstream commit the content was last verified against (7 to 40 hex characters). */

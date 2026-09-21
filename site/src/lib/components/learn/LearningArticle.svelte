@@ -47,7 +47,7 @@
           author: {
             '@type': 'Organization',
             name: 'OMG maintainers',
-            url: 'https://github.com/PyRo1121/omg',
+            url: 'https://github.com/omg-cli/omg',
           },
           mainEntityOfPage: `${SITE_ORIGIN}${path}`,
         },

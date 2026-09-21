@@ -1,5 +1,5 @@
 /**
- * Curated troubleshooting handbook. Reviewed against the PyRo1121/omg implementation
+ * Curated troubleshooting handbook. Reviewed against the omg-cli/omg implementation
  * and docs/troubleshooting.md at the commit recorded in the topic registry.
  */
 import type { DocsTopic } from '../topic';

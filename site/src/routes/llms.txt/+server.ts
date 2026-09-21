@@ -13,7 +13,7 @@ export const GET: RequestHandler = () =>
       '',
       '> OMG is an open-source CLI for supported system packages, language runtimes, and development environments on Linux, Apple Silicon macOS, and WSL.',
       '',
-      'OMG is alpha software. Follow the versioned source references in the handbook. npm, pnpm, and Bun retain ownership of their dependency installation and lockfiles. Native Windows is not supported.',
+      'OMG is approaching beta. Follow the versioned source references in the handbook. npm, pnpm, and Bun retain ownership of their dependency installation and lockfiles. Native Windows is not supported.',
       '',
       '## Guides',
       ...LEARNING_PAGES.map(
@@ -27,7 +27,7 @@ export const GET: RequestHandler = () =>
       ),
       '',
       '## Source',
-      '- [OMG source and releases](https://github.com/PyRo1121/omg)',
+      '- [OMG source and releases](https://github.com/omg-cli/omg)',
       '',
     ].join('\n'),
     {

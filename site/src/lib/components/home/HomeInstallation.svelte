@@ -16,7 +16,7 @@
       <button type="button" disabled={installation.pending} onclick={() => installation.copy()}
         >Copy install command</button
       >
-      <a href="https://github.com/PyRo1121/omg/releases"
+      <a href="https://github.com/omg-cli/omg/releases"
         >Download from GitHub <span aria-hidden="true">↗</span></a
       >
     </div>
