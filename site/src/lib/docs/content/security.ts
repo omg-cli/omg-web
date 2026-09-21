@@ -1,5 +1,5 @@
 /**
- * Curated security handbook. Reviewed against the PyRo1121/omg implementation and
+ * Curated security handbook. Reviewed against the omg-cli/omg implementation and
  * docs/security.md at the commit recorded in the topic registry.
  */
 import type { DocsTopic } from '../topic';
@@ -67,6 +67,7 @@ export const securityTopic: DocsTopic = {
             'Runtime installers and self-update compare downloaded bytes with the expected SHA-256 digest when that digest is available.',
             'AUR key preparation invokes gpg to inspect and import keys required by a build.',
             'omg audit slsa verifies a Sigstore hashedrekord signature and its Rekor log inclusion.',
+            '`--certificate-identity` optionally binds the Fulcio signer identity. Without it, a valid signature can verify but the signer is reported as unbounded.',
             'The current hashedrekord check does not establish build provenance or assign a SLSA level. It is a standalone audit and does not gate installation.',
           ],
         },

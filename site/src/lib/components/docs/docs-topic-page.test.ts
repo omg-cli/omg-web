@@ -28,7 +28,7 @@ describe('docs topic page renderer', () => {
     expect(rendered.body).toContain('aria-label="Breadcrumb"');
     expect(rendered.body).toContain('href="/docs/"');
     expect(rendered.body).toContain('id="packages"');
-    const tableHeading = /<h3 id="([^"]+)"[^>]*>Package command reference<\/h3>/u.exec(
+    const tableHeading = /<h3 id="([^"]+)"[^>]*>Every package command<\/h3>/u.exec(
       rendered.body
     );
     expect(tableHeading).not.toBeNull();

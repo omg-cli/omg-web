@@ -43,7 +43,7 @@ test.describe('Svelte public surfaces', () => {
     );
     await expect(page.getByRole('link', { name: 'Download from GitHub' })).toHaveAttribute(
       'href',
-      'https://github.com/PyRo1121/omg/releases'
+      'https://github.com/omg-cli/omg/releases'
     );
     await expect(page.locator('#install')).not.toContainText('yay -S');
     await expect(page.locator('#install')).not.toContainText('cargo install');
@@ -109,7 +109,7 @@ test.describe('Svelte public surfaces', () => {
     await expect(notesLink).toBeVisible();
     await expect(notesLink).toHaveAttribute(
       'href',
-      'https://github.com/PyRo1121/omg/releases/tag/v0.1.217'
+      'https://github.com/omg-cli/omg/releases/tag/v0.1.217'
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true
@@ -162,7 +162,7 @@ test.describe('Svelte public surfaces', () => {
     await expect(page.getByRole('heading', { name: 'Fast, with receipts.' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Inspect the benchmark record' })).toHaveAttribute(
       'href',
-      'https://github.com/PyRo1121/omg/tree/fe72b92b6e61c13a19f00627d22f3d1bc5713347/benchmarks/records/20260903_015949-5c43ddcc'
+      'https://github.com/omg-cli/omg/tree/fe72b92b6e61c13a19f00627d22f3d1bc5713347/benchmarks/records/20260903_015949-5c43ddcc'
     );
     await expect(
       page.getByRole('heading', { name: 'Install once. Start simplifying.' })
@@ -206,7 +206,7 @@ test.describe('Svelte public surfaces', () => {
     );
     await expect(
       page.getByRole('link', { name: 'Download release binaries on GitHub' })
-    ).toHaveAttribute('href', 'https://github.com/PyRo1121/omg/releases');
+    ).toHaveAttribute('href', 'https://github.com/omg-cli/omg/releases');
     await expect(page.locator('main')).not.toContainText('yay -S');
     await expect(page.locator('main')).not.toContainText('cargo install');
 
@@ -261,9 +261,9 @@ test.describe('Svelte public surfaces', () => {
       'CLI reference',
     ]);
 
-    await expect(page.getByRole('link', { name: /PyRo1121\/omg\/docs\/cli\.md/ })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: /omg-cli\/omg\/docs\/cli\.md/ })).toHaveAttribute(
       'href',
-      'https://github.com/PyRo1121/omg/blob/2bb910395ed5f7bd1a40cbf431fde032e876140e/docs/cli.md'
+      'https://github.com/omg-cli/omg/blob/2401eb61521055119b2e9238b83567a8bcaa13ad/docs/cli.md'
     );
 
     await page

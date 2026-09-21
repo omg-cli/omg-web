@@ -88,11 +88,11 @@
         <h2>Install OMG</h2>
         <p class="section-copy">
           The universal installer detects Linux or macOS and downloads the matching release.
-          Download the script, review it, then run it.
+          On Windows, run it inside WSL2. Download the script, review it, then run it.
         </p>
         <pre class="install-command"><code><span>$ </span>{installCommand}</code></pre>
         <p class="install-note">
-          Prefer a direct download? <a href="https://github.com/PyRo1121/omg/releases"
+          Prefer a direct download? <a href="https://github.com/omg-cli/omg/releases"
             >Download release binaries on GitHub</a
           >.
         </p>
@@ -122,7 +122,7 @@
         <dl class="platform-list">
           <div>
             <dt>Linux</dt>
-            <dd>Arch, Debian, Ubuntu, Fedora, RHEL, and compatible distributions.</dd>
+            <dd>Arch, Debian, Ubuntu, and Fedora releases. RHEL and CentOS-family hosts receive a Fedora-artifact fallback; that is not a compatibility guarantee.</dd>
           </div>
           <div>
             <dt>macOS</dt>
@@ -134,7 +134,7 @@
           </div>
           <div>
             <dt>Architecture</dt>
-            <dd>x86_64 Linux and WSL; Apple Silicon on macOS.</dd>
+            <dd>x86_64 Linux and WSL guests; Apple Silicon on macOS. Linux ARM64 and Intel macOS releases are not published.</dd>
           </div>
         </dl>
       </section>

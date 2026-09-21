@@ -29,7 +29,7 @@
         <li><a href="/updates/">Updates</a></li>
         <li><a href="/security/">Security</a></li>
         <li>
-          <a href="https://github.com/PyRo1121/omg" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/omg-cli/omg" target="_blank" rel="noopener noreferrer">
             GitHub
           </a>
         </li>

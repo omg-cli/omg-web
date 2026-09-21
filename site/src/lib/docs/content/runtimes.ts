@@ -1,5 +1,5 @@
 /**
- * Curated runtime handbook. Reviewed against the PyRo1121/omg implementation and
+ * Curated runtime handbook. Reviewed against the omg-cli/omg implementation and
  * docs/runtimes.md at the commit recorded in the topic registry.
  */
 import type { DocsTopic } from '../topic';
@@ -26,6 +26,11 @@ export const runtimesTopic: DocsTopic = {
             ['Bun', 'omg use bun latest. Provides bun'],
             ['Deno', 'omg use deno latest. Provides deno'],
             ['Pi', 'omg use pi 0.83.0. Installs through npm with lifecycle scripts disabled'],
+            ['Zig', 'omg use zig 0.13.0. Provides zig'],
+            ['.NET', 'omg use dotnet 8.0. Provides dotnet'],
+            ['Erlang', 'omg use erlang 26.2. Provides erl and erlc'],
+            ['PHP', 'omg use php 8.3. Provides php'],
+            ['Swift', 'omg use swift 5.10. Provides swift and swiftc'],
           ],
         },
         {
@@ -59,18 +64,25 @@ export const runtimesTopic: DocsTopic = {
           title: 'Version file priority per runtime',
           columns: ['Runtime', 'Detection order'],
           rows: [
-            ['Node.js', '.node-version, .nvmrc, .tool-versions, then package.json'],
+            ['Node.js', '.node-version, .nvmrc, package.json, then .tool-versions'],
             ['Python', '.python-version, pyproject.toml, then .tool-versions'],
             ['Go', '.go-version, go.mod, then .tool-versions'],
             ['Rust', 'rust-toolchain, rust-toolchain.toml, then .tool-versions'],
-            ['Bun', '.bun-version, .tool-versions, then package.json'],
+            ['Ruby', '.ruby-version, then .tool-versions'],
+            ['PHP', '.php-version, then .tool-versions'],
+            ['Swift', '.swift-version, then .tool-versions'],
+            ['Java', '.java-version, then .tool-versions'],
+            ['Bun', '.bun-version, package.json, then .tool-versions'],
             ['Deno', '.deno-version, .dvmrc, then .tool-versions'],
+            ['Zig', '.zig-version, then .tool-versions'],
+            ['.NET', 'global.json, then .tool-versions'],
+            ['Erlang and Pi', '.tool-versions'],
           ],
         },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'When no version file matches, the hook restores the base PATH. omg use installs the requested version and updates its current symlink. A matching project pin controls PATH the next time the hook runs.',
+            'When no version file matches, the hook restores the base PATH. omg use installs the requested version and updates its current symlink. A matching project pin controls PATH the next time the hook runs. Runtime archives have provider-specific host support; native runtime management runs on supported Unix targets and is not a native Windows installation path.',
           ],
         },
       ],

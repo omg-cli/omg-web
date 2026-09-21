@@ -37,7 +37,7 @@
     </p>
     <a
       class="text-link"
-      href="https://github.com/PyRo1121/omg/tree/fe72b92b6e61c13a19f00627d22f3d1bc5713347/benchmarks/records/20260903_015949-5c43ddcc"
+      href="https://github.com/omg-cli/omg/tree/fe72b92b6e61c13a19f00627d22f3d1bc5713347/benchmarks/records/20260903_015949-5c43ddcc"
       >Inspect the benchmark record <span aria-hidden="true">↗</span></a
     >
   </div>

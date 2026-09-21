@@ -8,6 +8,16 @@ interface ReleaseNote {
 /** Reviewed summaries of published OMG releases, newest first. */
 export const RELEASE_NOTES: ReadonlyArray<ReleaseNote> = [
   {
+    version: 'v0.1.223',
+    date: '2026-09-16',
+    title: 'Paired CLI and daemon releases',
+    changes: [
+      'Ship matching omg and omgd binaries in Linux and macOS release archives.',
+      'Stage both binaries during self-update, prevent concurrent updates, and restore previous files when replacement fails.',
+      'Expand QEMU daemon lifecycle checks across Arch, Debian, Ubuntu, and Fedora, and serialize native APT access.',
+    ],
+  },
+  {
     version: 'v0.1.218',
     date: '2026-09-04',
     title: 'Clearer CLI behavior',

@@ -92,7 +92,7 @@ export const content: LearningContent = {
           kind: 'paragraphs',
           paragraphs: [
             'A previously activated nvm, system installation, or another version manager can appear earlier in PATH. Review the shell profile and enable only the manager intended for this project. Keep the old installation until the new workflow works.',
-            'OMG is alpha software. These instructions are reviewed against the linked source documentation, not a claim of execution on every supported platform. Consult the runtime handbook for verification, storage, and version-file details.',
+            'OMG is approaching beta. These instructions are reviewed against the linked source documentation, not a claim of execution on every supported platform. Consult the runtime handbook for verification, storage, and version-file details.',
           ],
         },
       ],
