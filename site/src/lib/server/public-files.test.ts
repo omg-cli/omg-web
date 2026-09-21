@@ -11,6 +11,13 @@ import {
   withSiteHeaders,
 } from './public-files';
 
+/** A successful public HTML response, the shape the cache policy inspects. */
+const htmlResponse = () =>
+  new Response('page', { headers: { 'content-type': 'text/html; charset=utf-8' } });
+
+const EDGE_CACHE_POLICY =
+  'public, max-age=0, must-revalidate, s-maxage=600, stale-while-revalidate=86400';
+
 describe('public file endpoints', () => {
   it.each([
     ['install.sh', 'a22e3f8a6d4401678ac908514d72280efe22906c42f935e81384d48de45831d8'],
@@ -130,23 +137,20 @@ Sitemap: https://getomg.xyz/sitemap.xml
     expect(response.headers.has('x-robots-tag')).toBe(false);
   });
 
-  const htmlResponse = () =>
-    new Response('page', { headers: { 'content-type': 'text/html; charset=utf-8' } });
-  const edgePolicy =
-    'public, max-age=0, must-revalidate, s-maxage=600, stale-while-revalidate=86400';
-
   it.each(['GET', 'HEAD'])('gives a successful %s docs page the edge cache policy', method => {
     const securedResponse = withSiteHeaders(htmlResponse(), 'shadow');
     const response = withPublicHtmlCache(securedResponse, method, '/docs/cli/');
 
-    expect(response.headers.get('cache-control')).toBe(edgePolicy);
+    expect(response.headers.get('cache-control')).toBe(EDGE_CACHE_POLICY);
     expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow');
   });
 
   it.each(['GET', 'HEAD', 'POST'])('caches the homepage only for read %s requests', method => {
     const response = withPublicHtmlCache(htmlResponse(), method, '/');
 
-    expect(response.headers.get('cache-control')).toBe(method === 'POST' ? null : edgePolicy);
+    expect(response.headers.get('cache-control')).toBe(
+      method === 'POST' ? null : EDGE_CACHE_POLICY
+    );
   });
 
   it.each([

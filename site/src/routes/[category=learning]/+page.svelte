@@ -7,11 +7,15 @@
 
   const canonical = $derived(`${SITE_ORIGIN}/${data.category}/`);
 
-  /** The newest authored date in this category, used as the page's modified time. */
+  /**
+   * The newest authored date in this category. Categories are generated from the
+   * pages themselves, so a category always has at least one page; the epoch seed
+   * only guarantees the reduction has a comparable starting value.
+   */
   const latestModified = $derived(
     data.pages.reduce(
       (latest, page) => (page.modified > latest ? page.modified : latest),
-      data.pages[0]?.modified ?? ''
+      '1970-01-01'
     )
   );
 
@@ -27,7 +31,7 @@
           description: data.description,
           isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
           publisher: { '@id': `${SITE_ORIGIN}/#org` },
-          ...(latestModified === '' ? {} : { dateModified: latestModified }),
+          dateModified: latestModified,
           mainEntity: {
             '@type': 'ItemList',
             numberOfItems: data.pages.length,
@@ -63,7 +67,7 @@
   description={data.description}
   path={`/${data.category}/`}
   {structuredData}
-  modifiedTime={latestModified === '' ? undefined : latestModified}
+  modifiedTime={latestModified}
 />
 <main id="main-content" class="learning-index">
   <p class="page-kicker">OMG / Learn</p>

@@ -4,7 +4,11 @@
   import { SITE_ORIGIN, serializeJsonLd } from '../../../../shared/public-site';
 
   const canonical = `${SITE_ORIGIN}/updates/`;
+  /** The newest release date the page can prove; releases come from reviewed in-repo data. */
   const latestRelease = RELEASE_NOTES.at(0);
+  if (latestRelease === undefined) {
+    throw new Error('updates page requires at least one release note');
+  }
 
   /**
    * Release index markup: the page itself, its breadcrumb position, and one list
@@ -29,7 +33,7 @@
           operatingSystem: 'Linux, macOS, Windows Subsystem for Linux',
           url: `${SITE_ORIGIN}/`,
         },
-        ...(latestRelease === undefined ? {} : { dateModified: latestRelease.date }),
+        dateModified: latestRelease.date,
         mainEntity: {
           '@type': 'ItemList',
           numberOfItems: RELEASE_NOTES.length,

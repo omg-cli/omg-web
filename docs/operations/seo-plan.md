@@ -146,6 +146,17 @@ Rendering and caching
   keeps client revalidation and gains `s-maxage=600, stale-while-revalidate=86400`.
   Admin, dashboard, auth-entry, API, markdown, and health paths are excluded by pattern,
   so authenticated or non-HTML responses are never given a shared cache policy.
+- **Prerendering the marketing pages was reverted.** Rendering `/`, `/privacy/`, `/terms/`,
+  and `/updates/` at build time looked like a free TTFB win, and it shipped a real regression:
+  a prerendered SvelteKit page carries an inline hydration bootstrap script, and the static
+  `Content-Security-Policy` header from `shared/security-headers.ts` allows only
+  `script-src 'self' https://static.cloudflareinsights.com` with no hash or nonce. The browser
+  blocks the inline script, so hydration never runs and every interactive element on the page
+  stops responding — the anonymous e2e suite caught it ("Install command copied." never
+  appeared). Reproduced locally with a headless Chromium probe: `console.error: Executing
+  inline script violates the following Content-Security-Policy directive`. To reintroduce
+  prerendering, the header policy and the framework-generated policy have to agree on a hash
+  or nonce for that script first; until then these routes stay server-rendered per request.
 
 Structured data and freshness
 
