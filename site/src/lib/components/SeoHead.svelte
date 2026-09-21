@@ -2,15 +2,10 @@
   import { SITE_ORIGIN } from '../../../../shared/public-site';
 
   /**
-   * Social preview artwork with its real dimensions, so the declared
+   * The reviewed social card, with its real dimensions, so the declared
    * `og:image:width`/`height` can never drift from the file that is served.
-   * `standard` is the 1200x630 card every crawler expects; `discovery` is the
-   * wider launch artwork.
    */
-  const OG_IMAGES = {
-    standard: { path: '/og/omg-og.png', width: 1200, height: 630 },
-    discovery: { path: '/og/omg-discovery-2026.png', width: 1731, height: 909 },
-  } as const;
+  const SOCIAL_CARD = { path: '/og/omg-og.png', width: 1200, height: 630 } as const;
 
   let {
     title,
@@ -18,7 +13,6 @@
     path,
     type = 'website',
     structuredData,
-    image = 'standard',
     publishedTime,
     modifiedTime,
   }: {
@@ -28,8 +22,6 @@
     type?: 'website' | 'article';
     /** Already serialized with serializeJsonLd, never raw user content. */
     structuredData?: string;
-    /** Which reviewed artwork to advertise; defaults to the 1200x630 card. */
-    image?: keyof typeof OG_IMAGES;
     /** ISO 8601 date for `article:published_time`, when the build can prove it. */
     publishedTime?: string | undefined;
     /** ISO 8601 date for `article:modified_time`, when the build can prove it. */
@@ -37,8 +29,7 @@
   } = $props();
 
   const canonical = $derived(`${SITE_ORIGIN}${path}`);
-  const artwork = $derived(OG_IMAGES[image]);
-  const imageUrl = $derived(`${SITE_ORIGIN}${artwork.path}`);
+  const imageUrl = `${SITE_ORIGIN}${SOCIAL_CARD.path}`;
   const imageAlt =
     'OMG: one CLI for system packages, language runtimes, and development environments.';
 </script>
@@ -56,8 +47,8 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:image" content={imageUrl} />
   <meta property="og:image:secure_url" content={imageUrl} />
-  <meta property="og:image:width" content={String(artwork.width)} />
-  <meta property="og:image:height" content={String(artwork.height)} />
+  <meta property="og:image:width" content={String(SOCIAL_CARD.width)} />
+  <meta property="og:image:height" content={String(SOCIAL_CARD.height)} />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:alt" content={imageAlt} />
   {#if type === 'article' && publishedTime}

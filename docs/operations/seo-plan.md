@@ -127,11 +127,11 @@ origin with a cache-busting query string.
 
 Crawl and preview
 
-- `SeoHead` now selects social artwork from one table that also carries its real
-  dimensions, so `og:image:width`/`height` cannot drift from the served file. The default
-  is the 1200x630 card (`/og/omg-og.png`, 76 KB) instead of the 1,734x909 launch image
-  (1.03 MB); pages may opt back into the wide artwork with the `image` prop. `og:image:secure_url`
-  was added.
+- `SeoHead` now serves the 1200x630 card (`/og/omg-og.png`, 76 KB) from one constant that
+  also carries its real dimensions, so `og:image:width`/`height` cannot drift from the
+  served file, and `og:image:secure_url` was added. The unused 1,734x909 variant and its
+  1.03 MB asset were removed; the tech-article `image` in the docs markup points at the
+  same card.
 - `/sitemap.xml` no longer sends `X-Robots-Tag: noindex`. The header was an untested
   variable in the unresolved Search Console "Sitemap could not be read" report.
 - `robots.txt` carries `Content-Signal: search=yes, ai-train=no`, matching `llms.txt`.

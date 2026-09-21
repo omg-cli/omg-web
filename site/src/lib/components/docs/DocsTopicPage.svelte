@@ -32,7 +32,7 @@
           url: canonical,
           mainEntityOfPage: canonical,
           dateModified: topic.source.reviewedAt,
-          image: `${SITE_ORIGIN}/og/omg-discovery-2026.png`,
+          image: `${SITE_ORIGIN}/og/omg-og.png`,
           author: {
             '@type': 'Organization',
             name: 'OMG maintainers',

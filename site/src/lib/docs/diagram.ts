@@ -231,14 +231,15 @@ function assertDiagramIsRenderable(diagram: DocsDiagram): void {
   }
 }
 
-/** A connector's resolved endpoints plus the lanes it may route through. */
+/**
+ * A connector's resolved endpoints plus the lane a side route may use.
+ */
 interface ConnectorGeometry {
   readonly startX: number;
   readonly startY: number;
   readonly endX: number;
   readonly endY: number;
   readonly laneX: number;
-  readonly laneY: number;
 }
 
 /** A downward elbow: straight when the boxes align, rounded otherwise. */
@@ -259,7 +260,12 @@ function forwardPath(geometry: ConnectorGeometry): string {
   ].join(' ');
 }
 
-/** A route that leaves and returns on the right side, below or above. */
+/**
+ * A route that leaves and returns on the right side, below or above.
+ *
+ * Reached when a cycle forces an edge to point back at a box in an earlier row
+ * or (after cycle breaking) a later one.
+ */
 function sidePath(geometry: ConnectorGeometry): string {
   const { startX, startY, endX, endY, laneX } = geometry;
   const direction = endY >= startY ? 1 : -1;
@@ -273,27 +279,6 @@ function sidePath(geometry: ConnectorGeometry): string {
     `V ${endY - radius * direction}`,
     `Q ${laneX} ${endY} ${laneX - radius} ${endY}`,
     `H ${endX}`,
-  ].join(' ');
-}
-
-/**
- * A route that drops under the whole figure and comes back up.
- *
- * The row assignment follows the longest path, so two connected boxes never share
- * a row and this branch stays unused. It remains as a guard: if a future layout
- * change ever puts connected boxes side by side, the connector still renders
- * instead of collapsing into a zero-length line.
- */
-function underPath(geometry: ConnectorGeometry): string {
-  const { startX, startY, endX, endY, laneY } = geometry;
-  const horizontal = endX > startX ? 1 : -1;
-  return [
-    `M ${startX} ${startY}`,
-    `V ${laneY - CORNER_RADIUS}`,
-    `Q ${startX} ${laneY} ${startX + CORNER_RADIUS * horizontal} ${laneY}`,
-    `H ${endX - CORNER_RADIUS * horizontal}`,
-    `Q ${endX} ${laneY} ${endX} ${laneY - CORNER_RADIUS}`,
-    `V ${endY}`,
   ].join(' ');
 }
 
@@ -327,14 +312,13 @@ function toLaidOutNode(node: DocsDiagramNode, placement: NodePlacement): LaidOut
 function toLaidOutEdge(
   edge: DocsDiagramEdge,
   geometry: ConnectorGeometry,
-  forwards: boolean,
-  sameRow: boolean
+  forwards: boolean
 ): LaidOutDiagramEdge {
   const connector: Omit<LaidOutDiagramEdge, 'label'> = {
     from: edge.from,
     to: edge.to,
     dashed: edge.dashed ?? false,
-    path: sameRow ? underPath(geometry) : forwards ? forwardPath(geometry) : sidePath(geometry),
+    path: forwards ? forwardPath(geometry) : sidePath(geometry),
     labelX: forwards ? (geometry.startX + geometry.endX) / 2 : geometry.startX + 14,
     labelY: forwards ? (geometry.startY + geometry.endY) / 2 - 8 : geometry.startY - 8,
     labelAnchor: forwards ? 'middle' : 'start',
@@ -370,7 +354,6 @@ export function layoutDiagram(diagram: DocsDiagram): DiagramLayout {
 
   const rowOf = (id: string): number => rowsById.get(id) ?? 0;
   const needsSideLane = diagram.edges.some(edge => rowOf(edge.to) <= rowOf(edge.from));
-  const needsUnderLane = diagram.edges.some(edge => rowOf(edge.to) === rowOf(edge.from));
   const laneWidth = needsSideLane ? LANE_OFFSET * 2 : 0;
   const width = contentWidth + laneWidth;
 
@@ -404,14 +387,21 @@ export function layoutDiagram(diagram: DocsDiagram): DiagramLayout {
   });
 
   const laneX = contentWidth + LANE_OFFSET;
-  const laneY = contentHeight + LANE_OFFSET;
   const edges: LaidOutDiagramEdge[] = [];
   for (const edge of diagram.edges) {
     const from = nodeById.get(edge.from);
     const to = nodeById.get(edge.to);
     if (from === undefined || to === undefined) continue;
+    // Row assignment follows the longest path, so every edge crosses at least one
+    // row. If a future change breaks that, fail the build instead of drawing a
+    // connector that would collapse into a zero-length line.
+    if (to.row === from.row) {
+      throw new Error(
+        `diagram "${diagram.title}" placed "${edge.from}" and "${edge.to}" in one row; ` +
+          'the layered layout no longer holds'
+      );
+    }
     const forwards = to.row > from.row;
-    const sameRow = to.row === from.row;
     const geometry: ConnectorGeometry = forwards
       ? {
           startX: from.x + from.width / 2,
@@ -419,7 +409,6 @@ export function layoutDiagram(diagram: DocsDiagram): DiagramLayout {
           endX: to.x + to.width / 2,
           endY: to.y,
           laneX,
-          laneY,
         }
       : {
           startX: from.x + from.width,
@@ -427,13 +416,11 @@ export function layoutDiagram(diagram: DocsDiagram): DiagramLayout {
           endX: to.x + to.width,
           endY: to.y + to.height / 2,
           laneX,
-          laneY,
         };
-    edges.push(toLaidOutEdge(edge, geometry, forwards, sameRow));
+    edges.push(toLaidOutEdge(edge, geometry, forwards));
   }
 
-  const height = needsUnderLane ? laneY + LANE_OFFSET : contentHeight;
-  return { width, height, nodes, edges };
+  return { width, height: contentHeight, nodes, edges };
 }
 
 /**
