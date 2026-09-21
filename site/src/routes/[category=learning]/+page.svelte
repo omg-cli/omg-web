@@ -1,11 +1,70 @@
 <script lang="ts">
   import SeoHead from '../../lib/components/SeoHead.svelte';
   import { learningHref } from '../../lib/learn/catalog';
+  import { SITE_ORIGIN, serializeJsonLd } from '../../../../shared/public-site';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
+
+  const canonical = $derived(`${SITE_ORIGIN}/${data.category}/`);
+
+  /** The newest authored date in this category, used as the page's modified time. */
+  const latestModified = $derived(
+    data.pages.reduce(
+      (latest, page) => (page.modified > latest ? page.modified : latest),
+      data.pages[0]?.modified ?? ''
+    )
+  );
+
+  const structuredData = $derived(
+    serializeJsonLd({
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'CollectionPage',
+          '@id': `${canonical}#page`,
+          url: canonical,
+          name: data.title,
+          description: data.description,
+          isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+          publisher: { '@id': `${SITE_ORIGIN}/#org` },
+          ...(latestModified === '' ? {} : { dateModified: latestModified }),
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: data.pages.length,
+            itemListElement: data.pages.map((page, index) => ({
+              '@type': 'ListItem',
+              position: index + 1,
+              name: page.title,
+              description: page.description,
+              url: `${SITE_ORIGIN}${learningHref(page)}`,
+            })),
+          },
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'Learn',
+              item: `${SITE_ORIGIN}/${data.category}/`,
+            },
+            { '@type': 'ListItem', position: 3, name: data.title, item: canonical },
+          ],
+        },
+      ],
+    })
+  );
 </script>
 
-<SeoHead title={`${data.title} - OMG`} description={data.description} path={`/${data.category}/`} />
+<SeoHead
+  title={`${data.title} - OMG`}
+  description={data.description}
+  path={`/${data.category}/`}
+  {structuredData}
+  modifiedTime={latestModified === '' ? undefined : latestModified}
+/>
 <main id="main-content" class="learning-index">
   <p class="page-kicker">OMG / Learn</p>
   <h1>{data.title}</h1>

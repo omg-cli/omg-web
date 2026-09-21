@@ -1,12 +1,24 @@
 <!-- Terms of service for the OMG Package Manager site, CLI, and licensing API. -->
 <script lang="ts">
   import SeoHead from '../../lib/components/SeoHead.svelte';
+  import { SITE_ORIGIN, serializeJsonLd } from '../../../../shared/public-site';
+
+  const structuredData = serializeJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${SITE_ORIGIN}/terms/#page`,
+    url: `${SITE_ORIGIN}/terms/`,
+    name: 'Terms of Service - OMG Package Manager',
+    isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+    publisher: { '@id': `${SITE_ORIGIN}/#org` },
+  });
 </script>
 
 <SeoHead
   title="Terms of Service - OMG Package Manager"
-  description="Terms of Service for the OMG Package Manager website, CLI, and hosted services."
+  description="Terms covering the OMG Package Manager website, the omg command-line tool, and the hosted account services: acceptable use, accounts, billing, and liability."
   path="/terms/"
+  {structuredData}
 />
 
 <main id="main-content" class="legal-shell">

@@ -7,7 +7,7 @@ import {
   healthResponse,
   robotsResponse,
   sitemapResponse,
-  withDocsRouteCache,
+  withPublicHtmlCache,
   withSiteHeaders,
 } from './public-files';
 
@@ -44,8 +44,11 @@ describe('public file endpoints', () => {
     expect(response.headers.get('cache-control')).toBe('public, max-age=86400, s-maxage=604800');
     await expect(response.text()).resolves.toBe(`# OMG Package Manager - robots.txt
 # https://getomg.xyz
+# Content signals follow the Cloudflare robots.txt convention: search access is
+# allowed while model training on this documentation is not.
 
 User-agent: *
+Content-Signal: search=yes, ai-train=no
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /admin/
@@ -60,7 +63,8 @@ Sitemap: https://getomg.xyz/sitemap.xml
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('application/xml; charset=utf-8');
-    expect(response.headers.get('x-robots-tag')).toBe('noindex');
+    // A sitemap is a discovery file; a noindex header on it must not come back.
+    expect(response.headers.has('x-robots-tag')).toBe(false);
     expect(body.match(/<url>/g)).toHaveLength(9 + DOCS_TOPICS.length + LEARNING_PAGES.length);
     expect(body).toContain('<loc>https://getomg.xyz/security/</loc>');
     expect(body).toContain('<loc>https://getomg.xyz/</loc>');
@@ -70,7 +74,8 @@ Sitemap: https://getomg.xyz/sitemap.xml
     for (const topic of DOCS_TOPICS) {
       expect(body).toContain(`<loc>https://getomg.xyz/docs/${topic.slug}/</loc>`);
     }
-    expect(body.match(/<lastmod>/g)).toHaveLength(LEARNING_PAGES.length);
+    expect(body.match(/<lastmod>/g)).toHaveLength(LEARNING_PAGES.length + DOCS_TOPICS.length + 2);
+    expect(body).toContain('<lastmod>2026-09-21</lastmod>');
     expect(body).not.toContain('<changefreq>');
     expect(body).not.toContain('<priority>');
   });
@@ -80,6 +85,7 @@ Sitemap: https://getomg.xyz/sitemap.xml
 
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('x-robots-tag')).toBe('noindex');
     await expect(response.text()).resolves.toBe(
       JSON.stringify({ runtime: 'sveltekit-alchemy', status: 'ok' })
     );
@@ -124,34 +130,52 @@ Sitemap: https://getomg.xyz/sitemap.xml
     expect(response.headers.has('x-robots-tag')).toBe(false);
   });
 
-  it.each(['GET', 'HEAD'])('requires revalidation for successful %s /docs/ responses', method => {
-    const securedResponse = withSiteHeaders(new Response('docs'), 'shadow');
-    const response = withDocsRouteCache(securedResponse, method, '/docs/');
+  const htmlResponse = () =>
+    new Response('page', { headers: { 'content-type': 'text/html; charset=utf-8' } });
+  const edgePolicy =
+    'public, max-age=0, must-revalidate, s-maxage=600, stale-while-revalidate=86400';
 
-    expect(response.headers.get('cache-control')).toBe('public, max-age=0, must-revalidate');
+  it.each(['GET', 'HEAD'])('gives a successful %s docs page the edge cache policy', method => {
+    const securedResponse = withSiteHeaders(htmlResponse(), 'shadow');
+    const response = withPublicHtmlCache(securedResponse, method, '/docs/cli/');
+
+    expect(response.headers.get('cache-control')).toBe(edgePolicy);
     expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow');
   });
 
-  it.each(['GET', 'HEAD'])('requires revalidation for successful %s docs topic pages', method => {
-    const response = withDocsRouteCache(new Response('topic'), method, '/docs/cli/');
+  it.each(['GET', 'HEAD', 'POST'])('caches the homepage only for read %s requests', method => {
+    const response = withPublicHtmlCache(htmlResponse(), method, '/');
 
-    expect(response.headers.get('cache-control')).toBe('public, max-age=0, must-revalidate');
+    expect(response.headers.get('cache-control')).toBe(method === 'POST' ? null : edgePolicy);
   });
 
   it.each([
-    { method: 'GET', pathname: '/docs/', status: 404 },
-    { method: 'POST', pathname: '/docs/', status: 200 },
-    { method: 'GET', pathname: '/docs/cli/', status: 500 },
-    { method: 'GET', pathname: '/docsx/', status: 200 },
-    { method: 'HEAD', pathname: '/documentation/', status: 200 },
-    { method: 'GET', pathname: '/', status: 200 },
+    { method: 'GET', pathname: '/admin/', status: 200 },
+    { method: 'GET', pathname: '/dashboard/analytics/', status: 200 },
+    { method: 'GET', pathname: '/login/', status: 200 },
     { method: 'GET', pathname: '/api/auth/session', status: 200 },
-  ])(
-    'does not cache $method $pathname responses with status $status',
-    ({ method, pathname, status }) => {
-      const response = withDocsRouteCache(new Response(null, { status }), method, pathname);
+    { method: 'GET', pathname: '/markdown/guides/node-npm-pnpm', status: 200 },
+    { method: 'GET', pathname: '/health', status: 200 },
+    { method: 'POST', pathname: '/docs/', status: 200 },
+    { method: 'GET', pathname: '/docs/', status: 404 },
+    { method: 'GET', pathname: '/docs/cli/', status: 500 },
+  ])('never caches $method $pathname with status $status', ({ method, pathname, status }) => {
+    const response = withPublicHtmlCache(
+      new Response('x', { status, headers: { 'content-type': 'text/html' } }),
+      method,
+      pathname
+    );
 
-      expect(response.headers.has('cache-control')).toBe(false);
-    }
-  );
+    expect(response.headers.has('cache-control')).toBe(false);
+  });
+
+  it('leaves a non-HTML response untouched', () => {
+    const response = withPublicHtmlCache(
+      Response.json({ ok: true }),
+      'GET',
+      '/some-json-endpoint'
+    );
+
+    expect(response.headers.has('cache-control')).toBe(false);
+  });
 });

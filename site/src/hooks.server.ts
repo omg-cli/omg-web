@@ -2,7 +2,7 @@ import { building } from '$app/env';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle } from '@sveltejs/kit/hooks';
 import { createShadowAuth, enforceAuthMutationRateLimit } from './lib/server/auth.server';
-import { withDocsRouteCache, withSiteHeaders } from './lib/server/public-files';
+import { withPublicHtmlCache, withSiteHeaders } from './lib/server/public-files';
 
 const AUTH_PATH_PREFIX = '/api/auth/';
 const ORGANIZATION_PLUGIN_PATH_PREFIX = '/api/auth/organization/';
@@ -50,5 +50,5 @@ export const handle: Handle = async ({ event, resolve }) => {
   }
 
   const securedResponse = withSiteHeaders(response, platform?.env.DEPLOYMENT_STAGE);
-  return withDocsRouteCache(securedResponse, event.request.method, event.url.pathname);
+  return withPublicHtmlCache(securedResponse, event.request.method, event.url.pathname);
 };

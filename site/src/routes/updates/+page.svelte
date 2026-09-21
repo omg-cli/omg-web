@@ -1,12 +1,63 @@
 <script lang="ts">
   import SeoHead from '../../lib/components/SeoHead.svelte';
   import { RELEASE_NOTES, releaseDate } from '../../lib/release-notes';
+  import { SITE_ORIGIN, serializeJsonLd } from '../../../../shared/public-site';
+
+  const canonical = `${SITE_ORIGIN}/updates/`;
+  const latestRelease = RELEASE_NOTES.at(0);
+
+  /**
+   * Release index markup: the page itself, its breadcrumb position, and one list
+   * item per published release so each version has a stable, citable anchor.
+   */
+  const structuredData = serializeJsonLd({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${canonical}#page`,
+        url: canonical,
+        name: 'OMG release notes and updates',
+        description:
+          'Reviewed highlights from published OMG releases, with the date each version shipped.',
+        isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+        publisher: { '@id': `${SITE_ORIGIN}/#org` },
+        about: {
+          '@type': 'SoftwareApplication',
+          name: 'OMG Package Manager',
+          applicationCategory: 'DeveloperApplication',
+          operatingSystem: 'Linux, macOS, Windows Subsystem for Linux',
+          url: `${SITE_ORIGIN}/`,
+        },
+        ...(latestRelease === undefined ? {} : { dateModified: latestRelease.date }),
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: RELEASE_NOTES.length,
+          itemListElement: RELEASE_NOTES.map((release, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: `${release.version}: ${release.title}`,
+            url: `${canonical}#${release.version}`,
+          })),
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+          { '@type': 'ListItem', position: 2, name: 'Release notes', item: canonical },
+        ],
+      },
+    ],
+  });
 </script>
 
 <SeoHead
   title="Release notes and updates - OMG"
   description="Reviewed highlights from published OMG releases. See what changed, when it shipped, and where to read the complete notes."
   path="/updates/"
+  {structuredData}
+  modifiedTime={latestRelease === undefined ? undefined : latestRelease.date}
 />
 
 <main id="main-content" class="updates-shell">
@@ -28,13 +79,14 @@
   </aside>
   <section aria-label="Published releases">
     {#each RELEASE_NOTES as release, index (release.version)}
-      <details open={index === 0}>
+      <details id={release.version} open={index === 0}>
         <summary>
           <span class="version">{release.version}</span>
           <span>{release.title}</span>
           <time datetime={release.date}>{releaseDate(release.date)}</time>
         </summary>
         <div class="release-body">
+          <h2 class="release-heading">{release.version}: {release.title}</h2>
           <ul>
             {#each release.changes as change (change)}<li>{change}</li>{/each}
           </ul>
@@ -83,6 +135,18 @@
     line-height: 1.7;
     margin-bottom: 3rem;
   }
+  .release-heading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+    border: 0;
+  }
+
   details {
     border-top: 1px solid var(--rule);
   }

@@ -61,6 +61,7 @@
   description={meta.description}
   {path}
   type="article"
+  modifiedTime={meta.modified}
   {structuredData}
 />
 <main id="main-content" class="learning-article">
