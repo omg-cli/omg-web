@@ -28,6 +28,33 @@ export const workflowsTopic: DocsTopic = {
           ],
         },
         {
+          kind: 'diagram',
+          diagram: {
+            title: 'Inspect, preview, approve, verify',
+            caption:
+              'Every mutation follows the same order. The dashed line is the step most people skip: going back to inspect when the preview surprises them.',
+            nodes: [
+              { id: 'inspect', label: 'Inspect the package', detail: 'search, info, why' },
+              { id: 'preview', label: 'Preview the change', detail: 'dry run first' },
+              { id: 'review', label: 'Review source and policy', detail: 'AUR and rules' },
+              {
+                id: 'approve',
+                label: 'Approve the mutation',
+                detail: 'the real command',
+                tone: 'signal',
+              },
+              { id: 'verify', label: 'Check the result', detail: 'native state and history' },
+            ],
+            edges: [
+              { from: 'inspect', to: 'preview' },
+              { from: 'preview', to: 'review' },
+              { from: 'review', to: 'approve' },
+              { from: 'approve', to: 'verify' },
+              { from: 'review', to: 'inspect', label: 'adjust', dashed: true },
+            ],
+          },
+        },
+        {
           kind: 'paragraphs',
           paragraphs: [
             'omg env capture writes the current package and runtime state to omg.lock. Commit that file with your project so machines stay comparable, and run omg env check whenever something feels off.',

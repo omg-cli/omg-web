@@ -37,7 +37,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'omg audit and omg audit scan query OSV.dev for installed packages with a fixed concurrency limit. Results stay in a process-local cache for ten minutes. Reports count findings with CVSS 7.0 and above as high severity. The daemon uses Arch Linux security advisories for its separate system-status scan.',
+            'omg audit scan requires a running omgd. Current Linux and macOS release archives include that binary. Archives from v0.1.222 and earlier omit it on non-Arch targets. The scan queries OSV.dev for installed packages with a fixed concurrency limit. Results stay in a process-local cache for ten minutes. Reports count findings with CVSS 7.0 and above as high severity. The daemon uses Arch Linux security advisories for its separate system-status scan. Arch advisory matches are not Debian, Fedora, or macOS coverage.',
           ],
         },
         {
@@ -61,6 +61,41 @@ export const securityTopic: DocsTopic = {
       id: 'verification',
       heading: 'Signature and provenance verification',
       blocks: [
+        {
+          kind: 'diagram',
+          diagram: {
+            title: 'How an artifact signature is checked',
+            caption:
+              'A successful check ties the file you hold to a signing identity you named. It still is not a build-level or safety verdict.',
+            nodes: [
+              { id: 'artifact', label: 'Downloaded artifact', detail: 'the file you hold' },
+              { id: 'identity', label: 'Expected identity', detail: 'email or OIDC URI' },
+              { id: 'digest', label: 'SHA-256 digest', detail: 'computed locally' },
+              { id: 'rekor', label: 'Rekor inclusion', detail: 'signed entry timestamp' },
+              { id: 'fulcio', label: 'Fulcio certificate', detail: 'chain checked' },
+              {
+                id: 'verified',
+                label: 'Signature verified',
+                detail: 'identity is bound',
+                tone: 'signal',
+              },
+              {
+                id: 'limits',
+                label: 'Not a SLSA level',
+                detail: 'nor proof of safety',
+                tone: 'muted',
+              },
+            ],
+            edges: [
+              { from: 'artifact', to: 'digest' },
+              { from: 'digest', to: 'rekor' },
+              { from: 'rekor', to: 'fulcio' },
+              { from: 'fulcio', to: 'verified' },
+              { from: 'identity', to: 'verified', label: 'must match' },
+              { from: 'verified', to: 'limits', label: 'with limits', dashed: true },
+            ],
+          },
+        },
         {
           kind: 'bullets',
           items: [

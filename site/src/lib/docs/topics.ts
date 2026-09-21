@@ -18,7 +18,7 @@ interface DocsTopicMeta {
   readonly source: DocsSourceProvenance;
 }
 
-const reviewedCommit = '2401eb61521055119b2e9238b83567a8bcaa13ad';
+const reviewedCommit = 'd5e4bddc48a368342ee21bb6cf193affac6f7603';
 const reviewedAt = '2026-09-21';
 
 const REGISTRY = {

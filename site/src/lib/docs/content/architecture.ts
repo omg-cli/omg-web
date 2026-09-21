@@ -10,7 +10,7 @@ export const architectureTopic: DocsTopic = {
   sections: [
     {
       id: 'binaries',
-      heading: 'Three cooperating binaries',
+      heading: 'Two release binaries',
       blocks: [
         {
           kind: 'table',
@@ -19,22 +19,18 @@ export const architectureTopic: DocsTopic = {
           rows: [
             [
               'omg',
-              'The CLI handles arguments, package operations, policy, output, and interactive views',
+              'The CLI handles arguments, package operations, policy, output, interactive views, and prompt counters',
             ],
             [
               'omgd',
-              'The daemon maintains an in-memory package index, background status scans, and caches',
-            ],
-            [
-              'omg-fast',
-              'The prompt helper reads count snapshots directly and uses IPC for search, package info, or stale snapshot fallback',
+              'The daemon maintains an in-memory package index, background status refresh, and caches',
             ],
           ],
         },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The CLI talks to the daemon over a Unix socket. The daemon keeps hot derived data in memory and writes status snapshots to disk. omg-fast reads the fixed-size snapshot for prompt counts. Its search and package-info modes use the socket.',
+            'Current Linux and macOS release archives include both binaries. Archives from v0.1.222 and earlier omit omgd on non-Arch targets. The CLI talks to the daemon over a Unix socket when omgd is running. Prompt counters are commands on omg. They read the fixed-size omg.status snapshot beside the socket.',
           ],
         },
       ],
@@ -44,21 +40,53 @@ export const architectureTopic: DocsTopic = {
       heading: 'What happens on a search',
       blocks: [
         {
+          kind: 'diagram',
+          diagram: {
+            title: 'Search request path',
+            caption:
+              'A running daemon answers from memory. Without one, the same query takes the direct backend path.',
+            nodes: [
+              { id: 'cli', label: 'omg search', detail: 'your command', tone: 'signal' },
+              { id: 'daemon', label: 'omgd daemon', detail: 'only when running', tone: 'muted' },
+              { id: 'direct', label: 'Direct backend', detail: 'no daemon needed', tone: 'muted' },
+              { id: 'cache', label: 'Cache lookup', detail: 'in-memory hit or miss' },
+              { id: 'index', label: 'In-memory index' },
+              { id: 'official', label: 'Official repositories', detail: 'libalpm, APT, RPM' },
+              { id: 'aur', label: 'AUR', detail: 'over HTTPS' },
+            ],
+            edges: [
+              { from: 'cli', to: 'daemon', label: 'daemon running' },
+              { from: 'cli', to: 'direct', label: 'no daemon', dashed: true },
+              { from: 'daemon', to: 'cache' },
+              { from: 'cache', to: 'index', label: 'cache miss' },
+              { from: 'index', to: 'official' },
+              { from: 'index', to: 'aur', label: 'AUR query' },
+              { from: 'direct', to: 'official', dashed: true },
+            ],
+          },
+        },
+        {
           kind: 'steps',
           steps: [
-            { text: 'The CLI parses the query and uses the daemon when it is available.' },
-            { text: 'The daemon checks its in-memory response cache.' },
-            { text: 'On a cache miss, the daemon searches its in-memory package index.' },
-            { text: 'The daemon caches the result and returns it to the CLI.' },
             {
-              text: 'If the daemon is unavailable, the CLI queries package backends directly. On Arch it can query official repositories and the AUR in parallel.',
+              text: 'A simple omg search or omg info call queries the selected package backend directly.',
+            },
+            {
+              text: 'Other searches use the daemon when it is running and check its in-memory cache.',
+            },
+            {
+              text: 'On a daemon cache miss, the daemon searches its in-memory package index and remote sources.',
+            },
+            { text: 'The daemon caches that result and returns it to the CLI.' },
+            {
+              text: 'If the daemon is unavailable, the CLI uses the same direct backend path. On Arch, official repositories and the AUR can be queried in parallel.',
             },
           ],
         },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'On Arch, OMG binds libalpm through direct FFI instead of invoking pacman for queries. Debian reads the native package database. Fedora and RHEL read RPM SQLite data directly, with rpm -qa as a fallback for BDB or NDB databases. AUR requests use HTTPS.',
+            'On Arch, OMG binds libalpm through direct FFI instead of invoking pacman for queries. Debian and Ubuntu read the native APT database. Fedora reads RPM data directly, with a subprocess fallback when the database format requires it. AUR requests use HTTPS. Fedora support does not establish RHEL compatibility.',
           ],
         },
       ],
@@ -67,6 +95,36 @@ export const architectureTopic: DocsTopic = {
       id: 'runtime-flow',
       heading: 'What happens on a runtime switch',
       blocks: [
+        {
+          kind: 'diagram',
+          diagram: {
+            title: 'Runtime switch path',
+            caption:
+              'Every step stays inside your own data directory, so no administrator password is involved.',
+            nodes: [
+              {
+                id: 'detect',
+                label: 'Detect the runtime',
+                detail: 'node, python, rust',
+                tone: 'signal',
+              },
+              { id: 'check', label: 'Version installed?', detail: 'checked in the data dir' },
+              { id: 'download', label: 'Download release', detail: 'from the provider' },
+              { id: 'verify', label: 'Verify integrity', detail: 'checksum or signature' },
+              { id: 'extract', label: 'Extract version', detail: 'versions/runtime/version' },
+              { id: 'current', label: 'Update current link' },
+              { id: 'hook', label: 'Project PATH updated', detail: 'by the shell hook' },
+            ],
+            edges: [
+              { from: 'detect', to: 'check' },
+              { from: 'check', to: 'download', label: 'missing' },
+              { from: 'download', to: 'verify' },
+              { from: 'verify', to: 'extract' },
+              { from: 'extract', to: 'current' },
+              { from: 'current', to: 'hook' },
+            ],
+          },
+        },
         {
           kind: 'steps',
           steps: [
@@ -108,7 +166,7 @@ export const architectureTopic: DocsTopic = {
             ],
             [
               'Binary status file',
-              'Fixed-size package counts read directly by omg-fast, with IPC fallback when the snapshot is stale or missing',
+              'Fixed-size omg.status counts read by omg ec, tc, oc, and uc, with daemon and backend fallbacks when the snapshot is stale or missing',
             ],
           ],
         },
@@ -130,7 +188,7 @@ export const architectureTopic: DocsTopic = {
             'Transport is a Unix domain socket with length-delimited framing.',
             'Messages use a compact binary serialization format chosen for low latency.',
             'Requests cover search, package info, system status, security audits, explicit package listings, and cache or health controls.',
-            'Cached responses return quickly. A daemon search cache miss reads the in-memory index rather than querying a package backend.',
+            'A daemon cache hit returns the stored result. A miss searches the in-memory index and, when the command needs them, the native databases and remote sources.',
             'Without a running daemon, the CLI falls back to direct package-manager queries instead of failing.',
           ],
         },

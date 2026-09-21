@@ -45,6 +45,32 @@ export const runtimesTopic: DocsTopic = {
       heading: 'How version switching works',
       blocks: [
         {
+          kind: 'diagram',
+          diagram: {
+            title: 'Which version file wins',
+            caption:
+              'OMG reads the project folder first and then its parents. The first pin it finds decides the version on PATH.',
+            nodes: [
+              { id: 'folder', label: 'Project folder', detail: 'checked upward', tone: 'signal' },
+              { id: 'dedicated', label: '.node-version', detail: 'runtime-specific pin' },
+              { id: 'mise', label: 'mise.toml', detail: 'mise project pins' },
+              { id: 'manifest', label: 'package.json', detail: 'engines field' },
+              { id: 'tool-versions', label: '.tool-versions', detail: 'shared multi-tool pin' },
+              { id: 'active', label: 'Version on PATH' },
+            ],
+            edges: [
+              { from: 'folder', to: 'dedicated' },
+              { from: 'folder', to: 'mise' },
+              { from: 'dedicated', to: 'manifest', label: 'not set', dashed: true },
+              { from: 'manifest', to: 'tool-versions', label: 'not set', dashed: true },
+              { from: 'dedicated', to: 'active' },
+              { from: 'mise', to: 'active' },
+              { from: 'manifest', to: 'active' },
+              { from: 'tool-versions', to: 'active' },
+            ],
+          },
+        },
+        {
           kind: 'steps',
           steps: [
             {

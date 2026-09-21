@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { DocsDiagram } from './diagram';
+import { layoutDiagram } from './diagram';
 import type { DocsTopic } from './topic';
 import { DOCS_TOPICS, docsSourceHref, docsTopicHref } from './topics';
 import { architectureTopic } from './content/architecture';
@@ -36,6 +38,20 @@ const KEBAB_CASE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const HEX_COMMIT = /^[0-9a-f]{7,40}$/u;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/u;
 
+/** Every authored string inside one figure, so the prose guards cover diagrams too. */
+function diagramStrings(diagram: DocsDiagram): string[] {
+  const strings = [diagram.title];
+  if (diagram.caption !== undefined) strings.push(diagram.caption);
+  for (const node of diagram.nodes) {
+    strings.push(node.label);
+    if (node.detail !== undefined) strings.push(node.detail);
+  }
+  for (const edge of diagram.edges) {
+    if (edge.label !== undefined) strings.push(edge.label);
+  }
+  return strings;
+}
+
 /** Fields whose strings are prose; angle brackets there would be markup smuggling. */
 function proseStrings(topic: DocsTopic): string[] {
   const strings = [topic.title, topic.summary];
@@ -52,6 +68,8 @@ function proseStrings(topic: DocsTopic): string[] {
         strings.push(block.title, ...block.columns, ...block.rows.flat());
       } else if (block.kind === 'bullets') {
         strings.push(...block.items);
+      } else if (block.kind === 'diagram') {
+        strings.push(...diagramStrings(block.diagram));
       } else {
         strings.push(block.text);
       }
@@ -177,6 +195,33 @@ describe('docs handbook content', () => {
     expect(handbook).not.toContain('omg completions zsh >');
     expect(handbook).not.toContain('audit verify proves');
     expect(handbook).not.toContain('no privilege escalation');
+  });
+
+  it('lays out every authored diagram without an invalid node or edge', () => {
+    const diagrams: DocsDiagram[] = [];
+    for (const topic of TOPICS) {
+      for (const section of topic.sections) {
+        for (const block of section.blocks) {
+          if (block.kind === 'diagram') diagrams.push(block.diagram);
+        }
+      }
+    }
+
+    expect(diagrams.length).toBeGreaterThanOrEqual(8);
+    for (const diagram of diagrams) {
+      const layout = layoutDiagram(diagram);
+      expect(layout.nodes.length).toBe(diagram.nodes.length);
+      expect(layout.width).toBeGreaterThan(0);
+      expect(layout.height).toBeGreaterThan(0);
+      for (const edge of layout.edges) {
+        expect(edge.path.startsWith('M ')).toBe(true);
+        expect(edge.path.includes('NaN')).toBe(false);
+      }
+      for (const node of layout.nodes) {
+        expect(Number.isFinite(node.x)).toBe(true);
+        expect(Number.isFinite(node.y)).toBe(true);
+      }
+    }
   });
 
   it('emits canonical internal hrefs for every topic', () => {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { DocsBlock } from '../../docs/topic';
+  import DocsDiagram from './DocsDiagram.svelte';
 
   let { block }: { block: DocsBlock } = $props();
   const titleId = $props.id();
@@ -56,6 +57,8 @@
       <li>{item}</li>
     {/each}
   </ul>
+{:else if block.kind === 'diagram'}
+  <DocsDiagram diagram={block.diagram} />
 {:else}
   <aside class="note note-{block.tone}">
     <p>{block.text}</p>
