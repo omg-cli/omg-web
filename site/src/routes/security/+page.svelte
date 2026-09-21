@@ -186,10 +186,10 @@
       {visible.length} updates <span>· Review and merge status are labeled individually.</span>
     </p>
     <p class="feed-note">
-      The hardening in <a href="https://github.com/omg-cli/omg/pull/399">PR #399</a> is merged.
-      This feed follows main in both repositories. On main means merged; it does not imply the fix
-      is in your installed release. Check the <a href="/updates/">release notes</a> for the tagged build
-      you use.
+      The hardening in <a href="https://github.com/omg-cli/omg/pull/399">PR #399</a> is merged. This
+      feed follows main in both repositories. On main means merged; it does not imply the fix is in
+      your installed release. Check the <a href="/updates/">release notes</a> for the tagged build you
+      use.
     </p>
     <div class="timeline">
       {#each visible as update (update.repository + update.sha)}

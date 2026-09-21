@@ -50,7 +50,10 @@ export const installationTopic: DocsTopic = {
             ],
             ['Fedora', 'Universal installer or a matching Fedora release archive'],
             ['macOS', 'Universal installer. Homebrew packaging is not available yet'],
-            ['Windows', 'WSL2 only on Arch, Debian, Ubuntu, or Fedora, using the universal installer inside the distribution'],
+            [
+              'Windows',
+              'WSL2 only on Arch, Debian, Ubuntu, or Fedora, using the universal installer inside the distribution',
+            ],
           ],
         },
         {
@@ -65,11 +68,26 @@ export const installationTopic: DocsTopic = {
           columns: ['Backend', 'What it means'],
           rows: [
             ['Arch (`arch`)', 'libalpm plus AUR workflows; the default source-build feature set'],
-            ['Debian/Ubuntu (`debian`)', 'Native APT operations; source builds need libapt-pkg-dev and native build headers'],
-            ['Fedora (`fedora`)', 'DNF/RPM operations; source builds use the pure-Rust RPM database path'],
-            ['Apple Silicon macOS (`macos`)', 'Homebrew package operations; published macOS binaries are ARM64'],
-            ['Debian index/test (`debian-pure`)', 'Pure-Rust index fixtures only; refuses live package mutations'],
-            ['Windows', 'No native backend or binary; install inside WSL and use the guest distribution backend'],
+            [
+              'Debian/Ubuntu (`debian`)',
+              'Native APT operations; source builds need libapt-pkg-dev and native build headers',
+            ],
+            [
+              'Fedora (`fedora`)',
+              'DNF/RPM operations; source builds use the pure-Rust RPM database path',
+            ],
+            [
+              'Apple Silicon macOS (`macos`)',
+              'Homebrew package operations; published macOS binaries are ARM64',
+            ],
+            [
+              'Debian index/test (`debian-pure`)',
+              'Pure-Rust index fixtures only; refuses live package mutations',
+            ],
+            [
+              'Windows',
+              'No native backend or binary; install inside WSL and use the guest distribution backend',
+            ],
           ],
         },
       ],
