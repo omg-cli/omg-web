@@ -118,3 +118,120 @@ The 2026-09-01 shadow sample used managed Chrome without throttling. It recorded
 - Do not chase the generic query `package manager` as the primary target.
 - Do not publish comparison or speed claims without a reproducible benchmark.
 - Validate keyword-volume claims in a reputable keyword tool before funding a large content program.
+
+## Applied 2026-09-21 (follow-up live audit)
+
+A read-only audit of the deployed site (headers, redirects, rendered HTML, structured
+data, and a 17-user-agent crawl matrix) produced these changes, all verified on the live
+origin with a cache-busting query string.
+
+Crawl and preview
+
+- `SeoHead` now serves the 1200x630 card (`/og/omg-og.png`, 76 KB) from one constant that
+  also carries its real dimensions, so `og:image:width`/`height` cannot drift from the
+  served file, and `og:image:secure_url` was added. The unused 1,734x909 variant and its
+  1.03 MB asset were removed; the tech-article `image` in the docs markup points at the
+  same card.
+- `/sitemap.xml` no longer sends `X-Robots-Tag: noindex`. The header was an untested
+  variable in the unresolved Search Console "Sitemap could not be read" report.
+- `robots.txt` carries `Content-Signal: search=yes, ai-train=no`, matching `llms.txt`.
+- `/health` sends `X-Robots-Tag: noindex` so a JSON probe never enters an index.
+- `/security/` advertises `/security/feed.json` with `rel="alternate"`.
+
+Rendering and caching
+
+- `prerender = true` for `/`, `/privacy/`, `/terms/`, and `/updates/`. A build now emits
+  23 prerendered pages instead of 19.
+- `withDocsRouteCache` became `withPublicHtmlCache`: any successful public HTML response
+  keeps client revalidation and gains `s-maxage=600, stale-while-revalidate=86400`.
+  Admin, dashboard, auth-entry, API, markdown, and health paths are excluded by pattern,
+  so authenticated or non-HTML responses are never given a shared cache policy.
+- **Prerendering the marketing pages was reverted.** Rendering `/`, `/privacy/`, `/terms/`,
+  and `/updates/` at build time looked like a free TTFB win, and it shipped a real regression:
+  a prerendered SvelteKit page carries an inline hydration bootstrap script, and the static
+  `Content-Security-Policy` header from `shared/security-headers.ts` allows only
+  `script-src 'self' https://static.cloudflareinsights.com` with no hash or nonce. The browser
+  blocks the inline script, so hydration never runs and every interactive element on the page
+  stops responding — the anonymous e2e suite caught it ("Install command copied." never
+  appeared). Reproduced locally with a headless Chromium probe: `console.error: Executing
+  inline script violates the following Content-Security-Policy directive`. To reintroduce
+  prerendering, the header policy and the framework-generated policy have to agree on a hash
+  or nonce for that script first; until then these routes stay server-rendered per request.
+
+Structured data and freshness
+
+- Learning indexes: `CollectionPage` + `BreadcrumbList` + `ItemList`.
+- Legal pages: `WebPage` with the publisher reference.
+- Security page: `CollectionPage` with `dateModified` from the feed's `syncedAt`.
+- Release index: `CollectionPage` + `BreadcrumbList` + `ItemList`, a stable anchor per
+  version, and a heading per release entry.
+- `article:modified_time` now comes from the dates the site already trusts: docs
+  provenance (`reviewedAt`) and learn page `modified`.
+- `/updates/` carries a `lastmod` in the sitemap taken from the newest release date.
+
+Two items need an operator action, both verified as origin-ready:
+
+1. **Edge cache refresh.** `robots.txt` (up to 7 days of `s-maxage`) and `sitemap.xml`
+   (24 hours) still serve the previous copies from the Cloudflare edge. The deployed
+   credential is an OAuth grant without `Cache Purge`, so `POST /zones/{id}/purge_cache`
+   returns `10000 Authentication error` (zone `fb74005c3f17bc04cff822a8117643ea`). Purge
+   the changed URLs from the dashboard, or grant the credential `Cache Purge` and re-run
+   the purge for the 26 sitemap URLs plus `/robots.txt`.
+2. **Prerendered asset headers.** `withPublicHtmlCache` applies to dynamic HTML (verified
+   on `/security/`, which now returns the new policy). Prerendered pages are served from
+   the Workers assets store and keep Cloudflare's default
+   `public, max-age=0, must-revalidate`, so the longer shared-cache policy does not reach
+   them. To extend it, add a `_headers` rule for the prerendered HTML paths and confirm it
+   survives the adapter's generated `_headers` merge before relying on it.
+
+Open items from the earlier plan that this audit did not close: the Search Console
+sitemap fetch warning (now testable without the `noindex` header), Change of Address,
+Bing processing, the unshipped "Version managers compared" page, IndexNow key
+provisioning, and `Dynamic URL Redirects Write` for per-URL legacy redirects.
+
+## Performance audit 2026-09-21 (Lighthouse, deployed build)
+
+Measured with Lighthouse 13.5.0 driving Chromium 153 against `https://getomg.xyz/`,
+mobile profile and desktop preset, reports kept as JSON for comparison.
+
+| Run | Performance | Accessibility | Best practices | SEO |
+| --- | --- | --- | --- | --- |
+| Mobile | 86 | 100 | 100 | 100 |
+| Desktop | 92 | 100 | 100 | 100 |
+
+Mobile metrics: FCP 1.8 s, LCP 1.8 s, TBT 0 ms, **CLS 0.246**, speed index 1.8 s,
+total transfer 336 KiB, server response 280 ms (40 ms desktop).
+
+What the failing audits were
+
+- **CLS 0.246 mobile / 0.179 desktop.** The only layout shift is
+  `div > main#main-content > section.hero > div.hero-introduction`, caused by
+  "Web font loaded": the Archivo variable font replaces the fallback after first paint
+  and the paragraph reflows.
+- **Legacy JavaScript, 10,840 wasted bytes** and **cache TTL, 4,135 wasted bytes both
+  point at `static.cloudflareinsights.com/beacon.min.js`**, the analytics beacon Cloudflare
+  injects for this zone. It is not served from this repository, so neither finding is
+  actionable here; they will keep appearing in every audit until the zone stops injecting it.
+- **Render-blocking**: the two page stylesheets (2.2 KB and 3.8 KB), which is expected for
+  first-party CSS and carries no reported wasted time.
+
+What was changed in response
+
+- Metric-matched fallback faces for Archivo and IBM Plex Mono in `app.css`, generated from
+  the shipped font binaries (Archivo ascent 0.878 / descent 0.210 / average advance
+  0.5631 per em; Plex 1.025 / 0.275 / 0.6000) and sized against the metric-compatible local
+  fallbacks (95.93% and 100.02%). The fallback now occupies the same box as the web font,
+  so the swap cannot move text.
+- The root layout preloads the Latin display font at preload priority.
+- `favicon.svg` and `logo.svg` carried a 784x1168 and 1168x784 JPEG for marks displayed at
+  16-32 px and 110x33 px. Re-encoded at display-appropriate resolution with identical
+  geometry: 106,798 -> 5,982 bytes and 114,979 -> 14,503 bytes (~200 KB less on a first
+  visit, and the logo drops from 73 KB to about 6 KB of Brotli transfer).
+
+Deployment state
+
+The change set is committed and pushed on `docs/themed-diagrams`, but the deploy failed
+with `Invalid access token [code: 9109]` / `Authentication error [code: 10000]`: the stored
+Cloudflare OAuth credential expired on both the Windows profile and the WSL copy. The
+deployed build is therefore still the previous one; re-run `wrangler login` and then run
+the prepared script that deploys and prints the before/after Lighthouse comparison.

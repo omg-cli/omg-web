@@ -3,9 +3,52 @@
   import { onMount } from 'svelte';
   import { invalidate } from '$app/navigation';
   import { SECURITY_CATEGORIES, commitHref } from '../../lib/security-updates';
+  import { SITE_ORIGIN, serializeJsonLd } from '../../../../shared/public-site';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
+
+  /**
+   * The security page is assembled from the live feed at request time, so the
+   * markup describes the page and its freshness rather than a fixed article list.
+   */
+  const structuredData = $derived(
+    serializeJsonLd({
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'CollectionPage',
+          '@id': `${SITE_ORIGIN}/security/#page`,
+          url: `${SITE_ORIGIN}/security/`,
+          name: 'Security updates for OMG',
+          description:
+            'Reviewed OMG security improvements, the installation protections behind them, and the exact sources they come from.',
+          isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+          publisher: { '@id': `${SITE_ORIGIN}/#org` },
+          dateModified: data.feed.syncedAt,
+          about: {
+            '@type': 'SoftwareApplication',
+            name: 'OMG Package Manager',
+            applicationCategory: 'DeveloperApplication',
+            operatingSystem: 'Linux, macOS, Windows Subsystem for Linux',
+            url: `${SITE_ORIGIN}/`,
+          },
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'Security',
+              item: `${SITE_ORIGIN}/security/`,
+            },
+          ],
+        },
+      ],
+    })
+  );
   let category = $state('All updates');
   let repository = $state('all');
   let refreshFailed = $state(false);
@@ -70,7 +113,17 @@
   title="Security, in the open — OMG"
   description="Follow OMG security improvements as they land. Live commit history, installation protections and verifiable changes across OMG and OMG-Web."
   path="/security/"
+  {structuredData}
 />
+
+<svelte:head>
+  <link
+    rel="alternate"
+    type="application/json"
+    href="/security/feed.json"
+    title="OMG security updates feed"
+  />
+</svelte:head>
 
 <main id="main-content" class="security-shell">
   <header class="hero">

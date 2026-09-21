@@ -1,4 +1,5 @@
 import { SITE_ORIGIN } from '../../../../shared/public-site';
+import type { DocsDiagram } from '../docs/diagram';
 import type { DocsBlock } from '../docs/topic';
 import { learningHref, type LearningPageMeta } from './catalog';
 import type { LearningContent } from './page';
@@ -15,6 +16,25 @@ function absolute(href: string): string {
   return href.startsWith('/') ? `${SITE_ORIGIN}${href}` : href;
 }
 
+/** Text rendering of one figure: the box list, then every connection in words. */
+function diagramMarkdown(diagram: DocsDiagram): string {
+  const labels = new Map(diagram.nodes.map(node => [node.id, node.label]));
+  const rows = [
+    row(['Step', 'Detail']),
+    row(['---', '---']),
+    ...diagram.nodes.map(node => row([node.label, node.detail ?? ''])),
+  ].join('\n');
+  const connections = diagram.edges
+    .map(edge => {
+      const from = labels.get(edge.from) ?? edge.from;
+      const to = labels.get(edge.to) ?? edge.to;
+      return edge.label === undefined ? `${from} to ${to}` : `${from} to ${to} (${edge.label})`;
+    })
+    .join('; ');
+  const caption = diagram.caption === undefined ? '' : `\n\n${diagram.caption}`;
+  return `### ${diagram.title}${caption}\n\n${rows}\n\nConnections: ${connections}.`;
+}
+
 function blockMarkdown(block: DocsBlock): string {
   switch (block.kind) {
     case 'paragraphs':
@@ -25,6 +45,8 @@ function blockMarkdown(block: DocsBlock): string {
       return block.items.map(item => `- ${item}`).join('\n');
     case 'note':
       return `> ${block.text}`;
+    case 'diagram':
+      return diagramMarkdown(block.diagram);
     case 'steps':
       return block.steps
         .map(

@@ -5,12 +5,24 @@
 -->
 <script lang="ts">
   import SeoHead from '../../lib/components/SeoHead.svelte';
+  import { SITE_ORIGIN, serializeJsonLd } from '../../../../shared/public-site';
+
+  const structuredData = serializeJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${SITE_ORIGIN}/privacy/#page`,
+    url: `${SITE_ORIGIN}/privacy/`,
+    name: 'Privacy Policy - OMG Package Manager',
+    isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+    publisher: { '@id': `${SITE_ORIGIN}/#org` },
+  });
 </script>
 
 <SeoHead
   title="Privacy Policy - OMG Package Manager"
   description="How OMG Package Manager collects, uses, and protects your data: telemetry opt-out, data export, deletion, and retention periods."
   path="/privacy/"
+  {structuredData}
 />
 
 <main id="main-content" class="legal-shell">

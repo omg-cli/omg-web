@@ -2,9 +2,17 @@ import { SITE_ORIGIN } from '../../../../shared/public-site';
 import { applySecurityHeaders } from '../../../../shared/security-headers';
 import { DOCS_TOPICS, docsTopicHref } from '../docs/topics';
 import { LEARNING_PAGES, learningHref } from '../learn/catalog';
+import { RELEASE_NOTES } from '../release-notes';
 
 const SHADOW_ROBOTS_POLICY = 'noindex, nofollow';
-const DOCS_CACHE_POLICY = 'public, max-age=0, must-revalidate';
+/**
+ * Public HTML keeps a client side revalidation rule while allowing a shared cache
+ * to answer crawlers and repeat visitors from the edge: ten minutes of freshness,
+ * then a day of stale-while-revalidate. Private and non-HTML surfaces opt out.
+ */
+const PUBLIC_HTML_CACHE_POLICY =
+  'public, max-age=0, must-revalidate, s-maxage=600, stale-while-revalidate=86400';
+const NON_CACHEABLE_PATH = /^\/(?:api|admin|dashboard|login|signup|markdown|health)(?:\/|$)/u;
 
 const STATIC_PAGE_PATHS = [
   '/',
@@ -17,7 +25,12 @@ const STATIC_PAGE_PATHS = [
   '/guides/',
   '/compare/',
 ] as const;
-const DOCS_TOPIC_PATHS = DOCS_TOPICS.map(topic => docsTopicHref(topic.slug));
+const DOCS_REVIEWED_AT = DOCS_TOPICS.reduce(
+  (latest, topic) => (topic.source.reviewedAt > latest ? topic.source.reviewedAt : latest),
+  DOCS_TOPICS[0].source.reviewedAt
+);
+/** The newest published release date, used as the release index's lastmod. */
+const LATEST_RELEASE_AT = RELEASE_NOTES.at(0)?.date;
 
 function escapeXml(value: string): string {
   return value
@@ -62,19 +75,29 @@ export function withSiteHeaders(response: Response, deploymentStage: string | un
 }
 
 /**
- * Apply the production cache policy only to successful, read-only docs responses.
- * The policy covers the docs index and every curated topic page under /docs/.
+ * Apply a bounded edge cache policy to successful public HTML responses.
+ *
+ * Client caches still revalidate (`max-age=0, must-revalidate`), so a visitor
+ * always receives a checked copy, while a shared cache may serve the rendered
+ * page for up to ten minutes and keep serving stale copies for a day while it
+ * revalidates. Private surfaces, mutations, non-HTML responses, and shadow
+ * endpoints are never touched, so an authenticated or API response cannot be
+ * cached by this rule.
  */
-export function withDocsRouteCache(response: Response, method: string, pathname: string): Response {
+export function withPublicHtmlCache(
+  response: Response,
+  method: string,
+  pathname: string
+): Response {
   const isRead = method === 'GET' || method === 'HEAD';
-  const isDocsPath = pathname.startsWith('/docs/');
   const isSuccessful = response.status >= 200 && response.status < 300;
-  if (!isRead || !isDocsPath || !isSuccessful) {
+  const isHtml = (response.headers.get('content-type') ?? '').includes('text/html');
+  if (!isRead || !isSuccessful || !isHtml || NON_CACHEABLE_PATH.test(pathname)) {
     return response;
   }
 
   const headers = new Headers(response.headers);
-  headers.set('Cache-Control', DOCS_CACHE_POLICY);
+  headers.set('Cache-Control', PUBLIC_HTML_CACHE_POLICY);
   return new Response(response.body, {
     headers,
     status: response.status,
@@ -85,8 +108,11 @@ export function withDocsRouteCache(response: Response, method: string, pathname:
 export function robotsResponse(): Response {
   const body = `# OMG Package Manager - robots.txt
 # ${SITE_ORIGIN}
+# Content signals follow the Cloudflare robots.txt convention: search access is
+# allowed while model training on this documentation is not.
 
 User-agent: *
+Content-Signal: search=yes, ai-train=no
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /admin/
@@ -104,7 +130,13 @@ Sitemap: ${SITE_ORIGIN}/sitemap.xml
 
 export function sitemapResponse(): Response {
   const entries = [
-    ...[...STATIC_PAGE_PATHS, ...DOCS_TOPIC_PATHS].map(path => sitemapEntry(path)),
+    ...STATIC_PAGE_PATHS.map(path =>
+      sitemapEntry(
+        path,
+        path === '/docs/' ? DOCS_REVIEWED_AT : path === '/updates/' ? LATEST_RELEASE_AT : undefined
+      )
+    ),
+    ...DOCS_TOPICS.map(topic => sitemapEntry(docsTopicHref(topic.slug), topic.source.reviewedAt)),
     ...LEARNING_PAGES.map(page => sitemapEntry(learningHref(page), page.modified)),
   ].join('\n');
   const body = `<?xml version="1.0" encoding="UTF-8"?>
@@ -112,11 +144,12 @@ export function sitemapResponse(): Response {
 ${entries}
 </urlset>`;
 
+  // No X-Robots-Tag here: the sitemap is a discovery file, and a noindex header
+  // on it was an untested variable in the Search Console fetch failure.
   return new Response(body, {
     headers: {
       'Cache-Control': 'public, max-age=3600, s-maxage=86400',
       'Content-Type': 'application/xml; charset=utf-8',
-      'X-Robots-Tag': 'noindex',
     },
   });
 }
@@ -130,6 +163,9 @@ export function healthResponse(): Response {
     {
       headers: {
         'Cache-Control': 'no-store',
+        // A JSON health probe has no search value; keep it out of indexes without
+        // blocking the crawler that already requested it.
+        'X-Robots-Tag': 'noindex',
       },
     }
   );

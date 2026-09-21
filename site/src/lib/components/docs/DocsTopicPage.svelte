@@ -13,14 +13,33 @@
   const sourceHref = $derived(docsSourceHref(topic.source));
   const shortCommit = $derived(topic.source.reviewedCommit.slice(0, 7));
 
-  const breadcrumbData = $derived(
+  const structuredData = $derived(
     serializeJsonLd({
       '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
-        { '@type': 'ListItem', position: 2, name: 'Docs', item: `${SITE_ORIGIN}/docs/` },
-        { '@type': 'ListItem', position: 3, name: topic.navLabel, item: canonical },
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+            { '@type': 'ListItem', position: 2, name: 'Docs', item: `${SITE_ORIGIN}/docs/` },
+            { '@type': 'ListItem', position: 3, name: topic.navLabel, item: canonical },
+          ],
+        },
+        {
+          '@type': 'TechArticle',
+          headline: topic.title,
+          description: topic.summary,
+          url: canonical,
+          mainEntityOfPage: canonical,
+          dateModified: topic.source.reviewedAt,
+          image: `${SITE_ORIGIN}/og/omg-og.png`,
+          author: {
+            '@type': 'Organization',
+            name: 'OMG maintainers',
+            url: 'https://github.com/omg-cli/omg',
+          },
+          publisher: { '@id': `${SITE_ORIGIN}/#org` },
+        },
       ],
     })
   );
@@ -31,7 +50,8 @@
   description={topic.summary}
   path={`/docs/${topic.slug}/`}
   type="article"
-  structuredData={breadcrumbData}
+  modifiedTime={topic.source.reviewedAt}
+  {structuredData}
 />
 
 <main id="main-content" class="docs-topic">

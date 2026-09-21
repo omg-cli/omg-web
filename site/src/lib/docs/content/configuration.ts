@@ -37,6 +37,30 @@ export const configurationTopic: DocsTopic = {
           ],
         },
         {
+          kind: 'diagram',
+          diagram: {
+            title: 'Where the files live',
+            caption:
+              'Your home folder holds the settings you edit and the data OMG keeps. Nothing in the figure is created until you ask for it.',
+            nodes: [
+              { id: 'home', label: 'Home folder', detail: 'the tilde, ~' },
+              { id: 'config', label: 'config.toml', detail: 'general settings' },
+              { id: 'policy', label: 'policy.toml', detail: 'security policy' },
+              { id: 'data', label: 'Local data', detail: 'runtimes and history' },
+            ],
+            edges: [
+              { from: 'home', to: 'config' },
+              { from: 'home', to: 'policy' },
+              { from: 'home', to: 'data' },
+            ],
+          },
+        },
+        {
+          kind: 'note',
+          tone: 'info',
+          text: 'The daemon keeps its socket and the omg.status prompt snapshot in the session runtime directory (XDG_RUNTIME_DIR) rather than in your home folder. A root session uses /var/lib/omg and /var/cache/omg instead.',
+        },
+        {
           kind: 'note',
           tone: 'info',
           text: 'The table shows Linux and WSL defaults. On macOS, data and configuration default to ~/Library/Application Support/omg. XDG data and config variables apply on Linux. OMG_DATA_DIR, OMG_CONFIG_DIR, and OMG_SOCKET_PATH override paths on every platform.',

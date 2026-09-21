@@ -25,6 +25,32 @@ export const cliTopic: DocsTopic = {
           ],
         },
         {
+          kind: 'diagram',
+          diagram: {
+            title: 'A safe first pass',
+            caption:
+              'Nothing here changes the machine until the fourth step, and that step asks for confirmation first.',
+            nodes: [
+              { id: 'help', label: 'omg --help', detail: 'the public list' },
+              { id: 'search', label: 'omg search <query>', detail: 'find the package' },
+              { id: 'preview', label: 'omg install --dry-run', detail: 'a plan, no change' },
+              {
+                id: 'apply',
+                label: 'omg install <package>',
+                detail: 'now it changes',
+                tone: 'signal',
+              },
+              { id: 'doctor', label: 'omg doctor', detail: 'reads exit status' },
+            ],
+            edges: [
+              { from: 'help', to: 'search' },
+              { from: 'search', to: 'preview' },
+              { from: 'preview', to: 'apply' },
+              { from: 'apply', to: 'doctor' },
+            ],
+          },
+        },
+        {
           kind: 'commands',
           title: 'Start here',
           commands: [
@@ -288,7 +314,7 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'omg doctor',
-              'Check network, backend, daemon, PATH, and shell hook; --network tests mirrors, --eol checks runtime EOL, --turbo primes sudo',
+              'Check network, backend, daemon, PATH, and shell hook; --network tests mirrors, --eol checks Node.js, Python, Rust, Go, Ruby, Java, Bun, and Deno, --turbo primes sudo',
             ],
             ['omg audit [scan]', 'Scan installed packages for advisories'],
             [
@@ -317,7 +343,10 @@ export const cliTopic: DocsTopic = {
               'omg audit export',
               'Export generic compliance evidence; --framework, --period, and --output',
             ],
-            ['omg audit eol', 'Check end-of-life status of installed runtimes'],
+            [
+              'omg audit eol',
+              'Check end-of-life dates for installed Node.js, Python, Rust, Go, Ruby, Java, Bun, and Deno',
+            ],
           ],
         },
         {

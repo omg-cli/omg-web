@@ -18,6 +18,35 @@ export const troubleshootingTopic: DocsTopic = {
           commands: ['omg doctor', 'omg status', 'omg --version'],
         },
         {
+          kind: 'diagram',
+          diagram: {
+            title: 'Which result points where',
+            caption:
+              'Read the exit status first, then follow the line that matches it. Change nothing until you know which one you are looking at.',
+            nodes: [
+              { id: 'failed', label: 'One command failed', detail: 'start here', tone: 'signal' },
+              { id: 'doctor', label: 'omg doctor', detail: 'reads exit status' },
+              { id: 'not-found', label: 'command not found', detail: 'PATH problem' },
+              { id: 'daemon', label: 'daemon-status', detail: 'background helper' },
+              { id: 'policy', label: 'audit policy', detail: 'rule rejection' },
+              {
+                id: 'evidence',
+                label: 'Keep the evidence',
+                detail: 'before you change anything',
+              },
+            ],
+            edges: [
+              { from: 'failed', to: 'doctor' },
+              { from: 'doctor', to: 'not-found', label: 'PATH' },
+              { from: 'doctor', to: 'daemon', label: 'socket' },
+              { from: 'doctor', to: 'policy', label: 'rejected' },
+              { from: 'not-found', to: 'evidence' },
+              { from: 'daemon', to: 'evidence' },
+              { from: 'policy', to: 'evidence' },
+            ],
+          },
+        },
+        {
           kind: 'paragraphs',
           paragraphs: [
             'omg doctor checks connectivity, required tools, package-backend health, the daemon, PATH, and the shell hook. Add --network to test mirrors. Add --eol to flag end-of-life runtime versions. Most sections below start from these results.',
@@ -32,7 +61,7 @@ export const troubleshootingTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Without the daemon, commands still work but fall back to direct package-manager queries, which are slower. Use omg daemon-status to inspect the daemon.',
+            'Current Linux and macOS release archives include a matching omgd. Archives from v0.1.222 and earlier omit it on non-Arch targets. When no daemon is running, supported package queries use the direct backend path. Use omg daemon-status to inspect the daemon.',
           ],
         },
         {
