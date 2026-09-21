@@ -177,3 +177,50 @@ Open items from the earlier plan that this audit did not close: the Search Conso
 sitemap fetch warning (now testable without the `noindex` header), Change of Address,
 Bing processing, the unshipped "Version managers compared" page, IndexNow key
 provisioning, and `Dynamic URL Redirects Write` for per-URL legacy redirects.
+
+## Performance audit 2026-09-21 (Lighthouse, deployed build)
+
+Measured with Lighthouse 13.5.0 driving Chromium 153 against `https://getomg.xyz/`,
+mobile profile and desktop preset, reports kept as JSON for comparison.
+
+| Run | Performance | Accessibility | Best practices | SEO |
+| --- | --- | --- | --- | --- |
+| Mobile | 86 | 100 | 100 | 100 |
+| Desktop | 92 | 100 | 100 | 100 |
+
+Mobile metrics: FCP 1.8 s, LCP 1.8 s, TBT 0 ms, **CLS 0.246**, speed index 1.8 s,
+total transfer 336 KiB, server response 280 ms (40 ms desktop).
+
+What the failing audits were
+
+- **CLS 0.246 mobile / 0.179 desktop.** The only layout shift is
+  `div > main#main-content > section.hero > div.hero-introduction`, caused by
+  "Web font loaded": the Archivo variable font replaces the fallback after first paint
+  and the paragraph reflows.
+- **Legacy JavaScript, 10,840 wasted bytes** and **cache TTL, 4,135 wasted bytes both
+  point at `static.cloudflareinsights.com/beacon.min.js`**, the analytics beacon Cloudflare
+  injects for this zone. It is not served from this repository, so neither finding is
+  actionable here; they will keep appearing in every audit until the zone stops injecting it.
+- **Render-blocking**: the two page stylesheets (2.2 KB and 3.8 KB), which is expected for
+  first-party CSS and carries no reported wasted time.
+
+What was changed in response
+
+- Metric-matched fallback faces for Archivo and IBM Plex Mono in `app.css`, generated from
+  the shipped font binaries (Archivo ascent 0.878 / descent 0.210 / average advance
+  0.5631 per em; Plex 1.025 / 0.275 / 0.6000) and sized against the metric-compatible local
+  fallbacks (95.93% and 100.02%). The fallback now occupies the same box as the web font,
+  so the swap cannot move text.
+- The root layout preloads the Latin display font at preload priority.
+- `favicon.svg` and `logo.svg` carried a 784x1168 and 1168x784 JPEG for marks displayed at
+  16-32 px and 110x33 px. Re-encoded at display-appropriate resolution with identical
+  geometry: 106,798 -> 5,982 bytes and 114,979 -> 14,503 bytes (~200 KB less on a first
+  visit, and the logo drops from 73 KB to about 6 KB of Brotli transfer).
+
+Deployment state
+
+The change set is committed and pushed on `docs/themed-diagrams`, but the deploy failed
+with `Invalid access token [code: 9109]` / `Authentication error [code: 10000]`: the stored
+Cloudflare OAuth credential expired on both the Windows profile and the WSL copy. The
+deployed build is therefore still the previous one; re-run `wrangler login` and then run
+the prepared script that deploys and prints the before/after Lighthouse comparison.
