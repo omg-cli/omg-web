@@ -5,6 +5,39 @@ cd "$(dirname "$0")/../static"
 task_dir=$(mktemp -d)
 trap 'rm -rf "$task_dir"' EXIT
 sed '$d' install.sh > "$task_dir/functions.sh"
+# Exercise archive selection against private host-library layouts. A distro
+# name must never silently choose an incompatible APT major or architecture.
+(
+  set --
+  source "$task_dir/functions.sh"
+  trap - EXIT
+  for distro in debian ubuntu; do
+    for scenario in apt6 apt7 both absent dangling directory arm64; do
+      root="$task_dir/abi-$distro-$scenario"
+      lib="$root/usr/lib/x86_64-linux-gnu"
+      mkdir -p "$lib"
+      arch=x86_64
+      expected=""
+      case "$scenario" in
+        apt6) touch "$lib/libapt-pkg.so.6.0"; expected="$distro" ;;
+        apt7) touch "$lib/libapt-pkg.so.7.0"; expected=debian-trixie ;;
+        both) touch "$lib/libapt-pkg.so.6.0" "$lib/libapt-pkg.so.7.0"; expected=debian-trixie ;;
+        dangling) ln -s nonexistent "$lib/libapt-pkg.so.7.0" ;;
+        directory) mkdir "$lib/libapt-pkg.so.7.0" ;;
+        arm64) touch "$lib/libapt-pkg.so.7.0"; arch=aarch64 ;;
+      esac
+      status=0
+      actual=$(select_artifact v1.2.3 linux "$distro" "$arch" "$root" 2>"$root/error") || status=$?
+      if [[ -n "$expected" ]]; then
+        [[ "$status" == 0 && "$actual" == "omg-v1.2.3-x86_64-linux-$expected.tar.gz" ]]
+      else
+        [[ "$status" != 0 && -z "$actual" ]]
+        grep -q 'No compatible native APT release' "$root/error"
+      fi
+    done
+  done
+  printf 'PASS: Debian/Ubuntu APT archive selection and refusal cases\n'
+)
 for scenario in missing rejected wrong_tag accepted loader_error wrong_version missing_daemon daemon_loader_error hung_probe; do
   (
     set --
