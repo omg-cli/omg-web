@@ -196,6 +196,27 @@ export const securityTopic: DocsTopic = {
           title: 'Review and prove integrity',
           commands: ['omg audit log --limit 50', 'omg audit verify'],
         },
+        {
+          kind: 'commands',
+          title: 'How each entry is linked',
+          commands: [
+            '# entry N carries both the previous entry hash and its own:',
+            '#   "prev_hash": hash(entry N-1)',
+            '#   "hash":      sha256(canonical fields + prev_hash)',
+            '',
+            '# Writers read the last hash under a lock, so two concurrent processes',
+            '# cannot fork the chain, and a writer that starts after another one has',
+            '# appended keeps the linkage correct instead of reusing a stale value.',
+            '',
+            '# verify recomputes the linkage and reports the first entry that does not match',
+            'omg audit verify',
+          ],
+        },
+        {
+          kind: 'note',
+          tone: 'warning',
+          text: 'Chain verification proves internal consistency, not authorship or completeness. Anyone who can rewrite the file can recompute the chain, so treat it as local tamper evidence rather than an independently anchored record.',
+        },
       ],
     },
     {
