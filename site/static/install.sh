@@ -343,9 +343,17 @@ select_artifact() {
       asset_name="omg-${version}-${arch}-linux-${apt_target}.tar.gz"
       ;;
     arch | fedora)
+      if [[ "$arch" != x86_64 ]]; then
+        printf 'No published OMG Linux artifact for %s/%s; use a supported x86_64 host or build from source\n' "$distro" "$arch" >&2
+        return 1
+      fi
       asset_name="omg-${version}-${arch}-linux-${distro}.tar.gz"
       ;;
     *)
+      if [[ "$arch" != x86_64 ]]; then
+        printf 'No published OMG Linux artifact for %s/%s; use a supported x86_64 host or build from source\n' "$distro" "$arch" >&2
+        return 1
+      fi
       # Fallback to Fedora binary for unknown distros
       warn "Unknown Linux distro '${distro}', using Fedora binary (pure Rust, most portable)"
       asset_name="omg-${version}-${arch}-linux-fedora.tar.gz"

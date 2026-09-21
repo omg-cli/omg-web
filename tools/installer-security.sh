@@ -36,6 +36,14 @@ sed '$d' site/static/install.sh > "$task_dir/functions.sh"
       fi
     done
   done
+  for distro in arch fedora unknown; do
+    root="$task_dir/unpublished-$distro-arm64"
+    mkdir -p "$root"
+    status=0
+    actual=$(select_artifact v1.2.3 linux "$distro" aarch64 "$root" 2>"$root/error") || status=$?
+    [[ "$status" != 0 && -z "$actual" ]]
+    grep -q 'No published OMG Linux artifact' "$root/error"
+  done
   printf 'PASS: Debian/Ubuntu APT archive selection and refusal cases\n'
 )
 for scenario in missing rejected wrong_tag accepted loader_error wrong_version missing_daemon daemon_loader_error hung_probe; do
