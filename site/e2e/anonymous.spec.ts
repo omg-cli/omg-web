@@ -111,14 +111,14 @@ test.describe('Svelte public surfaces', () => {
     );
     await expect(page.locator('.updates-shell details').first()).toHaveAttribute('open', '');
     const olderRelease = page.locator('.updates-shell details').nth(1);
-    const notesLink = olderRelease.getByRole('link', { name: 'Full v0.1.217 release notes' });
+    const notesLink = olderRelease.getByRole('link', { name: 'Full v0.1.218 release notes' });
     await expect(notesLink).not.toBeVisible();
     await olderRelease.locator('summary').focus();
     await olderRelease.locator('summary').press('Enter');
     await expect(notesLink).toBeVisible();
     await expect(notesLink).toHaveAttribute(
       'href',
-      'https://github.com/omg-cli/omg/releases/tag/v0.1.217'
+      'https://github.com/omg-cli/omg/releases/tag/v0.1.218'
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true
@@ -283,7 +283,7 @@ test.describe('Svelte public surfaces', () => {
 
     await expect(page.getByRole('link', { name: /omg-cli\/omg\/docs\/cli\.md/ })).toHaveAttribute(
       'href',
-      'https://github.com/omg-cli/omg/blob/2401eb61521055119b2e9238b83567a8bcaa13ad/docs/cli.md'
+      'https://github.com/omg-cli/omg/blob/d5e4bddc48a368342ee21bb6cf193affac6f7603/docs/cli.md'
     );
 
     await page
