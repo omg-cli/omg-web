@@ -5,7 +5,48 @@ cd "$(dirname "$0")/.."
 task_dir=$(mktemp -d)
 trap 'rm -rf "$task_dir"' EXIT
 sed '$d' site/static/install.sh > "$task_dir/functions.sh"
-for scenario in missing rejected wrong_tag accepted; do
+# Exercise archive selection against private host-library layouts. A distro
+# name must never silently choose an incompatible APT major or architecture.
+(
+  set --
+  source "$task_dir/functions.sh"
+  trap - EXIT
+  for distro in debian ubuntu; do
+    for scenario in apt6 apt7 both absent dangling directory arm64; do
+      root="$task_dir/abi-$distro-$scenario"
+      lib="$root/usr/lib/x86_64-linux-gnu"
+      mkdir -p "$lib"
+      arch=x86_64
+      expected=""
+      case "$scenario" in
+        apt6) touch "$lib/libapt-pkg.so.6.0"; expected="$distro" ;;
+        apt7) touch "$lib/libapt-pkg.so.7.0"; expected=debian-trixie ;;
+        both) touch "$lib/libapt-pkg.so.6.0" "$lib/libapt-pkg.so.7.0"; expected=debian-trixie ;;
+        dangling) ln -s nonexistent "$lib/libapt-pkg.so.7.0" ;;
+        directory) mkdir "$lib/libapt-pkg.so.7.0" ;;
+        arm64) touch "$lib/libapt-pkg.so.7.0"; arch=aarch64 ;;
+      esac
+      status=0
+      actual=$(select_artifact v1.2.3 linux "$distro" "$arch" "$root" 2>"$root/error") || status=$?
+      if [[ -n "$expected" ]]; then
+        [[ "$status" == 0 && "$actual" == "omg-v1.2.3-x86_64-linux-$expected.tar.gz" ]]
+      else
+        [[ "$status" != 0 && -z "$actual" ]]
+        grep -q 'No compatible native APT release' "$root/error"
+      fi
+    done
+  done
+  for distro in arch fedora unknown; do
+    root="$task_dir/unpublished-$distro-arm64"
+    mkdir -p "$root"
+    status=0
+    actual=$(select_artifact v1.2.3 linux "$distro" aarch64 "$root" 2>"$root/error") || status=$?
+    [[ "$status" != 0 && -z "$actual" ]]
+    grep -q 'No published OMG Linux artifact' "$root/error"
+  done
+  printf 'PASS: Debian/Ubuntu APT archive selection and refusal cases\n'
+)
+for scenario in missing rejected wrong_tag accepted loader_error wrong_version missing_daemon daemon_loader_error hung_probe; do
   (
     set --
     source "$task_dir/functions.sh"
@@ -14,6 +55,14 @@ for scenario in missing rejected wrong_tag accepted; do
     mkdir -p "$scenario_dir"
     INSTALL_DIR="$scenario_dir/bin"
     OMG_VERSION=v1.2.3
+    MAX_VERSION_PROBE_SECONDS=1
+    case "$scenario" in
+      loader_error | wrong_version | missing_daemon | daemon_loader_error | hung_probe)
+        mkdir -p "$INSTALL_DIR"
+        printf 'previous cli\n' > "$INSTALL_DIR/omg"
+        printf 'previous daemon\n' > "$INSTALL_DIR/omgd"
+        ;;
+    esac
     for name in start_spinner stop_spinner fail_spinner header info success; do
       eval "$name() { :; }"
     done
@@ -46,15 +95,53 @@ for scenario in missing rejected wrong_tag accepted; do
     }
     tar() {
       touch "$scenario_dir/extracted"
-      printf '#!/bin/sh\nexit 0\n' > "$tmp_dir/omg"
+      printf '#!/bin/sh\nprintf "omg 1.2.3\\n"\n' > "$tmp_dir/omg"
+      if [[ "$scenario" == loader_error ]]; then
+        printf '#!/bin/sh\necho "missing libapt-pkg.so.6.0" >&2\nexit 127\n' > "$tmp_dir/omg"
+      elif [[ "$scenario" == wrong_version ]]; then
+        printf '#!/bin/sh\nprintf "omg 1.2.2\\n"\n' > "$tmp_dir/omg"
+      elif [[ "$scenario" == hung_probe ]]; then
+        printf '#!/bin/sh\necho "$$" > "%s/probe.pid"\nexec sleep 30\n' "$scenario_dir" > "$tmp_dir/omg"
+      fi
+      chmod +x "$tmp_dir/omg"
+      if [[ "$scenario" != missing_daemon ]]; then
+        printf '#!/bin/sh\nprintf "omgd 1.2.3\\n"\n' > "$tmp_dir/omgd"
+        if [[ "$scenario" == daemon_loader_error ]]; then
+          printf '#!/bin/sh\necho "daemon missing native library" >&2\nexit 127\n' > "$tmp_dir/omgd"
+        fi
+        chmod +x "$tmp_dir/omgd"
+      fi
     }
     install_binary() { mkdir -p "$INSTALL_DIR"; cp "$1" "$2"; }
-    if install_from_release; then status=0; else status=$?; fi
+    if install_from_release > "$scenario_dir/output" 2>&1; then status=0; else status=$?; fi
     if [[ "$scenario" == accepted ]]; then
-      [[ "$status" == 0 && -f "$INSTALL_DIR/omg" ]]
+      [[ "$status" == 0 && -x "$INSTALL_DIR/omg" && -x "$INSTALL_DIR/omgd" ]]
+      [[ $("$INSTALL_DIR/omg" --version) == 'omg 1.2.3' ]]
+      [[ $("$INSTALL_DIR/omgd" --version) == 'omgd 1.2.3' ]]
       grep -Fx -- '--source-ref' "$scenario_dir/gh-args"
       grep -Fx 'refs/tags/v1.2.3' "$scenario_dir/gh-args"
       grep -Fx 'omg-cli/omg/.github/workflows/release.yml' "$scenario_dir/gh-args"
+    elif [[ "$scenario" == loader_error || "$scenario" == wrong_version || "$scenario" == missing_daemon || "$scenario" == daemon_loader_error || "$scenario" == hung_probe ]]; then
+      if [[ "$status" == 0 ]]; then
+        printf 'Installer accepted unusable pair: %s\n' "$scenario" >&2
+        exit 1
+      fi
+      [[ $(cat "$INSTALL_DIR/omg") == 'previous cli' ]]
+      [[ $(cat "$INSTALL_DIR/omgd") == 'previous daemon' ]]
+      case "$scenario" in
+        loader_error) grep -F 'missing libapt-pkg.so.6.0' "$scenario_dir/output" ;;
+        wrong_version) grep -F 'does not report omg 1.2.3' "$scenario_dir/output" ;;
+        missing_daemon) grep -F 'missing omgd binary' "$scenario_dir/output" ;;
+        daemon_loader_error) grep -F 'daemon missing native library' "$scenario_dir/output" ;;
+        hung_probe)
+          grep -F 'omg version probe timed out' "$scenario_dir/output"
+          [[ -s "$scenario_dir/probe.pid" ]]
+          if kill -0 "$(cat "$scenario_dir/probe.pid")" 2>/dev/null; then
+            printf 'Hung version probe was left running\n' >&2
+            exit 1
+          fi
+          ;;
+      esac
     else
       [[ "$status" != 0 && ! -e "$scenario_dir/extracted" && ! -e "$INSTALL_DIR/omg" ]]
     fi
