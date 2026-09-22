@@ -55,6 +55,11 @@ export const securityTopic: DocsTopic = {
           tone: 'info',
           text: 'OSV requests use the shared HTTP client with a five-second connection timeout and a fifteen-second total timeout. The vulnerability scanner does not retry a failed request.',
         },
+        {
+          kind: 'note',
+          tone: 'info',
+          text: 'The CLI security development branch adds omg audit scan --fail-on-findings for an opt-in nonzero exit when findings are present. The ordinary scan remains a report. This option is not in v0.1.223.',
+        },
       ],
     },
     {
@@ -71,7 +76,7 @@ export const securityTopic: DocsTopic = {
               { id: 'artifact', label: 'Downloaded artifact', detail: 'the file you hold' },
               { id: 'identity', label: 'Expected identity', detail: 'email or OIDC URI' },
               { id: 'digest', label: 'SHA-256 digest', detail: 'computed locally' },
-              { id: 'rekor', label: 'Rekor inclusion', detail: 'signed entry timestamp' },
+              { id: 'rekor', label: 'Rekor SET', detail: 'signed entry timestamp' },
               { id: 'fulcio', label: 'Fulcio certificate', detail: 'chain checked' },
               {
                 id: 'verified',
@@ -101,8 +106,8 @@ export const securityTopic: DocsTopic = {
           items: [
             'Runtime installers and self-update compare downloaded bytes with the expected SHA-256 digest when that digest is available.',
             'AUR key preparation invokes gpg to inspect and import keys required by a build.',
-            'omg audit slsa verifies a Sigstore hashedrekord signature and its Rekor log inclusion.',
-            'Supply an expected publisher email or OIDC URI with `--certificate-identity`. The verifier rejects a missing or empty identity, even though the CLI parser accepts an omitted option.',
+            'omg audit slsa verifies a Sigstore hashedrekord artifact signature and Rekor signed entry timestamp (SET) against the pinned log key. It does not independently verify a Merkle inclusion proof or checkpoint.',
+            'Supply an expected publisher email or OIDC URI with `--certificate-identity`. In v0.1.223, the parser accepts omission but the verifier rejects it; the CLI security development branch requires the option at parsing.',
             'The current hashedrekord check does not establish build provenance or assign a SLSA level. It is a standalone audit and does not gate installation.',
           ],
         },
@@ -157,6 +162,11 @@ export const securityTopic: DocsTopic = {
           tone: 'warning',
           text: 'omg audit export --framework soc2 writes an audit log, vulnerability scan, SBOM, and policy snapshot on a supported backend. In v0.1.223, Debian and Ubuntu fail at the required SBOM step. Other accepted framework names return an unimplemented error. --period is metadata, not a time-range filter. The separate enterprise audit-export writes a generic inventory bundle for its accepted framework labels. These plaintext files are evidence to review, not compliance certification.',
         },
+        {
+          kind: 'note',
+          tone: 'info',
+          text: 'The CLI security development branch adds omg audit sbom --inventory-only. It skips advisory matching, labels that omission in the SBOM, and cannot be read as a clean vulnerability scan. The default still requires advisory matching. This option is not in v0.1.223.',
+        },
       ],
     },
     {
@@ -175,8 +185,13 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The installed-package license report and automatic vulnerability fix currently require the Arch backend. On Debian, Ubuntu, Fedora, and macOS they return an unsupported-backend error rather than a clean bill of health. In v0.1.223 and current main, --check-policy prints violations but does not fail solely because it found them; --filter also narrows the packages it checks. Inspect the complete report before treating it as a policy gate. omg audit fix upgrades affected Arch packages only when updates are available; review the dry run first.',
+            'The installed-package license report and automatic vulnerability fix currently require the Arch backend. On Debian, Ubuntu, Fedora, and macOS they return an unsupported-backend error rather than a clean bill of health. In v0.1.223, --check-policy prints violations but does not fail solely because it found them; --filter also narrows the packages it checks. Inspect the complete report before treating it as a policy gate. omg audit fix upgrades affected Arch packages only when updates are available; review the dry run first.',
           ],
+        },
+        {
+          kind: 'note',
+          tone: 'info',
+          text: 'The CLI security development branch changes --check-policy to check the full installed Arch inventory even when display output is filtered, then exit nonzero on violations. This stricter gate is not in v0.1.223.',
         },
       ],
     },

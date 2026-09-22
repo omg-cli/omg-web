@@ -360,6 +360,11 @@ export const cliTopic: DocsTopic = {
           tone: 'warning',
           text: 'Audit verification checks local consistency, not authenticity or completeness. SBOM and compliance exports are plaintext evidence bundles; the SLSA-named command does not certify a SLSA build level.',
         },
+        {
+          kind: 'note',
+          tone: 'info',
+          text: 'The CLI security development branch adds audit scan --fail-on-findings and audit sbom --inventory-only, and makes audit licenses --check-policy inspect all installed Arch packages and fail on violations. Inventory-only SBOMs mark advisory matching as skipped. These changes are not in v0.1.223.',
+        },
       ],
     },
     {
