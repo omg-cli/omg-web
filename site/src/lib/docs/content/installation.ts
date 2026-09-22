@@ -14,6 +14,42 @@ export const installationTopic: DocsTopic = {
       heading: 'Install with the universal installer',
       blocks: [
         {
+          kind: 'diagram',
+          diagram: {
+            title: 'What the installer checks',
+            caption:
+              'Two independent gates run before anything is copied into your home folder. A failed gate stops the install.',
+            nodes: [
+              {
+                id: 'download',
+                label: 'Download the script',
+                detail: 'curl to omg-install.sh',
+                tone: 'signal',
+              },
+              { id: 'inspect', label: 'Read it with less', detail: 'you decide to run it' },
+              { id: 'check-archive', label: 'Check the archive', detail: 'published sha256' },
+              { id: 'provenance', label: 'Verify build proof', detail: 'gh attestation verify' },
+              { id: 'install', label: 'Install the binaries', detail: 'into ~/.local/bin' },
+              { id: 'path', label: 'Add the folder to PATH' },
+              {
+                id: 'stop',
+                label: 'Stop and report',
+                detail: 'do not disable the check',
+                tone: 'danger',
+              },
+            ],
+            edges: [
+              { from: 'download', to: 'inspect' },
+              { from: 'inspect', to: 'check-archive' },
+              { from: 'check-archive', to: 'provenance' },
+              { from: 'provenance', to: 'install' },
+              { from: 'install', to: 'path' },
+              { from: 'check-archive', to: 'stop', label: 'mismatch', dashed: true },
+              { from: 'provenance', to: 'stop', label: 'failed', dashed: true },
+            ],
+          },
+        },
+        {
           kind: 'paragraphs',
           paragraphs: [
             'The universal installer detects your operating system and package backend, downloads the matching release binaries, and installs them to ~/.local/bin. Download the script, review it, then run it.',

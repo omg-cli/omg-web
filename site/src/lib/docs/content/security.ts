@@ -37,7 +37,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'omg audit and omg audit scan query OSV.dev for installed packages with a fixed concurrency limit. Results stay in a process-local cache for ten minutes. Reports count findings with CVSS 7.0 and above as high severity. The daemon uses Arch Linux security advisories for its separate system-status scan.',
+            'omg audit scan requires a running omgd. Current Linux and macOS release archives include that binary. Archives from v0.1.222 and earlier omit it on non-Arch targets. The scan queries OSV.dev for installed packages with a fixed concurrency limit. Results stay in a process-local cache for ten minutes. Reports count findings with CVSS 7.0 and above as high severity. The daemon uses Arch Linux security advisories for its separate system-status scan. Arch advisory matches are not Debian, Fedora, or macOS coverage.',
           ],
         },
         {
@@ -61,6 +61,41 @@ export const securityTopic: DocsTopic = {
       id: 'verification',
       heading: 'Signature and provenance verification',
       blocks: [
+        {
+          kind: 'diagram',
+          diagram: {
+            title: 'How an artifact signature is checked',
+            caption:
+              'A successful check ties the file you hold to a signing identity you named. It still is not a build-level or safety verdict.',
+            nodes: [
+              { id: 'artifact', label: 'Downloaded artifact', detail: 'the file you hold' },
+              { id: 'identity', label: 'Expected identity', detail: 'email or OIDC URI' },
+              { id: 'digest', label: 'SHA-256 digest', detail: 'computed locally' },
+              { id: 'rekor', label: 'Rekor inclusion', detail: 'signed entry timestamp' },
+              { id: 'fulcio', label: 'Fulcio certificate', detail: 'chain checked' },
+              {
+                id: 'verified',
+                label: 'Signature verified',
+                detail: 'identity is bound',
+                tone: 'signal',
+              },
+              {
+                id: 'limits',
+                label: 'Not a SLSA level',
+                detail: 'nor proof of safety',
+                tone: 'muted',
+              },
+            ],
+            edges: [
+              { from: 'artifact', to: 'digest' },
+              { from: 'digest', to: 'rekor' },
+              { from: 'rekor', to: 'fulcio' },
+              { from: 'fulcio', to: 'verified' },
+              { from: 'identity', to: 'verified', label: 'must match' },
+              { from: 'verified', to: 'limits', label: 'with limits', dashed: true },
+            ],
+          },
+        },
         {
           kind: 'bullets',
           items: [
@@ -160,6 +195,27 @@ export const securityTopic: DocsTopic = {
           kind: 'commands',
           title: 'Review and prove integrity',
           commands: ['omg audit log --limit 50', 'omg audit verify'],
+        },
+        {
+          kind: 'commands',
+          title: 'How each entry is linked',
+          commands: [
+            '# entry N carries both the previous entry hash and its own:',
+            '#   "prev_hash": hash(entry N-1)',
+            '#   "hash":      sha256(canonical fields + prev_hash)',
+            '',
+            '# Writers read the last hash under a lock, so two concurrent processes',
+            '# cannot fork the chain, and a writer that starts after another one has',
+            '# appended keeps the linkage correct instead of reusing a stale value.',
+            '',
+            '# verify recomputes the linkage and reports the first entry that does not match',
+            'omg audit verify',
+          ],
+        },
+        {
+          kind: 'note',
+          tone: 'warning',
+          text: 'Chain verification proves internal consistency, not authorship or completeness. Anyone who can rewrite the file can recompute the chain, so treat it as local tamper evidence rather than an independently anchored record.',
         },
       ],
     },

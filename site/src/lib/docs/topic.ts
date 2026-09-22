@@ -6,6 +6,8 @@
  * variant carries markup, so the renderer can only emit escaped text.
  */
 
+import type { DocsDiagram } from './diagram';
+
 /** Slugs the omg CLI repository owns a handbook topic for. */
 export type DocsTopicSlug =
   | 'installation'
@@ -64,6 +66,8 @@ export type DocsBlock =
     }
   /** A bulleted list of facts or requirements. */
   | { readonly kind: 'bullets'; readonly items: readonly [string, ...string[]] }
+  /** A themed flow diagram rendered as inline SVG from typed data. */
+  | { readonly kind: 'diagram'; readonly diagram: DocsDiagram }
   /** A callout that highlights a default, a limit, or a failure mode. */
   | { readonly kind: 'note'; readonly tone: 'info' | 'warning'; readonly text: string };
 

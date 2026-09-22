@@ -3,11 +3,20 @@ import { Schema } from 'effect';
 import { SITE_ORIGIN } from '../../shared/public-site';
 import { AUTH_FIELDS } from './helpers';
 
-const BreadcrumbListSchema = Schema.Struct({
+const DocsTopicNodeSchema = Schema.Struct({
   '@type': Schema.String,
-  itemListElement: Schema.Array(Schema.Struct({ name: Schema.String, position: Schema.Number })),
+  dateModified: Schema.optional(Schema.String),
+  headline: Schema.optional(Schema.String),
+  itemListElement: Schema.optional(
+    Schema.Array(Schema.Struct({ name: Schema.String, position: Schema.Number }))
+  ),
 });
-const decodeBreadcrumbList = Schema.decodeUnknownSync(Schema.fromJsonString(BreadcrumbListSchema));
+const DocsTopicStructuredDataSchema = Schema.Struct({
+  '@graph': Schema.Array(DocsTopicNodeSchema),
+});
+const decodeDocsTopicStructuredData = Schema.decodeUnknownSync(
+  Schema.fromJsonString(DocsTopicStructuredDataSchema)
+);
 const TimingBatchSchema = Schema.Struct({
   events: Schema.Array(
     Schema.Struct({
@@ -129,7 +138,15 @@ test.describe('Svelte public surfaces', () => {
     );
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
       'content',
-      `${SITE_ORIGIN}/og/omg-discovery-2026.png`
+      `${SITE_ORIGIN}/og/omg-og.png`
+    );
+    await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
+      'content',
+      '1200'
+    );
+    await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute(
+      'content',
+      '630'
     );
     await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute('content', 'en_US');
 
@@ -144,7 +161,7 @@ test.describe('Svelte public surfaces', () => {
     ).toBeVisible();
     expect(() => JSON.parse(structuredDataText)).not.toThrow();
 
-    const socialImage = await page.request.get('/og/omg-discovery-2026.png');
+    const socialImage = await page.request.get('/og/omg-og.png');
     expect(socialImage.ok()).toBe(true);
     expect(socialImage.headers()['content-type']).toBe('image/png');
   });
@@ -253,17 +270,20 @@ test.describe('Svelte public surfaces', () => {
     const breadcrumbText = await page
       .locator('script[type="application/ld+json"]')
       .evaluate(node => node.textContent ?? '');
-    const breadcrumb = decodeBreadcrumbList(breadcrumbText);
-    expect(breadcrumb['@type']).toBe('BreadcrumbList');
-    expect(breadcrumb.itemListElement.map(item => item.name)).toEqual([
+    const structuredData = decodeDocsTopicStructuredData(breadcrumbText);
+    const breadcrumb = structuredData['@graph'].find(node => node['@type'] === 'BreadcrumbList');
+    const article = structuredData['@graph'].find(node => node['@type'] === 'TechArticle');
+    expect(breadcrumb?.itemListElement?.map(item => item.name)).toEqual([
       'Home',
       'Docs',
       'CLI reference',
     ]);
+    expect(article?.headline).toBe('CLI reference');
+    expect(article?.dateModified).toBe('2026-09-21');
 
     await expect(page.getByRole('link', { name: /omg-cli\/omg\/docs\/cli\.md/ })).toHaveAttribute(
       'href',
-      'https://github.com/omg-cli/omg/blob/2401eb61521055119b2e9238b83567a8bcaa13ad/docs/cli.md'
+      'https://github.com/omg-cli/omg/blob/d5e4bddc48a368342ee21bb6cf193affac6f7603/docs/cli.md'
     );
 
     await page

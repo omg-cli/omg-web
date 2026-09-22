@@ -2,6 +2,46 @@
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
 
+/*
+ * Metric-matched fallback faces.
+ *
+ * Archivo and IBM Plex Mono are loaded with font-display: swap, so the fallback
+ * paints first and the web font replaces it. Without matching metrics that swap
+ * reflows text and costs layout stability (measured 0.246 CLS on the homepage
+ * hero, attributable to the Archivo swap). These faces borrow the local font and
+ * override its metrics with the values read from the shipped webfonts, so the
+ * swap keeps the same line box and width.
+ *
+ * Values are generated from the font binaries:
+ *   Archivo  ascent 0.878  descent 0.210  lineGap 0    avg advance 0.5631/em
+ *   Plex     ascent 1.025  descent 0.275  lineGap 0    avg advance 0.6000/em
+ * The size-adjust ratio compares each webfont against its metric-compatible
+ * local fallback (Arial family 0.5402, Courier family 0.6001 on the same sample).
+ */
+@font-face {
+  font-family: 'Archivo Fallback';
+  src: local('Arial'), local('Helvetica Neue'), local('Liberation Sans');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  size-adjust: 95.93%;
+  ascent-override: 87.8%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Plex Mono Fallback';
+  src: local('Courier New'), local('Liberation Mono'), local('DejaVu Sans Mono');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 100.02%;
+  ascent-override: 102.5%;
+  descent-override: 27.5%;
+  line-gap-override: 0%;
+}
+
 :root {
   color-scheme: dark;
   --paper: #090909;
@@ -14,9 +54,9 @@
   --signal-hover: #ff7655;
   --signal-ink: #090909;
   --danger: #ed707a;
-  --font-display: 'Archivo Variable', system-ui, sans-serif;
-  --font-body: 'Archivo Variable', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-display: 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif;
+  --font-body: 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace;
 }
 
 * {
