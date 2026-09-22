@@ -154,7 +154,7 @@ Rendering and caching
   blocks the inline script, so hydration never runs and every interactive element on the page
   stops responding — the anonymous e2e suite caught it ("Install command copied." never
   appeared). Reproduced locally with a headless Chromium probe: `console.error: Executing
-  inline script violates the following Content-Security-Policy directive`. To reintroduce
+inline script violates the following Content-Security-Policy directive`. To reintroduce
   prerendering, the header policy and the framework-generated policy have to agree on a hash
   or nonce for that script first; until then these routes stay server-rendered per request.
 
@@ -194,10 +194,10 @@ provisioning, and `Dynamic URL Redirects Write` for per-URL legacy redirects.
 Measured with Lighthouse 13.5.0 driving Chromium 153 against `https://getomg.xyz/`,
 mobile profile and desktop preset, reports kept as JSON for comparison.
 
-| Run | Performance | Accessibility | Best practices | SEO |
-| --- | --- | --- | --- | --- |
-| Mobile | 86 | 100 | 100 | 100 |
-| Desktop | 92 | 100 | 100 | 100 |
+| Run     | Performance | Accessibility | Best practices | SEO |
+| ------- | ----------- | ------------- | -------------- | --- |
+| Mobile  | 86          | 100           | 100            | 100 |
+| Desktop | 92          | 100           | 100            | 100 |
 
 Mobile metrics: FCP 1.8 s, LCP 1.8 s, TBT 0 ms, **CLS 0.246**, speed index 1.8 s,
 total transfer 336 KiB, server response 280 ms (40 ms desktop).

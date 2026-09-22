@@ -174,11 +174,7 @@ Sitemap: https://getomg.xyz/sitemap.xml
   });
 
   it('leaves a non-HTML response untouched', () => {
-    const response = withPublicHtmlCache(
-      Response.json({ ok: true }),
-      'GET',
-      '/some-json-endpoint'
-    );
+    const response = withPublicHtmlCache(Response.json({ ok: true }), 'GET', '/some-json-endpoint');
 
     expect(response.headers.has('cache-control')).toBe(false);
   });
