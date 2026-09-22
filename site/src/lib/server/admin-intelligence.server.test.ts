@@ -101,11 +101,30 @@ class IntelligenceServiceStub {
       case '/api/site/analytics/overview':
         return Response.json({
           period_days: 30,
-          summary: { total_pageviews: 300, total_visitors: 120, total_sessions: 150 },
+          summary: {
+            total_pageviews: 300,
+            total_visitors: 120,
+            total_sessions: 150,
+            bounce_rate: 40,
+          },
           daily_trend: [{ date: '2026-08-28', pageviews: 20, visitors: 10 }],
           top_pages: [{ path: '/', views: 100, visitors: 80 }],
           top_referrers: [{ referrer_domain: 'github.com', visitors: 30, pageviews: 40 }],
           device_breakdown: [{ device_type: 'desktop', visitors: 90 }],
+          browsers: [{ browser: 'Chrome', visitors: 70 }],
+          operating_systems: [{ os: 'Linux', visitors: 50 }],
+          countries: [{ country_code: 'US', visitors: 80, pageviews: 120 }],
+          campaigns: [],
+          calls_to_action: [{ cta_type: 'install', count: 6 }],
+          hourly: [{ hour: 15, pageviews: 20 }],
+          web_vitals: {
+            samples: 10,
+            lcp_p75_ms: 1200,
+            inp_p75_ms: 80,
+            cls_p75: 0.02,
+            ttfb_p75_ms: 400,
+            fcp_p75_ms: 900,
+          },
         });
       case '/api/site/analytics/geo':
         return Response.json({
@@ -179,6 +198,9 @@ describe('admin intelligence service', () => {
     expect(value.product.growth.new_users_7d).toBe(4);
     expect(value.cohorts).toEqual([{ cohortMonth: '2026-08', monthIndex: 0, activeUsers: 12 }]);
     expect(value.site.summary.total_visitors).toBe(120);
+    expect(value.site.summary.bounce_rate).toBe(40);
+    expect(value.site.web_vitals.lcp_p75_ms).toBe(1200);
+    expect(value.site.top_referrers[0]?.referrer_domain).toBe('github.com');
     expect(value.geo.geo_distribution[0]?.country_code).toBe('US');
     expect(service.paths).toEqual([
       '/api/internal/site-session',

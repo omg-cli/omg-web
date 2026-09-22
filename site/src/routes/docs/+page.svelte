@@ -5,21 +5,28 @@
 
   const canonicalUrl = `${SITE_ORIGIN}/docs/`;
   const installCommand = `curl -fsSL ${SITE_ORIGIN}/install.sh -o omg-install.sh\nless omg-install.sh && bash omg-install.sh`;
-  const breadcrumbData = serializeJsonLd({
+  const structuredData = serializeJsonLd({
     '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
+    '@graph': [
       {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: `${SITE_ORIGIN}/`,
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+          { '@type': 'ListItem', position: 2, name: 'Docs', item: canonicalUrl },
+        ],
       },
       {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Docs',
-        item: canonicalUrl,
+        '@type': 'CollectionPage',
+        name: 'OMG Documentation',
+        description:
+          'Install OMG, learn its package and runtime commands, capture reproducible environments, and browse the curated handbook.',
+        url: canonicalUrl,
+        isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+        hasPart: DOCS_TOPICS.map(topic => ({
+          '@type': 'TechArticle',
+          name: topic.title,
+          url: `${SITE_ORIGIN}${docsTopicHref(topic.slug)}`,
+        })),
       },
     ],
   });
@@ -51,7 +58,7 @@
   title="OMG Documentation - Install, Commands, and Platforms"
   description="Install OMG, learn its package and runtime commands, capture reproducible environments, and browse the curated handbook."
   path="/docs/"
-  structuredData={breadcrumbData}
+  {structuredData}
 />
 
 <main id="main-content" class="docs-shell">

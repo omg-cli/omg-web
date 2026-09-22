@@ -6,29 +6,25 @@ import { cliTopic } from '../../docs/content/cli';
 import { installationTopic } from '../../docs/content/installation';
 import { docsSourceHref } from '../../docs/topics';
 
-const BreadcrumbItemSchema = Schema.Struct({ name: Schema.String, position: Schema.Number });
-const StructuredDataNodeSchema = Schema.Struct({
+const DocsTopicNodeSchema = Schema.Struct({
   '@type': Schema.String,
-  itemListElement: Schema.optional(Schema.Array(BreadcrumbItemSchema)),
+  headline: Schema.optional(Schema.String),
+  dateModified: Schema.optional(Schema.String),
+  itemListElement: Schema.optional(
+    Schema.Array(Schema.Struct({ name: Schema.String, position: Schema.Number }))
+  ),
 });
 const DocsTopicStructuredDataSchema = Schema.Struct({
-  '@graph': Schema.Array(StructuredDataNodeSchema),
+  '@graph': Schema.Array(DocsTopicNodeSchema),
 });
 const decodeDocsTopicStructuredData = Schema.decodeUnknownSync(
   Schema.fromJsonString(DocsTopicStructuredDataSchema)
 );
 
-/** Read the BreadcrumbList the page serializes into its JSON-LD graph. */
-const breadcrumbList = (head: string) => {
+function structuredDataFrom(head: string) {
   const match = /<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/u.exec(head);
-  const node = decodeDocsTopicStructuredData(match?.[1] ?? 'null')['@graph'].find(
-    entry => entry['@type'] === 'BreadcrumbList'
-  );
-  if (node?.itemListElement === undefined) {
-    throw new Error('docs topic JSON-LD is missing a BreadcrumbList');
-  }
-  return { type: node['@type'], items: node.itemListElement };
-};
+  return decodeDocsTopicStructuredData(match?.[1] ?? 'null');
+}
 
 describe('docs topic page renderer', () => {
   const rendered = render(DocsTopicPage, { props: { topic: cliTopic } });
@@ -75,17 +71,25 @@ describe('docs topic page renderer', () => {
 
   it('keeps structured and visible breadcrumb labels aligned', () => {
     const installationPage = render(DocsTopicPage, { props: { topic: installationTopic } });
-    const breadcrumb = breadcrumbList(installationPage.head);
+    const parsed = structuredDataFrom(installationPage.head);
+    const breadcrumb = parsed['@graph'].find(node => node['@type'] === 'BreadcrumbList');
+    const article = parsed['@graph'].find(node => node['@type'] === 'TechArticle');
 
-    expect(breadcrumb.items.at(-1)?.name).toBe('Installation');
+    expect(breadcrumb?.itemListElement?.at(-1)?.name).toBe('Installation');
+    expect(article?.headline).toBe(installationTopic.title);
+    expect(article?.dateModified).toBe(installationTopic.source.reviewedAt);
     expect(installationPage.body).toMatch(/<span aria-current="page"[^>]*>Installation<\/span>/u);
   });
 
   it('serializes parseable BreadcrumbList JSON-LD with three levels', () => {
-    const breadcrumb = breadcrumbList(rendered.head);
-
-    expect(breadcrumb.type).toBe('BreadcrumbList');
-    expect(breadcrumb.items.map(item => item.name)).toEqual(['Home', 'Docs', 'CLI reference']);
-    expect(breadcrumb.items.at(-1)?.position).toBe(3);
+    const parsed = structuredDataFrom(rendered.head);
+    const breadcrumb = parsed['@graph'].find(node => node['@type'] === 'BreadcrumbList');
+    expect(breadcrumb?.['@type']).toBe('BreadcrumbList');
+    expect(breadcrumb?.itemListElement?.map(item => item.name)).toEqual([
+      'Home',
+      'Docs',
+      'CLI reference',
+    ]);
+    expect(breadcrumb?.itemListElement?.at(-1)?.position).toBe(3);
   });
 });

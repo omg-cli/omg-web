@@ -43,11 +43,30 @@ describe('operator analytics page', () => {
             cohorts: [{ cohortMonth: '2026-08', monthIndex: 0, activeUsers: 12 }],
             site: {
               period_days: 30,
-              summary: { total_pageviews: 300, total_visitors: 120, total_sessions: 150 },
+              summary: {
+                total_pageviews: 300,
+                total_visitors: 120,
+                total_sessions: 150,
+                bounce_rate: 40,
+              },
               daily_trend: [],
-              top_pages: [],
-              top_referrers: [],
-              device_breakdown: [],
+              top_pages: [{ path: '/', views: 100, visitors: 40 }],
+              top_referrers: [{ referrer_domain: 'github.com', visitors: 12, pageviews: 20 }],
+              device_breakdown: [{ device_type: 'desktop', visitors: 40 }],
+              browsers: [{ browser: 'Firefox', visitors: 8 }],
+              operating_systems: [{ os: 'Linux', visitors: 8 }],
+              countries: [{ country_code: 'US', visitors: 40, pageviews: 80 }],
+              campaigns: [],
+              calls_to_action: [{ cta_type: 'docs', count: 3 }],
+              hourly: [{ hour: 3, pageviews: 9 }],
+              web_vitals: {
+                samples: 4,
+                lcp_p75_ms: 1800,
+                inp_p75_ms: 90,
+                cls_p75: 0.04,
+                ttfb_p75_ms: 300,
+                fcp_p75_ms: 700,
+              },
             },
             geo: {
               period_days: 30,
@@ -85,6 +104,10 @@ describe('operator analytics page', () => {
     });
 
     expect(result.body).toContain('Product and site activity');
+    expect(result.body).toContain('github.com');
+    expect(result.body).toContain('Core Web Vitals');
+    expect(result.body).toContain('1,800 ms');
+    expect(result.body).toContain('03:00 UTC');
     expect(result.body).toContain('Documentation analytics');
     expect(result.body).toContain('Retention cohorts');
     expect(result.body).toContain('2026-08');

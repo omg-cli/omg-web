@@ -228,6 +228,43 @@ export const SiteReferrerRowSchema = Schema.Struct({
 /** Site analytics device rollup. */
 export const SiteDeviceRowSchema = Schema.Struct({ device_type: OptNullStr, visitors: D1Number });
 
+/** Site analytics browser rollup. */
+export const SiteBrowserRowSchema = Schema.Struct({ browser: OptNullStr, visitors: D1Number });
+
+/** Site analytics operating-system rollup. */
+export const SiteOsRowSchema = Schema.Struct({ os: OptNullStr, visitors: D1Number });
+
+/** Site analytics country rollup from recorded pageviews. */
+export const SiteCountryRowSchema = Schema.Struct({
+  country_code: OptNullStr,
+  visitors: D1Number,
+  pageviews: D1Number,
+});
+
+/** Site analytics campaign rollup. */
+export const SiteCampaignRowSchema = Schema.Struct({
+  utm_source: OptNullStr,
+  utm_medium: OptNullStr,
+  utm_campaign: OptNullStr,
+  visitors: D1Number,
+  pageviews: D1Number,
+});
+
+/** Site analytics call-to-action rollup. */
+export const SiteCtaRowSchema = Schema.Struct({ cta_type: OptNullStr, count: D1Number });
+
+/** Site analytics hour-of-day rollup. Hours are UTC. */
+export const SiteHourlyRowSchema = Schema.Struct({ hour: D1Number, pageviews: D1Number });
+
+/** One nearest-rank percentile from recorded Core Web Vitals samples. */
+export const SiteVitalValueRowSchema = Schema.Struct({ value: Schema.Number });
+
+/** Sessions and single-page sessions in a reporting window. */
+export const SiteBounceRowSchema = Schema.Struct({
+  sessions: D1Number,
+  bounces: D1Number,
+});
+
 /** Docs analytics top page. */
 export const DocsTopPageRowSchema = Schema.Struct({
   path: OptNullStr,

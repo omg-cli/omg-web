@@ -68,7 +68,12 @@ const CohortsSchema = Schema.Struct({
 
 const SiteAnalyticsSchema = Schema.Struct({
   period_days: Count,
-  summary: Schema.Struct({ total_pageviews: Count, total_visitors: Count, total_sessions: Count }),
+  summary: Schema.Struct({
+    total_pageviews: Count,
+    total_visitors: Count,
+    total_sessions: Count,
+    bounce_rate: Count,
+  }),
   daily_trend: Schema.Array(
     Schema.Struct({ date: NonEmptyText, pageviews: Count, visitors: Count })
   ),
@@ -77,6 +82,30 @@ const SiteAnalyticsSchema = Schema.Struct({
     Schema.Struct({ referrer_domain: OptionalText, visitors: Count, pageviews: Count })
   ),
   device_breakdown: Schema.Array(Schema.Struct({ device_type: OptionalText, visitors: Count })),
+  browsers: Schema.Array(Schema.Struct({ browser: OptionalText, visitors: Count })),
+  operating_systems: Schema.Array(Schema.Struct({ os: OptionalText, visitors: Count })),
+  countries: Schema.Array(
+    Schema.Struct({ country_code: OptionalText, visitors: Count, pageviews: Count })
+  ),
+  campaigns: Schema.Array(
+    Schema.Struct({
+      utm_source: OptionalText,
+      utm_medium: OptionalText,
+      utm_campaign: OptionalText,
+      visitors: Count,
+      pageviews: Count,
+    })
+  ),
+  calls_to_action: Schema.Array(Schema.Struct({ cta_type: OptionalText, count: Count })),
+  hourly: Schema.Array(Schema.Struct({ hour: Count, pageviews: Count })),
+  web_vitals: Schema.Struct({
+    samples: Count,
+    lcp_p75_ms: Schema.NullOr(Count),
+    inp_p75_ms: Schema.NullOr(Count),
+    cls_p75: Schema.NullOr(Count),
+    ttfb_p75_ms: Schema.NullOr(Count),
+    fcp_p75_ms: Schema.NullOr(Count),
+  }),
 });
 
 const GeoSchema = Schema.Struct({
