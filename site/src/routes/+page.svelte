@@ -15,7 +15,9 @@
         '@id': `${SITE_ORIGIN}/#org`,
         name: 'OMG Package Manager',
         url: canonicalUrl,
-        logo: `${SITE_ORIGIN}/logo.svg`,
+        logo: `${SITE_ORIGIN}/icons/icon-512.png`,
+        description:
+          'OMG is a free open-source CLI for system packages, language runtimes, and development environments on Linux, macOS, and WSL.',
         sameAs: ['https://github.com/omg-cli/omg'],
       },
       {
