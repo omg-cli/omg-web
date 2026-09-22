@@ -33,6 +33,11 @@
             GitHub
           </a>
         </li>
+        <li>
+          <a href="https://latham.cloud/work/omg" target="_blank" rel="noopener">
+            Built by Olen Latham
+          </a>
+        </li>
         <li><a href="/privacy/">Privacy</a></li>
         <li><a href="/terms/">Terms</a></li>
       </ul>
