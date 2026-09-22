@@ -61,9 +61,7 @@ describe('docs topic page renderer', () => {
     expect(rendered.head).toContain('<link rel="canonical" href="https://getomg.xyz/docs/cli/"');
     expect(rendered.head).toContain('property="og:title"');
     expect(rendered.head).toContain('name="twitter:card"');
-    expect(rendered.head).toContain(
-      '<meta name="description" content="Every OMG command for packages, runtimes, audits, environments, and maintenance, with the options that matter day to day."'
-    );
+    expect(rendered.head).toContain(`<meta name="description" content="${cliTopic.summary}"`);
     expect(rendered.body).toContain(
       `href="${docsSourceHref(cliTopic.source)}" target="_blank" rel="noopener noreferrer"`
     );

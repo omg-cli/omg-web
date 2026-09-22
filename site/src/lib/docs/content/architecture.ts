@@ -30,7 +30,7 @@ export const architectureTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Current Linux and macOS release archives include both binaries. Archives from v0.1.222 and earlier omit omgd on non-Arch targets. The CLI talks to the daemon over a Unix socket when omgd is running. Prompt counters are commands on omg. They read the fixed-size omg.status snapshot beside the socket.',
+            'Current Linux and macOS release archives include both binaries. Archives from v0.1.222 and earlier omit omgd on non-Arch targets. The CLI talks to the daemon over a Unix socket when omgd is running. Bash and Zsh hooks provide prompt count helpers that read the fixed-size omg.status snapshot beside the socket. Separate omg ec/tc/oc/uc commands were added after v0.1.223.',
           ],
         },
       ],
@@ -69,10 +69,10 @@ export const architectureTopic: DocsTopic = {
           kind: 'steps',
           steps: [
             {
-              text: 'A simple omg search or omg info call queries the selected package backend directly.',
+              text: 'A simple omg search or omg info call takes an optimized path. Search may query a running daemon; Debian package info can read the local APT database directly.',
             },
             {
-              text: 'Other searches use the daemon when it is running and check its in-memory cache.',
+              text: 'When a daemon answers, it checks its in-memory cache.',
             },
             {
               text: 'On a daemon cache miss, the daemon searches its in-memory package index and remote sources.',
@@ -110,7 +110,7 @@ export const architectureTopic: DocsTopic = {
               },
               { id: 'check', label: 'Version installed?', detail: 'checked in the data dir' },
               { id: 'download', label: 'Download release', detail: 'from the provider' },
-              { id: 'verify', label: 'Verify integrity', detail: 'checksum or signature' },
+              { id: 'verify', label: 'Check integrity data', detail: 'provider-specific' },
               { id: 'extract', label: 'Extract version', detail: 'versions/runtime/version' },
               { id: 'current', label: 'Update current link' },
               { id: 'hook', label: 'Project PATH updated', detail: 'by the shell hook' },
@@ -131,7 +131,9 @@ export const architectureTopic: DocsTopic = {
             {
               text: 'The CLI detects the runtime type and checks whether the requested version is installed.',
             },
-            { text: 'If not, it downloads the release from the official origin and verifies it.' },
+            {
+              text: 'If not, it downloads the release from its configured provider and checks the integrity data available for that provider.',
+            },
             {
               text: 'The version is extracted under versions/runtime/version in the OMG data directory.',
             },
@@ -166,7 +168,7 @@ export const architectureTopic: DocsTopic = {
             ],
             [
               'Binary status file',
-              'Fixed-size omg.status counts read by omg ec, tc, oc, and uc, with daemon and backend fallbacks when the snapshot is stale or missing',
+              'Fixed-size omg.status counts read by Bash and Zsh hook helpers; separate CLI count commands with daemon and backend fallbacks were added after v0.1.223',
             ],
           ],
         },
@@ -186,11 +188,10 @@ export const architectureTopic: DocsTopic = {
             '#   offset 8  16 bytes   four u32 counts: total, explicit, orphan, updates',
             '#   offset 24  8 bytes   unix timestamp in seconds',
             '',
-            '# A counter reads that file only when it is owned by you, the size matches,',
-            '# and the timestamp is no older than five minutes. Anything else falls back',
-            '# to the slower CLI path, which is why a counter can change after a refresh.',
-            'omg ec   # explicitly installed packages',
-            'omg uc   # updates available',
+            '# Hook helpers accept the file only when its owner, size, format, and age pass',
+            '# validation. When it is missing or stale, check current state with omg status.',
+            'omg-ec   # explicitly installed packages in Bash or Zsh',
+            'omg-uc   # updates available in Bash or Zsh',
           ],
         },
         {
@@ -227,8 +228,9 @@ export const architectureTopic: DocsTopic = {
             '# 4. a decode error fails the call; it is never reported as an empty success',
             '',
             '# The socket path resolves from OMG_SOCKET_PATH, then $XDG_RUNTIME_DIR/omg.sock.',
-            '# A missing XDG_RUNTIME_DIR never becomes /omg.sock: the CLI refuses to guess,',
-            "# and it will not substitute another user's socket when ownership checks fail.",
+            '# Without XDG_RUNTIME_DIR, Unix uses /run/user/$UID/omg.sock when available,',
+            '# otherwise a validated private /tmp/omg-$UID directory or home fallback.',
+            "# It will not use another user's socket when ownership checks fail.",
             'omg daemon-status',
           ],
         },
@@ -251,9 +253,11 @@ export const architectureTopic: DocsTopic = {
             {
               text: 'omg audit slsa verifies Sigstore hashedrekord signatures and Rekor inclusion. It does not establish build provenance.',
             },
-            { text: 'omg audit queries OSV.dev. Daemon status scans use Arch Linux advisories.' },
             {
-              text: 'Package installs and Arch updates apply policy.toml checks and report rejected rules.',
+              text: 'In v0.1.223, omg audit requires the daemon and queries supported OSV ecosystems. The newer checkout adds direct audit fallback and native Arch and Fedora advisory paths.',
+            },
+            {
+              text: 'Arch installs and updates apply policy.toml to prepared ALPM transactions. Native APT, DNF, and Homebrew mutations refuse explicit policy.',
             },
           ],
         },

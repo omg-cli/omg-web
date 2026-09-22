@@ -57,7 +57,7 @@ export const workflowsTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'omg env capture writes the current package and runtime state to omg.lock. Commit that file with your project so machines stay comparable, and run omg env check whenever something feels off.',
+            'On Arch, Debian, and Ubuntu, omg env capture writes supported package names and selected runtime versions to omg.lock. Commit that file with your project and run omg env check to inspect drift. It does not record system package versions or all application dependencies. Fedora and macOS do not support this capture path.',
           ],
         },
       ],
@@ -97,7 +97,7 @@ export const workflowsTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'info',
-          text: 'omg env share publishes the lockfile as a GitHub Gist and needs GITHUB_TOKEN. Teammates restore it with omg env sync followed by the Gist URL.',
+          text: 'Environment capture and drift checks require an Arch, Debian, or Ubuntu backend. omg env share publishes the lockfile as a GitHub Gist and needs GITHUB_TOKEN. Teammates fetch and check it with omg env sync followed by the Gist URL; sync does not install missing software.',
         },
       ],
     },
@@ -139,7 +139,7 @@ export const workflowsTopic: DocsTopic = {
       blocks: [
         {
           kind: 'commands',
-          title: 'Weekly compliance check',
+          title: 'Periodic security review',
           commands: [
             'omg audit',
             'omg audit secrets -p .',
@@ -150,7 +150,7 @@ export const workflowsTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The vulnerability scan covers installed packages. The secret scan covers your project directory. The SBOM records installed packages and known vulnerabilities. audit verify detects changes within the retained log, but filesystem access can still delete or truncate entries. Review findings before updating packages.',
+            'In v0.1.223, run the full routine on Arch and start omgd for the audit step; Debian and Ubuntu SBOM generation fails because required vulnerability matching is unavailable there. The newer checkout supports SBOMs on Arch, Debian, Ubuntu, and Fedora and can audit without a daemon. Findings alone do not make the vulnerability command exit with a failure status. The secret scan covers your project directory. The SBOM records installed packages and matched findings when inventory and advisory data are available. audit verify checks the retained log for local consistency; filesystem access can still delete, truncate, or rewrite it. Review the results before changing packages.',
           ],
         },
       ],
@@ -167,7 +167,7 @@ export const workflowsTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'warning',
-          text: 'There is no CLI command that removes installed runtime versions. Switch away from a version before deleting it from the versions tree under the OMG data directory, then confirm the result with omg list.',
+          text: 'Remove an installed runtime with omg use <runtime> <version> --uninstall. Switch away from an active version first, then confirm the result with omg list <runtime>.',
         },
         {
           kind: 'steps',
@@ -200,7 +200,7 @@ export const workflowsTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The shell hook provides cached count functions for prompts. omg-ec shows explicit packages, omg-tc shows all packages, omg-oc shows orphans, and omg-uc shows available updates. They read the daemon binary status snapshot, so they are safe to call on every prompt render. Run omg dash for a full-screen view.',
+            'The Bash and Zsh shell hooks provide count functions for prompts. omg-ec shows explicit packages, omg-tc shows all packages, omg-oc shows orphans, and omg-uc shows available updates. They use the daemon binary status snapshot when it is fresh; consult omg status or the native package manager when you need current counts. Run omg dash for a full-screen view.',
           ],
         },
       ],

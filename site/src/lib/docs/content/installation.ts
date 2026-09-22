@@ -52,7 +52,7 @@ export const installationTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The universal installer detects your operating system and package backend, downloads the matching release binaries, and installs them to ~/.local/bin. Download the script, review it, then run it.',
+            'The universal installer detects your operating system and package backend, downloads the matching release binaries, and installs them to ~/.local/bin. It requires the GitHub CLI (gh) to verify the release attestation. Download the script, review it, then run it.',
           ],
         },
         {
@@ -66,7 +66,7 @@ export const installationTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'info',
-          text: 'Native Windows is not supported. Run the same installer inside WSL2 on Arch, Debian, Ubuntu, or Fedora, and OMG will use the package backend of that Linux guest.',
+          text: 'Native Windows is not supported. Run the same installer inside WSL2 on Arch, Debian 12, Ubuntu 24.04, or Fedora, and OMG will use the package backend of that Linux guest. Debian 13 and Ubuntu 26.04 need an APT 7 release archive that v0.1.223 does not publish.',
         },
       ],
     },
@@ -81,14 +81,14 @@ export const installationTopic: DocsTopic = {
           rows: [
             ['Arch Linux', 'Universal installer or a matching GitHub release archive'],
             [
-              'Debian and Ubuntu',
+              'Debian 12 and Ubuntu 24.04',
               'Universal installer, or download a release tarball and copy the binary to /usr/local/bin',
             ],
             ['Fedora', 'Universal installer or a matching Fedora release archive'],
             ['macOS', 'Universal installer. Homebrew packaging is not available yet'],
             [
               'Windows',
-              'WSL2 only on Arch, Debian, Ubuntu, or Fedora, using the universal installer inside the distribution',
+              'WSL2 on Arch, Debian 12, Ubuntu 24.04, or Fedora, using the universal installer inside the distribution',
             ],
           ],
         },
@@ -96,6 +96,7 @@ export const installationTopic: DocsTopic = {
           kind: 'paragraphs',
           paragraphs: [
             'Release binaries support x86_64 Linux and Apple Silicon macOS. Linux archives are backend-specific for Arch, Debian/Ubuntu, and Fedora. Intel macOS, Linux ARM64, 32-bit x86, ARMv7 release installs, and native Windows are unsupported. The installer maps RHEL/CentOS-family identification to the Fedora artifact as a best-effort fallback, but Fedora evidence does not establish RHEL compatibility. The supported installation channels are the universal installer and GitHub release downloads.',
+            'Debian 12 and Ubuntu 24.04 use the APT 6 archives. Debian 13 and Ubuntu 26.04 need APT 7 binaries. The newer installer selects a `debian-trixie` release pair for those hosts, but v0.1.223 does not publish that pair, so installation cannot complete there until a compatible release is available.',
           ],
         },
         {
@@ -198,18 +199,21 @@ export const installationTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'omg self-update replaces the binary atomically and verifies the download before installing it. You can also obtain the current release through the universal installer or GitHub releases.',
+            'omg self-update verifies and stages the matching omg and omgd binaries before replacing either one. Each replacement is atomic, and a failure restores the prior files. Restart a running daemon afterward so it loads the new code. You can also obtain a release through the universal installer or GitHub releases.',
           ],
         },
         {
           kind: 'commands',
-          title: 'Remove installer-managed binaries',
-          commands: ['rm -f ~/.local/bin/omg ~/.local/bin/omgd'],
+          title: 'Remove a script installation',
+          commands: [
+            `curl -fsSL ${SITE_ORIGIN}/install.sh -o omg-install.sh`,
+            'less omg-install.sh && bash omg-install.sh --uninstall',
+          ],
         },
         {
           kind: 'note',
           tone: 'warning',
-          text: 'On Linux and WSL, removing ~/.local/share/omg or ~/.config/omg deletes installed runtimes, tools, history, policy, and settings. On macOS, data and configuration default to ~/Library/Application Support/omg. Back up state before deleting it.',
+          text: 'The installer backs up shell files it changes as <file>.omg-backup and leaves configuration and caches in place. On Linux and WSL, removing ~/.local/share/omg or ~/.config/omg deletes installed runtimes, tools, history, policy, and settings. On macOS, data and configuration default to ~/Library/Application Support/omg. Back up state before deleting it.',
         },
       ],
     },
@@ -253,7 +257,7 @@ export const installationTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Release archives pair `omg` with `omgd` on supported Linux and macOS targets. Restart a running daemon after `omg self-update` so it loads the new binary. Most commands have a direct fallback path, but metrics and some audit exports require Unix daemon support.',
+            'Release archives pair `omg` with `omgd` on supported Linux and macOS targets. Restart a running daemon after `omg self-update` so it loads the new binary. Package queries and vulnerability scans can use direct backends when the daemon is unavailable. Metrics still need the daemon; SOC 2 export can scan directly on Unix.',
           ],
         },
       ],
