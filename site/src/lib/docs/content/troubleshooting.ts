@@ -151,7 +151,7 @@ export const troubleshootingTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Policy rejections name the violated rule, such as a grade below minimum_grade or an AUR source that the policy disallows. Inspect policy.toml and the package source before deciding whether to change the policy.',
+            'On Arch, policy rejections name the violated rule, such as a grade below minimum_grade or a disallowed AUR source. Native APT, DNF, and Homebrew paths refuse explicit policy because OMG cannot enforce it against the final native transaction. Inspect policy.toml and the active backend before changing either.',
           ],
         },
         {

@@ -37,7 +37,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'omg audit scan requires a running omgd. Current Linux and macOS release archives include that binary. Archives from v0.1.222 and earlier omit it on non-Arch targets. The scan queries OSV.dev for installed packages with a fixed concurrency limit. Results stay in a process-local cache for ten minutes. Reports count findings with CVSS 7.0 and above as high severity. The daemon uses Arch Linux security advisories for its separate system-status scan. Arch advisory matches are not Debian, Fedora, or macOS coverage.',
+            'In the published v0.1.223 release, omg audit scan requires a running omgd. It queries OSV.dev for installed packages. The release maps macOS packages to the Homebrew ecosystem, although effective finding coverage has not been verified; Fedora has no OSV mapping. Current main can scan without a daemon and uses Arch Linux advisories on Arch, native DNF advisories on Fedora, and OSV on Debian and Ubuntu. A scan that finds no advisories is not proof that every package is safe. Finding vulnerabilities is reported but does not, by itself, make the command fail.',
           ],
         },
         {
@@ -55,23 +55,28 @@ export const securityTopic: DocsTopic = {
           tone: 'info',
           text: 'OSV requests use the shared HTTP client with a five-second connection timeout and a fifteen-second total timeout. The vulnerability scanner does not retry a failed request.',
         },
+        {
+          kind: 'note',
+          tone: 'info',
+          text: 'The CLI security development branch adds omg audit scan --fail-on-findings for an opt-in nonzero exit when findings are present. The ordinary scan remains a report. This option is not in v0.1.223.',
+        },
       ],
     },
     {
       id: 'verification',
-      heading: 'Signature and provenance verification',
+      heading: 'Artifact signature verification',
       blocks: [
         {
           kind: 'diagram',
           diagram: {
             title: 'How an artifact signature is checked',
             caption:
-              'A successful check ties the file you hold to a signing identity you named. It still is not a build-level or safety verdict.',
+              'A successful check ties the file you hold to the signing identity you specified. It is not a build-level or safety verdict.',
             nodes: [
               { id: 'artifact', label: 'Downloaded artifact', detail: 'the file you hold' },
               { id: 'identity', label: 'Expected identity', detail: 'email or OIDC URI' },
               { id: 'digest', label: 'SHA-256 digest', detail: 'computed locally' },
-              { id: 'rekor', label: 'Rekor inclusion', detail: 'signed entry timestamp' },
+              { id: 'rekor', label: 'Rekor SET', detail: 'signed entry timestamp' },
               { id: 'fulcio', label: 'Fulcio certificate', detail: 'chain checked' },
               {
                 id: 'verified',
@@ -101,15 +106,17 @@ export const securityTopic: DocsTopic = {
           items: [
             'Runtime installers and self-update compare downloaded bytes with the expected SHA-256 digest when that digest is available.',
             'AUR key preparation invokes gpg to inspect and import keys required by a build.',
-            'omg audit slsa verifies a Sigstore hashedrekord signature and its Rekor log inclusion.',
-            '`--certificate-identity` optionally binds the Fulcio signer identity. Without it, a valid signature can verify but the signer is reported as unbounded.',
+            'omg audit slsa verifies a Sigstore hashedrekord artifact signature and Rekor signed entry timestamp (SET) against the pinned log key. It does not independently verify a Merkle inclusion proof or checkpoint.',
+            'Supply an expected publisher email or OIDC URI with `--certificate-identity`. In v0.1.223, the parser accepts omission but the verifier rejects it; the CLI security development branch requires the option at parsing.',
             'The current hashedrekord check does not establish build provenance or assign a SLSA level. It is a standalone audit and does not gate installation.',
           ],
         },
         {
           kind: 'commands',
-          title: 'Check provenance directly',
-          commands: ['omg audit slsa artifacts/package.pkg.tar.zst'],
+          title: 'Verify a downloaded artifact',
+          commands: [
+            'omg audit slsa artifacts/package.pkg.tar.zst --certificate-identity "$EXPECTED_SIGNER_IDENTITY"',
+          ],
         },
       ],
     },
@@ -120,7 +127,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'policy.toml is checked for package installs and Arch updates. A package is rejected when its grade is below minimum_grade, when AUR sources are disallowed, when require_pgp demands a grade below Verified, when its license is outside allowed_licenses, or when it appears in banned_packages. Rejections identify the rule that failed.',
+            'On Arch, OMG checks policy.toml against the prepared ALPM transaction, including dependencies. It rejects candidates below minimum_grade, disallowed AUR sources, packages below Verified when require_pgp is true, licenses outside allowed_licenses, and banned_packages. Native APT, DNF, and Homebrew installs and upgrades refuse an explicit policy because a separate precheck cannot guarantee their final transactions.',
           ],
         },
         {
@@ -140,14 +147,51 @@ export const securityTopic: DocsTopic = {
           commands: [
             'omg audit sbom -o sbom.json',
             'omg audit log --export audit.csv',
+            'omg audit export --framework soc2 --output ./audit-evidence',
             'omg enterprise audit-export --framework soc2 --period 2026-Q1',
           ],
         },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The CLI writes a CycloneDX 1.5 SBOM with PURL identifiers, package versions, and vulnerability data. Enterprise audit export is a separate command. It accepts soc2, iso27001, fedramp, hipaa, and pci-dss framework labels.',
+            'In v0.1.223, the CLI writes a CycloneDX 1.5 system-package SBOM on Arch. Debian and Ubuntu have an inventory path, but required vulnerability matching fails there in that release. Current main supports Arch, Debian, Ubuntu, and Fedora when inventory and advisory data are available; Homebrew is unsupported. The SBOM contains installed package identities and matched findings, not application dependency graphs. An inventory or advisory failure stops generation.',
           ],
+        },
+        {
+          kind: 'note',
+          tone: 'warning',
+          text: 'omg audit export --framework soc2 writes an audit log, vulnerability scan, SBOM, and policy snapshot on a supported backend. In v0.1.223, Debian and Ubuntu fail at the required SBOM step. Other accepted framework names return an unimplemented error. --period is metadata, not a time-range filter. The separate enterprise audit-export writes a generic inventory bundle for its accepted framework labels. These plaintext files are evidence to review, not compliance certification.',
+        },
+        {
+          kind: 'note',
+          tone: 'info',
+          text: 'The CLI security development branch adds omg audit sbom --inventory-only. It skips advisory matching, labels that omission in the SBOM, and cannot be read as a clean vulnerability scan. The default still requires advisory matching. This option is not in v0.1.223.',
+        },
+      ],
+    },
+    {
+      id: 'licenses',
+      heading: 'License review and vulnerability fixes',
+      blocks: [
+        {
+          kind: 'commands',
+          title: 'Review installed package licenses on Arch',
+          commands: [
+            'omg audit licenses',
+            'omg audit licenses --check-policy',
+            'omg audit fix --dry-run',
+          ],
+        },
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'The installed-package license report and automatic vulnerability fix currently require the Arch backend. On Debian, Ubuntu, Fedora, and macOS they return an unsupported-backend error rather than a clean bill of health. In v0.1.223, --check-policy prints violations but does not fail solely because it found them; --filter also narrows the packages it checks. Inspect the complete report before treating it as a policy gate. omg audit fix upgrades affected Arch packages only when updates are available; review the dry run first.',
+          ],
+        },
+        {
+          kind: 'note',
+          tone: 'info',
+          text: 'The CLI security development branch changes --check-policy to check the full installed Arch inventory even when display output is filtered, then exit nonzero on violations. This stricter gate is not in v0.1.223.',
         },
       ],
     },

@@ -249,11 +249,13 @@ export const architectureTopic: DocsTopic = {
             { text: 'Runtime and self-update downloads verify expected SHA-256 digests.' },
             { text: 'AUR key preparation uses gpg to inspect and import required keys.' },
             {
-              text: 'omg audit slsa verifies Sigstore hashedrekord signatures and Rekor inclusion. It does not establish build provenance.',
+              text: 'omg audit slsa verifies a Sigstore hashedrekord artifact signature and Rekor signed entry timestamp. It does not verify a Merkle inclusion proof or establish build provenance.',
             },
-            { text: 'omg audit queries OSV.dev. Daemon status scans use Arch Linux advisories.' },
             {
-              text: 'Package installs and Arch updates apply policy.toml checks and report rejected rules.',
+              text: 'In v0.1.223, omg audit needs omgd and queries supported OSV ecosystems. Current main has a direct fallback and native Arch and Fedora advisory paths.',
+            },
+            {
+              text: 'Arch installs and updates check policy.toml against prepared transactions. Native APT, DNF, and Homebrew mutations refuse explicit policy.',
             },
           ],
         },
