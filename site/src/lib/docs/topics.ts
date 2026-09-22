@@ -18,8 +18,8 @@ interface DocsTopicMeta {
   readonly source: DocsSourceProvenance;
 }
 
-const reviewedCommit = 'd5e4bddc48a368342ee21bb6cf193affac6f7603';
-const reviewedAt = '2026-09-21';
+const reviewedCommit = 'c43c8ff10701be2cf6a17a39d030fd7180db9308';
+const reviewedAt = '2026-09-22';
 
 const REGISTRY = {
   installation: {
@@ -27,7 +27,7 @@ const REGISTRY = {
     navLabel: 'Installation',
     title: 'Installing OMG',
     summary:
-      'Install OMG on Arch, Debian, Ubuntu, Fedora, and macOS, enable shell integration, update, and uninstall cleanly.',
+      'Install OMG on Arch, Debian 12, Ubuntu 24.04, Fedora, and macOS; enable shell integration, update, and uninstall.',
     source: {
       repo: 'omg-cli/omg',
       path: 'docs/installation.md',
@@ -40,7 +40,7 @@ const REGISTRY = {
     navLabel: 'CLI reference',
     title: 'CLI reference',
     summary:
-      'Every OMG command for packages, runtimes, audits, environments, and maintenance, with the options that matter day to day.',
+      'A curated OMG command guide for packages, runtimes, audits, environments, and maintenance, with useful options and limits.',
     source: {
       repo: 'omg-cli/omg',
       path: 'docs/cli.md',
@@ -79,7 +79,7 @@ const REGISTRY = {
     navLabel: 'Workflows',
     title: 'Daily workflows',
     summary:
-      'Daily development, team onboarding, CI pipelines, and maintenance routines built on OMG lockfiles and commands.',
+      'Daily development, team onboarding, CI, and maintenance routines; lockfile workflows apply to Arch, Debian, and Ubuntu.',
     source: {
       repo: 'omg-cli/omg',
       path: 'docs/workflows.md',
@@ -118,7 +118,7 @@ const REGISTRY = {
     navLabel: 'Architecture',
     title: 'Architecture',
     summary:
-      'How the omg CLI, omgd daemon, and omg-fast prompt binary cooperate through caching, IPC, and background workers.',
+      'How the omg CLI and omgd daemon use caches, a Unix socket, and a status snapshot read by Bash and Zsh prompt helpers.',
     source: {
       repo: 'omg-cli/omg',
       path: 'docs/architecture.md',

@@ -82,7 +82,7 @@ Sitemap: https://getomg.xyz/sitemap.xml
       expect(body).toContain(`<loc>https://getomg.xyz/docs/${topic.slug}/</loc>`);
     }
     expect(body.match(/<lastmod>/g)).toHaveLength(LEARNING_PAGES.length + DOCS_TOPICS.length + 2);
-    expect(body).toContain('<lastmod>2026-09-21</lastmod>');
+    expect(body).toContain(`<lastmod>${DOCS_TOPICS[0].source.reviewedAt}</lastmod>`);
     expect(body).not.toContain('<changefreq>');
     expect(body).not.toContain('<priority>');
   });

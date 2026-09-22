@@ -37,7 +37,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'omg audit scan requires a running omgd. Current Linux and macOS release archives include that binary. Archives from v0.1.222 and earlier omit it on non-Arch targets. The scan queries OSV.dev for installed packages with a fixed concurrency limit. Results stay in a process-local cache for ten minutes. Reports count findings with CVSS 7.0 and above as high severity. The daemon uses Arch Linux security advisories for its separate system-status scan. Arch advisory matches are not Debian, Fedora, or macOS coverage.',
+            'In the published v0.1.223 release, omg audit scan requires a running omgd. It scans installed packages against supported OSV ecosystems; Fedora and macOS do not have configured OSV ecosystems in that release. The newer CLI checkout prefers the daemon but scans directly when it is unavailable. It uses Arch Linux security advisories on Arch, native DNF advisories on Fedora, and OSV for Debian and Ubuntu. Missing findings are not proof that a package is free of vulnerabilities. The scan prints findings but does not fail solely because it found them.',
           ],
         },
         {
@@ -66,7 +66,7 @@ export const securityTopic: DocsTopic = {
           diagram: {
             title: 'How an artifact signature is checked',
             caption:
-              'A successful check ties the file you hold to a signing identity you named. It still is not a build-level or safety verdict.',
+              'The check requires --certificate-identity and verifies the artifact signature against that expected signer. It does not establish a SLSA build level or software safety.',
             nodes: [
               { id: 'artifact', label: 'Downloaded artifact', detail: 'the file you hold' },
               { id: 'identity', label: 'Expected identity', detail: 'email or OIDC URI' },
@@ -76,7 +76,7 @@ export const securityTopic: DocsTopic = {
               {
                 id: 'verified',
                 label: 'Signature verified',
-                detail: 'identity is bound',
+                detail: 'identity bound to expectation',
                 tone: 'signal',
               },
               {
@@ -91,7 +91,7 @@ export const securityTopic: DocsTopic = {
               { from: 'digest', to: 'rekor' },
               { from: 'rekor', to: 'fulcio' },
               { from: 'fulcio', to: 'verified' },
-              { from: 'identity', to: 'verified', label: 'must match' },
+              { from: 'identity', to: 'verified', label: 'required' },
               { from: 'verified', to: 'limits', label: 'with limits', dashed: true },
             ],
           },
@@ -102,14 +102,16 @@ export const securityTopic: DocsTopic = {
             'Runtime installers and self-update compare downloaded bytes with the expected SHA-256 digest when that digest is available.',
             'AUR key preparation invokes gpg to inspect and import keys required by a build.',
             'omg audit slsa verifies a Sigstore hashedrekord signature and its Rekor log inclusion.',
-            '`--certificate-identity` optionally binds the Fulcio signer identity. Without it, a valid signature can verify but the signer is reported as unbounded.',
+            'The verifier rejects a missing or empty `--certificate-identity`, even though the CLI parser accepts its omission. Set it to a trusted publisher email or OIDC URI obtained independently.',
             'The current hashedrekord check does not establish build provenance or assign a SLSA level. It is a standalone audit and does not gate installation.',
           ],
         },
         {
           kind: 'commands',
           title: 'Check provenance directly',
-          commands: ['omg audit slsa artifacts/package.pkg.tar.zst'],
+          commands: [
+            'omg audit slsa artifacts/package.pkg.tar.zst --certificate-identity "$EXPECTED_SIGNER_IDENTITY"',
+          ],
         },
       ],
     },
@@ -120,7 +122,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'policy.toml is checked for package installs and Arch updates. A package is rejected when its grade is below minimum_grade, when AUR sources are disallowed, when require_pgp demands a grade below Verified, when its license is outside allowed_licenses, or when it appears in banned_packages. Rejections identify the rule that failed.',
+            'On Arch, OMG checks policy.toml against the prepared ALPM transaction, including dependencies. It rejects candidates below minimum_grade, disallowed AUR sources, packages below Verified when require_pgp is true, licenses outside allowed_licenses, and banned_packages. Native APT, DNF, and Homebrew install and upgrade paths refuse explicit policy because a separate precheck cannot guarantee the final native transaction.',
           ],
         },
         {
@@ -140,14 +142,20 @@ export const securityTopic: DocsTopic = {
           commands: [
             'omg audit sbom -o sbom.json',
             'omg audit log --export audit.csv',
+            'omg audit export --framework soc2 --output ./audit-evidence',
             'omg enterprise audit-export --framework soc2 --period 2026-Q1',
           ],
         },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The CLI writes a CycloneDX 1.5 SBOM with PURL identifiers, package versions, and vulnerability data. Enterprise audit export is a separate command. It accepts soc2, iso27001, fedramp, hipaa, and pci-dss framework labels.',
+            'In v0.1.223, the CLI writes a CycloneDX 1.5 system-package SBOM on Arch. Debian and Ubuntu have an inventory path, but the command always enables vulnerability matching and fails because that release only matches Arch advisories. The newer checkout supports Arch, Debian, Ubuntu, and Fedora when inventory and advisory data are available. An inventory or advisory failure stops generation; Homebrew is unsupported. The separate enterprise audit export accepts soc2, iso27001, fedramp, hipaa, and pci-dss labels but writes a generic inventory bundle, not framework-specific controls.',
           ],
+        },
+        {
+          kind: 'note',
+          tone: 'warning',
+          text: 'On a supported backend, omg audit export --framework soc2 writes audit entries, a vulnerability scan, an SBOM, and a policy snapshot. In v0.1.223, Debian and Ubuntu fail at the required SBOM step. Other accepted framework names return an unimplemented error. The --period value is metadata, not a time-range filter. Export files are plaintext evidence and do not certify compliance.',
         },
       ],
     },

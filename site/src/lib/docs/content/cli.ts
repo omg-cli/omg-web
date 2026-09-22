@@ -33,7 +33,7 @@ export const cliTopic: DocsTopic = {
             nodes: [
               { id: 'help', label: 'omg --help', detail: 'the public list' },
               { id: 'search', label: 'omg search <query>', detail: 'find the package' },
-              { id: 'preview', label: 'omg install --dry-run', detail: 'a plan, no change' },
+              { id: 'preview', label: 'Preview install', detail: 'omg install ripgrep --dry-run' },
               {
                 id: 'apply',
                 label: 'omg install <package>',
@@ -96,7 +96,7 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'audit',
-              '`sbom --output`; `secrets --path`; `log --limit --severity --export`; `slsa <package> [--certificate-identity]`; `licenses --format --export --filter --check-policy`; `fix --dry-run --yes --min-severity`; `export --framework --period --output`',
+              '`sbom --output`; `secrets --path`; `log --limit --severity --export`; `slsa <package> --certificate-identity <identity>`; `licenses --format --export --filter --check-policy`; `fix --dry-run --yes --min-severity`; `export --framework --period --output`',
             ],
             [
               'snapshots, CI, and migration',
@@ -157,10 +157,6 @@ export const cliTopic: DocsTopic = {
               'Remove orphans or caches; --orphans, --cache, --aur, --all, --dry-run, --yes',
             ],
             ['omg explicit', 'List explicitly installed packages; --count prints only the count'],
-            [
-              'omg ec / tc / oc / uc',
-              'Fast explicit, total, orphan, and available-update counters',
-            ],
             ['omg sync (sy)', 'Refresh package databases from mirrors'],
           ],
         },
@@ -177,7 +173,7 @@ export const cliTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'warning',
-          text: 'Package operations are backend-specific. AUR recipes execute community build code, and rollback depends on cached archives or reachable source history. Keep the native package manager available for recovery.',
+          text: 'Package operations are backend-specific. AUR recipes execute community build code, and rollback depends on the backend, cached archives, or reachable source history. Keep the native package manager available for recovery. The Bash and Zsh hooks provide omg-ec, omg-tc, omg-oc, and omg-uc count helpers; the separate omg ec/tc/oc/uc CLI commands were added after v0.1.223.',
         },
       ],
     },
@@ -212,7 +208,7 @@ export const cliTopic: DocsTopic = {
           rows: [
             [
               'node',
-              'Alias nodejs; .node-version, .nvmrc, package.json, and .tool-versions; node, npm, npx',
+              'Alias nodejs; .node-version, .nvmrc, .tool-versions, and package.json; node, npm, npx',
             ],
             [
               'python',
@@ -225,7 +221,7 @@ export const cliTopic: DocsTopic = {
             ],
             ['ruby', '.ruby-version and .tool-versions; ruby, gem'],
             ['java', '.java-version and .tool-versions; java, javac'],
-            ['bun', 'Alias bunjs; .bun-version, package.json, and .tool-versions; bun'],
+            ['bun', 'Alias bunjs; .bun-version, .tool-versions, and package.json; bun'],
             ['pi', '.tool-versions; pi'],
             ['deno', '.deno-version, .dvmrc, and .tool-versions; deno'],
             ['zig', 'Alias ziglang; .zig-version and .tool-versions; zig'],
@@ -316,10 +312,13 @@ export const cliTopic: DocsTopic = {
               'omg doctor',
               'Check network, backend, daemon, PATH, and shell hook; --network tests mirrors, --eol checks Node.js, Python, Rust, Go, Ruby, Java, Bun, and Deno, --turbo primes sudo',
             ],
-            ['omg audit [scan]', 'Scan installed packages for advisories'],
+            [
+              'omg audit [scan]',
+              'Scan installed packages for vulnerabilities; v0.1.223 requires a daemon, while the newer checkout can scan directly',
+            ],
             [
               'omg audit sbom',
-              'Write an Arch package CycloneDX inventory; -o/--output selects the file',
+              'Write a CycloneDX system-package inventory. In v0.1.223, the required vulnerability match succeeds on Arch only; the newer checkout supports Arch, Debian, Ubuntu, and Fedora. -o/--output selects the file',
             ],
             ['omg audit secrets', 'Scan a directory for credentials; -p/--path selects it'],
             [
@@ -332,7 +331,7 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'omg audit slsa <package>',
-              'Verify supported artifact signatures; optional --certificate-identity binds the Fulcio SAN',
+              'Verify a supported artifact signature against the required --certificate-identity value',
             ],
             [
               'omg audit licenses',
@@ -341,7 +340,7 @@ export const cliTopic: DocsTopic = {
             ['omg audit fix', 'Upgrade vulnerable packages; --dry-run, --yes, and --min-severity'],
             [
               'omg audit export',
-              'Export generic compliance evidence; --framework, --period, and --output',
+              'Export SOC 2 evidence; --framework, --period, and --output. Other framework names are accepted but unimplemented',
             ],
             [
               'omg audit eol',
@@ -379,7 +378,7 @@ export const cliTopic: DocsTopic = {
             ['omg tool search <query> / registry', 'Search or list the curated tool registry'],
             [
               'omg init',
-              'Run first setup; --defaults, --skip-shell, and --skip-daemon make it non-interactive',
+              'Run first setup; --defaults or a non-interactive terminal applies defaults and captures omg.lock; --skip-shell and --skip-daemon skip those setup actions',
             ],
           ],
         },
@@ -407,8 +406,14 @@ export const cliTopic: DocsTopic = {
           title: 'Environment state commands',
           columns: ['Command', 'Purpose and options'],
           rows: [
-            ['omg env capture', 'Write current supported package and runtime state to omg.lock'],
-            ['omg env check', 'Report drift against omg.lock without changing the machine'],
+            [
+              'omg env capture',
+              'Write explicit package names and selected runtime versions to omg.lock on Arch, Debian, or Ubuntu',
+            ],
+            [
+              'omg env check',
+              'Report drift against omg.lock on those backends without changing the machine',
+            ],
             [
               'omg env share',
               'Publish a GitHub Gist; --description and --public control metadata and visibility',
@@ -475,7 +480,7 @@ export const cliTopic: DocsTopic = {
             ['omg team golden-path list / delete <name>', 'Inspect or delete templates'],
             [
               'omg team compliance',
-              'Check compliance; --export writes a report and --enforce blocks non-compliant operations',
+              'Report that local compliance scoring is unavailable; --enforce warns without enforcing, and --export fails because no evaluated report exists',
             ],
             ['omg team activity', 'Show activity; --days sets the lookback window'],
           ],
@@ -496,7 +501,7 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'omg container build',
-              'Build an image; --dockerfile, --tag, --no-cache, --build-arg, and --target',
+              'Build an image from the current directory; --dockerfile, --tag, --no-cache, --build-arg, and --target. In v0.1.223, pass a relative -f path because the default path is rejected; the newer checkout fixes that default',
             ],
             [
               'omg container list / images / pull <image>',
@@ -506,7 +511,10 @@ export const cliTopic: DocsTopic = {
               'omg container stop <container> / exec <container>',
               'Stop or execute in a running container',
             ],
-            ['omg container init', 'Generate a Dockerfile; --base selects the image'],
+            [
+              'omg container init',
+              'Generate Dockerfile.omg; --base selects the image. Build with omg container build -f Dockerfile.omg -t myapp. Omit the unsupported trailing dot printed by v0.1.223',
+            ],
             [
               'omg account link / status / unlink',
               'Optional dashboard link; --token-stdin avoids putting the token in shell history',
