@@ -253,7 +253,7 @@ export const installationTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Release archives pair `omg` with `omgd` on supported Linux and macOS targets. Restart a running daemon after `omg self-update` so it loads the new binary. Most commands have a direct fallback path, but metrics and some audit exports require Unix daemon support.',
+            'Release archives pair `omg` with `omgd` on supported Linux and macOS targets. Restart a running daemon after `omg self-update` so it loads the new binary. In v0.1.223, vulnerability audits require omgd. Current main has a direct audit fallback. Metrics still need daemon support.',
           ],
         },
       ],

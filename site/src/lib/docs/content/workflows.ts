@@ -139,7 +139,7 @@ export const workflowsTopic: DocsTopic = {
       blocks: [
         {
           kind: 'commands',
-          title: 'Weekly compliance check',
+          title: 'Periodic security review',
           commands: [
             'omg audit',
             'omg audit secrets -p .',
@@ -150,7 +150,7 @@ export const workflowsTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The vulnerability scan covers installed packages. The secret scan covers your project directory. The SBOM records installed packages and known vulnerabilities. audit verify detects changes within the retained log, but filesystem access can still delete or truncate entries. Review findings before updating packages.',
+            'In v0.1.223, run the full routine on Arch and start omgd for the audit step; Debian and Ubuntu SBOM generation fails at required vulnerability matching. Current main supports SBOMs on Arch, Debian, Ubuntu, and Fedora and can audit without a daemon. Findings alone do not make the vulnerability scan fail. The secret scan covers your project directory. The SBOM records installed packages and matched findings when inventory and advisory data are available. audit verify checks the retained log for local consistency; filesystem access can still delete, truncate, or rewrite it. Review results before changing packages.',
           ],
         },
       ],

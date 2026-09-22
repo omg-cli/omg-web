@@ -161,7 +161,7 @@ export const configurationTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The default policy uses a minimum_grade of Community. It allows AUR packages and does not require the Verified grade. Tighten minimum_grade, allow_aur, require_pgp, allowed_licenses, and banned_packages when the machine needs stricter controls.',
+            'The default policy uses a minimum_grade of Community. It allows AUR packages and does not require the Verified grade. Tighten minimum_grade, allow_aur, require_pgp, allowed_licenses, and banned_packages when the machine needs stricter controls. Explicit policy is enforced against prepared Arch transactions, including dependencies. Native APT, DNF, and Homebrew mutations refuse explicit policy because a precheck cannot guarantee their final transactions.',
           ],
         },
       ],

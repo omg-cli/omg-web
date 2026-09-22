@@ -96,7 +96,7 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'audit',
-              '`sbom --output`; `secrets --path`; `log --limit --severity --export`; `slsa <package> [--certificate-identity]`; `licenses --format --export --filter --check-policy`; `fix --dry-run --yes --min-severity`; `export --framework --period --output`',
+              '`sbom --output`; `secrets --path`; `log --limit --severity --export`; `slsa <package> --certificate-identity <identity>`; `licenses --format --export --filter --check-policy`; `fix --dry-run --yes --min-severity`; `export --framework --period --output`',
             ],
             [
               'snapshots, CI, and migration',
@@ -316,10 +316,13 @@ export const cliTopic: DocsTopic = {
               'omg doctor',
               'Check network, backend, daemon, PATH, and shell hook; --network tests mirrors, --eol checks Node.js, Python, Rust, Go, Ruby, Java, Bun, and Deno, --turbo primes sudo',
             ],
-            ['omg audit [scan]', 'Scan installed packages for advisories'],
+            [
+              'omg audit [scan]',
+              'Scan installed packages for advisories; v0.1.223 needs omgd, while current main has a direct fallback. Findings are reported without a failure exit status',
+            ],
             [
               'omg audit sbom',
-              'Write an Arch package CycloneDX inventory; -o/--output selects the file',
+              'Write a CycloneDX system-package inventory; v0.1.223 succeeds on Arch, while current main also supports Debian, Ubuntu, and Fedora. -o/--output selects the file',
             ],
             ['omg audit secrets', 'Scan a directory for credentials; -p/--path selects it'],
             [
@@ -332,16 +335,19 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'omg audit slsa <package>',
-              'Verify supported artifact signatures; optional --certificate-identity binds the Fulcio SAN',
+              'Verify supported artifact signatures against the required --certificate-identity value; this does not establish a SLSA level',
             ],
             [
               'omg audit licenses',
-              'Report license inventory; --format, --export, --filter, and --check-policy',
+              'Report installed-package licenses on Arch; --format, --export, --filter, and --check-policy. Violations currently print without a failure exit status',
             ],
-            ['omg audit fix', 'Upgrade vulnerable packages; --dry-run, --yes, and --min-severity'],
+            [
+              'omg audit fix',
+              'Upgrade vulnerable Arch packages when updates are available; --dry-run, --yes, and --min-severity',
+            ],
             [
               'omg audit export',
-              'Export generic compliance evidence; --framework, --period, and --output',
+              'Export SOC 2 evidence on a supported backend; other accepted framework names are not implemented. --period records metadata rather than filtering events',
             ],
             [
               'omg audit eol',
