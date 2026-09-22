@@ -19,13 +19,21 @@ import {
   readOptionalExtraRow,
   DocsGeoRowSchema,
   SiteAnalyticsTotalsRowSchema,
+  SiteBounceRowSchema,
+  SiteBrowserRowSchema,
+  SiteCampaignRowSchema,
+  SiteCountryRowSchema,
+  SiteCtaRowSchema,
   SiteDailyTrendRowSchema,
   SiteDeviceRowSchema,
   SiteGeoRowSchema,
+  SiteHourlyRowSchema,
+  SiteOsRowSchema,
   SiteReferrerRowSchema,
   SiteRealtimeCountryRowSchema,
   SiteRealtimePageRowSchema,
   SiteTopPageRowSchema,
+  SiteVitalValueRowSchema,
 } from '../contracts/d1-extras';
 
 /** Clamp the `days` query parameter to a valid 1–90-day reporting window. */
@@ -494,12 +502,57 @@ export async function handleGetRealtimeAnalytics(_request: Request, env: Env): P
   }
 }
 
+const VITAL_JSON_PATH = {
+  lcp: '$.lcp',
+  inp: '$.inp',
+  cls: '$.cls',
+  ttfb: '$.ttfb',
+  fcp: '$.fcp',
+} as const;
+
+type VitalProperty = keyof typeof VITAL_JSON_PATH;
+
+/**
+ * Nearest-rank 75th percentile for one recorded Core Web Vital.
+ * Returns null when the window has no numeric samples.
+ */
+async function loadVitalPercentile(
+  env: Env,
+  startDate: string,
+  property: VitalProperty
+): Promise<number | null | 'invalid'> {
+  const path = VITAL_JSON_PATH[property];
+  const row = await env.DB.prepare(
+    `SELECT metric AS value
+     FROM (
+       SELECT CAST(json_extract(properties, ?) AS REAL) AS metric,
+              ROW_NUMBER() OVER (ORDER BY CAST(json_extract(properties, ?) AS REAL)) AS rn,
+              COUNT(*) OVER () AS total
+       FROM site_analytics_events
+       WHERE event_name = 'core_web_vitals'
+         AND date(created_at / 1000, 'unixepoch') >= ?
+         AND typeof(json_extract(properties, ?)) IN ('real', 'integer')
+     )
+     WHERE rn = ((total * 3 + 3) / 4)`
+  )
+    .bind(path, path, startDate, path)
+    .first();
+  const parsed = await readOptionalExtraRow(
+    SiteVitalValueRowSchema,
+    'Site vital percentile has an invalid shape',
+    row
+  );
+  if (parsed._tag === 'invalid') return 'invalid';
+  if (parsed._tag === 'missing') return null;
+  return parsed.value.value;
+}
+
 /**
  * Return aggregated site analytics for the admin dashboard.
  *
  * @param request - Incoming request whose `days` query bounds the window.
  * @param env - Worker bindings including D1.
- * @returns Totals, daily trend, top pages/referrers, and devices.
+ * @returns Totals, trends, acquisition, devices, and Core Web Vitals.
  */
 export async function handleGetAnalyticsOverview(request: Request, env: Env): Promise<Response> {
   try {
@@ -509,7 +562,21 @@ export async function handleGetAnalyticsOverview(request: Request, env: Env): Pr
     startDate.setDate(startDate.getDate() - days);
     const startDateStr = startDate.toISOString().slice(0, 10);
 
-    const [totalStats, dailyTrend, topPages, topReferrers, deviceBreakdown] = await Promise.all([
+    const [
+      totalStats,
+      dailyTrend,
+      topPages,
+      topReferrers,
+      deviceBreakdown,
+      browsers,
+      operatingSystems,
+      countries,
+      campaigns,
+      callsToAction,
+      hourly,
+      bounceRow,
+      vitalSamples,
+    ] = await Promise.all([
       env.DB.prepare(
         `SELECT
            COUNT(*) as total_pageviews,
@@ -550,16 +617,15 @@ export async function handleGetAnalyticsOverview(request: Request, env: Env): Pr
         .all(),
 
       env.DB.prepare(
-        `SELECT json_extract(properties, '$.referrer_domain') as referrer_domain,
+        `SELECT COALESCE(json_extract(properties, '$.referrer_domain'), 'direct') as referrer_domain,
                 COUNT(DISTINCT visitor_id) as visitors,
                 COUNT(*) as pageviews
          FROM site_analytics_events
          WHERE event_type = 'pageview'
            AND date(created_at / 1000, 'unixepoch') >= ?
-           AND json_extract(properties, '$.referrer_domain') != 'direct'
          GROUP BY referrer_domain
          ORDER BY visitors DESC
-         LIMIT 10`
+         LIMIT 15`
       )
         .bind(startDateStr)
         .all(),
@@ -575,6 +641,109 @@ export async function handleGetAnalyticsOverview(request: Request, env: Env): Pr
       )
         .bind(startDateStr)
         .all(),
+
+      env.DB.prepare(
+        `SELECT json_extract(properties, '$.browser') as browser,
+                COUNT(DISTINCT visitor_id) as visitors
+         FROM site_analytics_events
+         WHERE event_type = 'pageview'
+           AND date(created_at / 1000, 'unixepoch') >= ?
+         GROUP BY browser
+         ORDER BY visitors DESC`
+      )
+        .bind(startDateStr)
+        .all(),
+
+      env.DB.prepare(
+        `SELECT json_extract(properties, '$.os') as os,
+                COUNT(DISTINCT visitor_id) as visitors
+         FROM site_analytics_events
+         WHERE event_type = 'pageview'
+           AND date(created_at / 1000, 'unixepoch') >= ?
+         GROUP BY os
+         ORDER BY visitors DESC`
+      )
+        .bind(startDateStr)
+        .all(),
+
+      env.DB.prepare(
+        `SELECT country_code,
+                COUNT(DISTINCT visitor_id) as visitors,
+                COUNT(*) as pageviews
+         FROM site_analytics_events
+         WHERE event_type = 'pageview'
+           AND date(created_at / 1000, 'unixepoch') >= ?
+         GROUP BY country_code
+         ORDER BY visitors DESC
+         LIMIT 20`
+      )
+        .bind(startDateStr)
+        .all(),
+
+      env.DB.prepare(
+        `SELECT json_extract(properties, '$.utm.source') as utm_source,
+                json_extract(properties, '$.utm.medium') as utm_medium,
+                json_extract(properties, '$.utm.campaign') as utm_campaign,
+                COUNT(DISTINCT visitor_id) as visitors,
+                COUNT(*) as pageviews
+         FROM site_analytics_events
+         WHERE event_type = 'pageview'
+           AND date(created_at / 1000, 'unixepoch') >= ?
+           AND COALESCE(json_extract(properties, '$.utm.source'), '') != ''
+         GROUP BY utm_source, utm_medium, utm_campaign
+         ORDER BY visitors DESC
+         LIMIT 15`
+      )
+        .bind(startDateStr)
+        .all(),
+
+      env.DB.prepare(
+        `SELECT json_extract(properties, '$.cta_type') as cta_type,
+                COUNT(*) as count
+         FROM site_analytics_events
+         WHERE event_type = 'click'
+           AND date(created_at / 1000, 'unixepoch') >= ?
+         GROUP BY cta_type
+         ORDER BY count DESC
+         LIMIT 15`
+      )
+        .bind(startDateStr)
+        .all(),
+
+      env.DB.prepare(
+        `SELECT CAST(strftime('%H', created_at / 1000, 'unixepoch') AS INTEGER) as hour,
+                COUNT(*) as pageviews
+         FROM site_analytics_events
+         WHERE event_type = 'pageview'
+           AND date(created_at / 1000, 'unixepoch') >= ?
+         GROUP BY hour
+         ORDER BY hour ASC`
+      )
+        .bind(startDateStr)
+        .all(),
+
+      env.DB.prepare(
+        `SELECT COUNT(*) as sessions,
+                COALESCE(SUM(CASE WHEN views = 1 THEN 1 ELSE 0 END), 0) as bounces
+         FROM (
+           SELECT session_id, COUNT(*) as views
+           FROM site_analytics_events
+           WHERE event_type = 'pageview'
+             AND date(created_at / 1000, 'unixepoch') >= ?
+           GROUP BY session_id
+         )`
+      )
+        .bind(startDateStr)
+        .first(),
+
+      env.DB.prepare(
+        `SELECT COUNT(*) as count
+         FROM site_analytics_events
+         WHERE event_name = 'core_web_vitals'
+           AND date(created_at / 1000, 'unixepoch') >= ?`
+      )
+        .bind(startDateStr)
+        .first(),
     ]);
 
     const totalsLookup = await readOptionalExtraRow(
@@ -586,7 +755,44 @@ export async function handleGetAnalyticsOverview(request: Request, env: Env): Pr
       return errorResponse('Failed to load site analytics', 500);
     }
     const totals = optionalRowValue(totalsLookup);
-    const [decodedTrend, decodedPages, decodedReferrers, decodedDevices] = await Promise.all([
+    const bounceLookup = await readOptionalExtraRow(
+      SiteBounceRowSchema,
+      'Site bounce row has an invalid shape',
+      bounceRow
+    );
+    const sampleLookup = await readOptionalExtraRow(
+      CountRowSchema,
+      'Site vital sample row has an invalid shape',
+      vitalSamples
+    );
+    if (isInvalidExtraRow(bounceLookup) || isInvalidExtraRow(sampleLookup)) {
+      return errorResponse('Failed to load site analytics', 500);
+    }
+    const bounce = optionalRowValue(bounceLookup);
+    const samples = optionalRowValue(sampleLookup)?.count ?? 0;
+    const vitalProperties = ['lcp', 'inp', 'cls', 'ttfb', 'fcp'] as const;
+    const vitalValues = await Promise.all(
+      vitalProperties.map(property => loadVitalPercentile(env, startDateStr, property))
+    );
+    if (vitalValues.some(value => value === 'invalid')) {
+      return errorResponse('Failed to load analytics overview', 500);
+    }
+    const [lcp, inp, cls, ttfb, fcp] = vitalValues.map(value =>
+      value === 'invalid' ? null : value
+    );
+    const bounceSessions = bounce?.sessions ?? 0;
+    const [
+      decodedTrend,
+      decodedPages,
+      decodedReferrers,
+      decodedDevices,
+      decodedBrowsers,
+      decodedOperatingSystems,
+      decodedCountries,
+      decodedCampaigns,
+      decodedCalls,
+      decodedHourly,
+    ] = await Promise.all([
       Effect.runPromiseExit(
         decodeExtraRowArray(
           SiteDailyTrendRowSchema,
@@ -615,12 +821,60 @@ export async function handleGetAnalyticsOverview(request: Request, env: Env): Pr
           deviceBreakdown.results
         )
       ),
+      Effect.runPromiseExit(
+        decodeExtraRowArray(
+          SiteBrowserRowSchema,
+          'Site browser row has an invalid shape',
+          browsers.results
+        )
+      ),
+      Effect.runPromiseExit(
+        decodeExtraRowArray(
+          SiteOsRowSchema,
+          'Site operating system row has an invalid shape',
+          operatingSystems.results
+        )
+      ),
+      Effect.runPromiseExit(
+        decodeExtraRowArray(
+          SiteCountryRowSchema,
+          'Site country row has an invalid shape',
+          countries.results
+        )
+      ),
+      Effect.runPromiseExit(
+        decodeExtraRowArray(
+          SiteCampaignRowSchema,
+          'Site campaign row has an invalid shape',
+          campaigns.results
+        )
+      ),
+      Effect.runPromiseExit(
+        decodeExtraRowArray(
+          SiteCtaRowSchema,
+          'Site call to action row has an invalid shape',
+          callsToAction.results
+        )
+      ),
+      Effect.runPromiseExit(
+        decodeExtraRowArray(
+          SiteHourlyRowSchema,
+          'Site hourly row has an invalid shape',
+          hourly.results
+        )
+      ),
     ]);
     if (
       Exit.isFailure(decodedTrend) ||
       Exit.isFailure(decodedPages) ||
       Exit.isFailure(decodedReferrers) ||
-      Exit.isFailure(decodedDevices)
+      Exit.isFailure(decodedDevices) ||
+      Exit.isFailure(decodedBrowsers) ||
+      Exit.isFailure(decodedOperatingSystems) ||
+      Exit.isFailure(decodedCountries) ||
+      Exit.isFailure(decodedCampaigns) ||
+      Exit.isFailure(decodedCalls) ||
+      Exit.isFailure(decodedHourly)
     ) {
       return errorResponse('Failed to load analytics overview', 500);
     }
@@ -631,11 +885,29 @@ export async function handleGetAnalyticsOverview(request: Request, env: Env): Pr
         total_pageviews: totals?.total_pageviews || 0,
         total_visitors: totals?.total_visitors || 0,
         total_sessions: totals?.total_sessions || 0,
+        bounce_rate:
+          bounceSessions === 0
+            ? 0
+            : Math.round(((bounce?.bounces ?? 0) / bounceSessions) * 1000) / 10,
       },
       daily_trend: decodedTrend.value,
       top_pages: decodedPages.value,
       top_referrers: decodedReferrers.value,
       device_breakdown: decodedDevices.value,
+      browsers: decodedBrowsers.value,
+      operating_systems: decodedOperatingSystems.value,
+      countries: decodedCountries.value,
+      campaigns: decodedCampaigns.value,
+      calls_to_action: decodedCalls.value,
+      hourly: decodedHourly.value,
+      web_vitals: {
+        samples,
+        lcp_p75_ms: lcp,
+        inp_p75_ms: inp,
+        cls_p75: cls,
+        ttfb_p75_ms: ttfb,
+        fcp_p75_ms: fcp,
+      },
     });
   } catch (error: unknown) {
     reportError('Analytics overview error:', error);

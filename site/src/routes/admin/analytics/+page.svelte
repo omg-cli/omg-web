@@ -1,8 +1,17 @@
 <script lang="ts">
   import type { PageProps } from './$types';
   import { formatCount, formatProductLabel } from '../../dashboard/dashboard-view';
+  import { formatHour, formatRate, webVitalReadings } from './admin-traffic-view';
 
   let { data }: PageProps = $props();
+  const vitals = $derived(webVitalReadings(data.analytics.site.web_vitals));
+  const pagesPerSession = $derived(
+    data.analytics.site.summary.total_sessions === 0
+      ? '0.00'
+      : (
+          data.analytics.site.summary.total_pageviews / data.analytics.site.summary.total_sessions
+        ).toFixed(2)
+  );
 </script>
 
 <svelte:head>
@@ -16,7 +25,10 @@
     <div>
       <p>Analytics / {data.days} days</p>
       <h1>Product and site activity</h1>
-      <span>Grounded Worker aggregates. No client-side tracking identifiers are exposed.</span>
+      <span
+        >Recorded browser visits for this period. Pageviews, sources, devices, and Core Web Vitals
+        stay here.</span
+      >
     </div>
     <nav aria-label="Analytics period">
       {#each [7, 30, 90] as days}
@@ -40,6 +52,12 @@
       >
     </article>
     <article>
+      <span>Pages / session</span><strong>{pagesPerSession}</strong>
+    </article>
+    <article>
+      <span>Bounce rate</span><strong>{formatRate(data.analytics.site.summary.bounce_rate)}</strong>
+    </article>
+    <article>
       <span>Countries</span><strong>{formatCount(data.analytics.geo.total_countries)}</strong>
     </article>
     <article>
@@ -60,6 +78,209 @@
     <article>
       <span>Retention</span><strong>{data.analytics.product.retention_rate.toFixed(1)}%</strong>
     </article>
+  </section>
+
+  <div class="panel-grid">
+    <section class="panel" aria-labelledby="referrers-title">
+      <header>
+        <h2 id="referrers-title">Referrers</h2>
+        <span>Including direct</span>
+      </header>
+      {#if data.analytics.site.top_referrers.length === 0}
+        <p class="empty">No referrer data recorded.</p>
+      {:else}
+        <ol class="ranked">
+          {#each data.analytics.site.top_referrers as item (`${item.referrer_domain}:${item.visitors}`)}
+            <li>
+              <strong>{item.referrer_domain ?? 'Direct'}</strong>
+              <span
+                >{formatCount(item.visitors)} visitors / {formatCount(item.pageviews)} views</span
+              >
+            </li>
+          {/each}
+        </ol>
+      {/if}
+    </section>
+    <section class="panel" aria-labelledby="campaigns-title">
+      <header>
+        <h2 id="campaigns-title">Campaigns</h2>
+        <span>UTM on landing pageviews</span>
+      </header>
+      {#if data.analytics.site.campaigns.length === 0}
+        <p class="empty">No campaign parameters recorded.</p>
+      {:else}
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Source</th><th>Medium</th><th>Campaign</th><th>Visitors</th><th>Views</th></tr
+              >
+            </thead>
+            <tbody>
+              {#each data.analytics.site.campaigns as item, index (`${item.utm_source}:${item.utm_campaign}:${index}`)}
+                <tr>
+                  <td>{item.utm_source ?? 'Unknown'}</td>
+                  <td>{item.utm_medium ?? 'Unknown'}</td>
+                  <td>{item.utm_campaign ?? 'Unknown'}</td>
+                  <td>{formatCount(item.visitors)}</td>
+                  <td>{formatCount(item.pageviews)}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      {/if}
+    </section>
+  </div>
+
+  <div class="panel-grid">
+    <section class="panel" aria-labelledby="devices-title">
+      <header>
+        <h2 id="devices-title">Devices</h2>
+        <span>From the request user agent</span>
+      </header>
+      {#if data.analytics.site.device_breakdown.length === 0}
+        <p class="empty">No device data recorded.</p>
+      {:else}
+        <ol class="ranked">
+          {#each data.analytics.site.device_breakdown as item (`${item.device_type}:${item.visitors}`)}
+            <li>
+              <strong>{formatProductLabel(item.device_type ?? 'unknown')}</strong>
+              <span>{formatCount(item.visitors)} visitors</span>
+            </li>
+          {/each}
+        </ol>
+      {/if}
+    </section>
+    <section class="panel" aria-labelledby="browsers-title">
+      <header>
+        <h2 id="browsers-title">Browsers</h2>
+        <span>Recorded visitors</span>
+      </header>
+      {#if data.analytics.site.browsers.length === 0}
+        <p class="empty">No browser data recorded.</p>
+      {:else}
+        <ol class="ranked">
+          {#each data.analytics.site.browsers as item (`${item.browser}:${item.visitors}`)}
+            <li>
+              <strong>{item.browser ?? 'Unknown'}</strong>
+              <span>{formatCount(item.visitors)} visitors</span>
+            </li>
+          {/each}
+        </ol>
+      {/if}
+    </section>
+  </div>
+
+  <div class="panel-grid">
+    <section class="panel" aria-labelledby="os-title">
+      <header>
+        <h2 id="os-title">Operating systems</h2>
+        <span>Recorded visitors</span>
+      </header>
+      {#if data.analytics.site.operating_systems.length === 0}
+        <p class="empty">No operating system data recorded.</p>
+      {:else}
+        <ol class="ranked">
+          {#each data.analytics.site.operating_systems as item (`${item.os}:${item.visitors}`)}
+            <li>
+              <strong>{item.os ?? 'Unknown'}</strong>
+              <span>{formatCount(item.visitors)} visitors</span>
+            </li>
+          {/each}
+        </ol>
+      {/if}
+    </section>
+    <section class="panel" aria-labelledby="cta-title">
+      <header>
+        <h2 id="cta-title">Calls to action</h2>
+        <span>Recorded clicks</span>
+      </header>
+      {#if data.analytics.site.calls_to_action.length === 0}
+        <p class="empty">No call-to-action clicks recorded.</p>
+      {:else}
+        <ol class="ranked">
+          {#each data.analytics.site.calls_to_action as item (`${item.cta_type}:${item.count}`)}
+            <li>
+              <strong>{formatProductLabel(item.cta_type ?? 'unknown')}</strong>
+              <span>{formatCount(item.count)} clicks</span>
+            </li>
+          {/each}
+        </ol>
+      {/if}
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="vitals-title">
+    <header>
+      <h2 id="vitals-title">Core Web Vitals</h2>
+      <span>{formatCount(data.analytics.site.web_vitals.samples)} p75 samples</span>
+    </header>
+    {#if data.analytics.site.web_vitals.samples === 0}
+      <p class="empty">No Core Web Vitals samples were recorded in this period.</p>
+    {:else}
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>p75</th><th>Rating</th><th>What it measures</th></tr>
+          </thead>
+          <tbody>
+            {#each vitals as reading (reading.label)}
+              <tr>
+                <td>{reading.label}</td>
+                <td>{reading.value}</td>
+                <td>{reading.tone === 'needs-improvement' ? 'needs improvement' : reading.tone}</td>
+                <td>{reading.detail}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {/if}
+  </section>
+
+  <section class="panel" aria-labelledby="hourly-title">
+    <header>
+      <h2 id="hourly-title">Hour of day</h2>
+      <span>UTC pageviews</span>
+    </header>
+    {#if data.analytics.site.hourly.length === 0}
+      <p class="empty">No hourly pageviews recorded.</p>
+    {:else}
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Hour</th><th>Pageviews</th></tr></thead>
+          <tbody>
+            {#each data.analytics.site.hourly as bucket (bucket.hour)}
+              <tr>
+                <td>{formatHour(bucket.hour)}</td>
+                <td>{formatCount(bucket.pageviews)}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {/if}
+  </section>
+
+  <section class="panel" aria-labelledby="site-countries-title">
+    <header>
+      <h2 id="site-countries-title">Site countries</h2>
+      <span>Pageview locations</span>
+    </header>
+    {#if data.analytics.site.countries.length === 0}
+      <p class="empty">No site country data recorded.</p>
+    {:else}
+      <ol class="ranked">
+        {#each data.analytics.site.countries as country (`${country.country_code}:${country.visitors}`)}
+          <li>
+            <strong>{country.country_code ?? 'Unknown'}</strong>
+            <span
+              >{formatCount(country.visitors)} visitors / {formatCount(country.pageviews)} views</span
+            >
+          </li>
+        {/each}
+      </ol>
+    {/if}
   </section>
 
   <div class="panel-grid">
@@ -167,9 +388,11 @@
         <ol class="ranked">
           {#each data.analytics.geo.geo_distribution as country (country.country_code)}<li>
               <strong>{country.country_code}</strong><span
-                >{formatCount(country.user_count)} weighted events / {country.percentage.toFixed(
-                  1
-                )}%</span
+                >{formatCount(country.user_count)} weighted / {formatCount(
+                  country.breakdown.site_visitors
+                )} site / {formatCount(country.breakdown.docs_sessions)} docs / {formatCount(
+                  country.breakdown.cli_installs
+                )} CLI</span
               >
             </li>{/each}
         </ol>

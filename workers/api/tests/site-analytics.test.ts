@@ -32,6 +32,20 @@ const AnalyticsOverviewSchema = Schema.Struct({
     total_pageviews: Schema.Number,
     total_visitors: Schema.Number,
     total_sessions: Schema.Number,
+    bounce_rate: Schema.Number,
+  }),
+  top_referrers: Schema.Array(
+    Schema.Struct({
+      referrer_domain: Schema.NullOr(Schema.String),
+      visitors: Schema.Number,
+      pageviews: Schema.Number,
+    })
+  ),
+  web_vitals: Schema.Struct({
+    samples: Schema.Number,
+    lcp_p75_ms: Schema.NullOr(Schema.Number),
+    inp_p75_ms: Schema.NullOr(Schema.Number),
+    cls_p75: Schema.NullOr(Schema.Number),
   }),
 });
 
@@ -350,7 +364,39 @@ describe('POST /api/site/analytics/track', () => {
       total_pageviews: 2,
       total_visitors: 1,
       total_sessions: 1,
+      bounce_rate: 0,
     });
+    expect(payload.top_referrers[0]?.referrer_domain).toBe('direct');
+    expect(payload.web_vitals.samples).toBe(0);
+    expect(payload.web_vitals.lcp_p75_ms).toBeNull();
+  });
+
+  it('reports the nearest-rank p75 for recorded Core Web Vitals', async () => {
+    for (const lcp of [100, 200, 300, 4000]) {
+      expect(
+        (
+          await track({
+            events: [
+              event({
+                event_type: 'web_vitals',
+                event_name: 'core_web_vitals',
+                properties: { lcp },
+              }),
+            ],
+          })
+        ).status
+      ).toBe(200);
+    }
+
+    const response = await handleGetAnalyticsOverview(
+      new Request('https://internal.test/api/site/analytics/overview?days=1'),
+      env
+    );
+    expect(response.status).toBe(200);
+    const payload = Schema.decodeUnknownSync(AnalyticsOverviewSchema)(await response.json());
+    expect(payload.web_vitals.samples).toBe(4);
+    expect(payload.web_vitals.lcp_p75_ms).toBe(300);
+    expect(payload.web_vitals.inp_p75_ms).toBeNull();
   });
 
   it('rejects malformed events inside a batch at the boundary', async () => {
