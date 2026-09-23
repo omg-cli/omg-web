@@ -22,8 +22,8 @@
       number: '03',
       title: 'An environment you can take with you.',
       detail:
-        'Capture a working setup and use a shared environment to bring another machine into sync.',
-      command: 'omg env sync <share-url>',
+        'On Arch, Debian, and Ubuntu, capture a working setup in omg.lock and check another machine against it.',
+      command: 'omg env capture',
       href: '/docs/cli/',
       link: 'Environment commands',
     },
