@@ -6,27 +6,38 @@
       Manage system packages and <a href="/runtimes/node/">Node.js</a>,
       <a href="/runtimes/bun/">Bun</a>, and <a href="/runtimes/python/">Python</a> versions with one
       free CLI for Linux, macOS, and WSL. Keep your
-      <a href="/guides/node-npm-pnpm/">npm and pnpm workflows</a> and share a consistent environment.
+      <a href="/guides/node-npm-pnpm/">npm and pnpm workflows</a> as they are.
     </p>
     <nav class="hero-actions" aria-label="Homepage introduction">
       <a class="primary-link" href="#install">Install OMG <span aria-hidden="true">↓</span></a>
       <a class="text-link" href="#workflow">See how it works <span aria-hidden="true">→</span></a>
     </nav>
   </div>
-  <div class="command-line" aria-label="Example package installation command">
-    <span class="command-label">Start with a package</span>
-    <code><span aria-hidden="true">$ </span>omg install ripgrep</code>
-    <span class="platforms">Linux / macOS</span>
+  <div class="command-examples" aria-label="Example OMG commands">
+    <a class="command-example" href="/docs/cli/">
+      <span class="command-label">System packages</span>
+      <code><span aria-hidden="true">$ </span>omg install ripgrep</code>
+      <span class="command-destination"
+        >Explore package commands <span aria-hidden="true">↗</span></span
+      >
+    </a>
+    <a class="command-example" href="/docs/runtimes/">
+      <span class="command-label">Project runtimes</span>
+      <code><span aria-hidden="true">$ </span>omg use node 22</code>
+      <span class="command-destination"
+        >Explore runtime commands <span aria-hidden="true">↗</span></span
+      >
+    </a>
   </div>
 </section>
 
 <style>
   .hero {
-    padding-block: clamp(3rem, 8vw, 7rem) 0;
+    padding-block: clamp(2.5rem, 6vw, 5rem) 0;
   }
 
   .hero-eyebrow {
-    margin: 0 0 clamp(2rem, 4vw, 4rem);
+    margin: 0 0 clamp(1.75rem, 3vw, 2.75rem);
     color: var(--ink-muted);
     font-family: var(--font-mono);
     font-size: 0.75rem;
@@ -49,7 +60,7 @@
   .hero-introduction {
     display: grid;
     gap: 2rem;
-    margin-block: clamp(2rem, 5vw, 4rem) clamp(3rem, 6vw, 5rem);
+    margin-block: clamp(2rem, 4vw, 3rem) clamp(2.5rem, 4vw, 3.5rem);
   }
 
   .hero-introduction > p {
@@ -85,30 +96,54 @@
     background: var(--signal-hover);
   }
 
-  .command-line {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 1rem 3rem;
-    padding-block: 1.5rem;
+  .command-examples {
+    display: grid;
     border-block: 1px solid var(--rule);
   }
 
+  .command-example {
+    display: grid;
+    align-content: center;
+    gap: 0.45rem;
+    min-width: 0;
+    padding-block: 1.35rem;
+    text-decoration: none;
+  }
+
+  .command-example + .command-example {
+    border-top: 1px solid var(--rule);
+  }
+
+  .command-example:hover .command-destination {
+    color: var(--signal);
+  }
+
   .command-label,
-  .platforms {
+  .command-destination {
     color: var(--ink-muted);
     font-family: var(--font-mono);
     font-size: 0.75rem;
   }
 
-  .command-line code {
+  .command-example code {
     font-family: var(--font-mono);
-    font-size: clamp(1rem, 2vw, 1.4rem);
+    font-size: clamp(1rem, 1.7vw, 1.25rem);
     overflow-wrap: anywhere;
   }
 
-  .command-line code span {
+  .command-example code span {
     color: var(--signal);
+  }
+
+  @media (min-width: 42rem) {
+    .command-examples {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .command-example + .command-example {
+      padding-left: clamp(1.5rem, 4vw, 4rem);
+      border-top: 0;
+      border-left: 1px solid var(--rule);
+    }
   }
 
   @media (min-width: 60rem) {
@@ -118,15 +153,6 @@
     }
     .hero-actions {
       justify-content: flex-end;
-    }
-    .platforms {
-      margin-left: auto;
-    }
-  }
-
-  @media (max-width: 35rem) {
-    .command-label {
-      flex-basis: 100%;
     }
   }
 </style>
