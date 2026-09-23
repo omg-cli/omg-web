@@ -363,7 +363,7 @@ export const cliTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'info',
-          text: 'The CLI security development branch adds audit scan --fail-on-findings and audit sbom --inventory-only, and makes audit licenses --check-policy inspect all installed Arch packages and fail on violations. Inventory-only SBOMs mark advisory matching as skipped. These changes are not in v0.1.223.',
+          text: 'The newer CLI checkout adds audit scan --fail-on-findings and audit sbom --inventory-only, and makes audit licenses --check-policy inspect all installed Arch packages and fail on violations. Inventory-only SBOMs mark advisory matching as skipped. These changes are not in v0.1.223.',
         },
       ],
     },
