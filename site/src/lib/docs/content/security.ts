@@ -58,7 +58,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'info',
-          text: 'The CLI security development branch adds omg audit scan --fail-on-findings for an opt-in nonzero exit when findings are present. The ordinary scan remains a report. This option is not in v0.1.223.',
+          text: 'The newer CLI checkout adds omg audit scan --fail-on-findings for an opt-in nonzero exit when findings are present. The ordinary scan remains a report. This option is not in v0.1.223.',
         },
       ],
     },
@@ -107,7 +107,7 @@ export const securityTopic: DocsTopic = {
             'Runtime installers and self-update compare downloaded bytes with the expected SHA-256 digest when that digest is available.',
             'AUR key preparation invokes gpg to inspect and import keys required by a build.',
             'omg audit slsa verifies a Sigstore hashedrekord artifact signature and Rekor signed entry timestamp (SET) against the pinned log key. It does not independently verify a Merkle inclusion proof or checkpoint.',
-            'Supply an expected publisher email or OIDC URI with `--certificate-identity`. In v0.1.223, the parser accepts omission but the verifier rejects it; the CLI security development branch requires the option at parsing.',
+            'Supply an expected publisher email or OIDC URI with `--certificate-identity`. In v0.1.223, the parser accepts omission but the verifier rejects it; the newer CLI checkout requires the option at parsing.',
             'The current hashedrekord check does not establish build provenance or assign a SLSA level. It is a standalone audit and does not gate installation.',
           ],
         },
@@ -165,7 +165,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'info',
-          text: 'The CLI security development branch adds omg audit sbom --inventory-only. It skips advisory matching, labels that omission in the SBOM, and cannot be read as a clean vulnerability scan. The default still requires advisory matching. This option is not in v0.1.223.',
+          text: 'The newer CLI checkout adds omg audit sbom --inventory-only. It skips advisory matching, labels that omission in the SBOM, and cannot be read as a clean vulnerability scan. The default still requires advisory matching. This option is not in v0.1.223.',
         },
       ],
     },
@@ -191,7 +191,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'info',
-          text: 'The CLI security development branch changes --check-policy to check the full installed Arch inventory even when display output is filtered, then exit nonzero on violations. This stricter gate is not in v0.1.223.',
+          text: 'The newer CLI checkout changes --check-policy to check the full installed Arch inventory even when display output is filtered, then exit nonzero on violations. This stricter gate is not in v0.1.223.',
         },
       ],
     },
