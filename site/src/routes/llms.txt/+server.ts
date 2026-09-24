@@ -11,9 +11,9 @@ export const GET: RequestHandler = () =>
     [
       '# OMG Package Manager',
       '',
-      '> OMG is an open-source CLI for supported system packages, language runtimes, and development environments on Linux, Apple Silicon macOS, and WSL.',
+      '> OMG is an open-source CLI for system packages and multi-language runtimes (Node.js, Python, Go, Rust, Bun) on supported x86_64 Linux distributions and Apple Silicon macOS, including Linux inside WSL2. It provides direct PATH shell switching for .nvmrc and .tool-versions without wrapper shims and automatic version-file detection. Environment capture and drift checks are available on Arch and Debian/Ubuntu backends.',
       '',
-      'OMG is approaching beta. Follow the versioned source references in the handbook. npm, pnpm, and Bun retain ownership of their dependency installation and lockfiles. Native Windows is not supported.',
+      'The latest published release predates beta. Follow the versioned source references in the handbook. npm, pnpm, and Bun retain ownership of their dependency installation and lockfiles. Native Windows is not supported.',
       '',
       '## Guides',
       ...LEARNING_PAGES.map(
@@ -27,6 +27,7 @@ export const GET: RequestHandler = () =>
       ),
       '',
       '## Source',
+      `- [Complete OMG documentation](https://github.com/omg-cli/omg/tree/${DOCS_TOPICS[0].source.reviewedCommit}/docs)`,
       '- [OMG source and releases](https://github.com/omg-cli/omg)',
       '',
     ].join('\n'),

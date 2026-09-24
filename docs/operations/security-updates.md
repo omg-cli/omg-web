@@ -11,7 +11,7 @@ The feed also recognizes hardening, privilege, checksum, provenance and
 attestation titles. Ordinary merge commits are excluded. Commit bodies are
 displayed as escaped plain text, with a direct link to the full commit.
 
-The feed follows `main` in `PyRo1121/omg` and `PyRo1121/omg-web`.
+The feed follows `main` in `omg-cli/omg` and `omg-cli/omg-web`.
 Hardening PR #399 merged on September 14, 2026; its retained branch is no longer
 polled or presented as an open review. All 16 committed fallback entries were
 verified as ancestors of OMG main before their status changed to On main.

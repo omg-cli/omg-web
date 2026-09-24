@@ -77,9 +77,9 @@
     </nav>
   </header>
   <aside aria-label="Release compatibility">
-    OMG is approaching beta. Commands, flags, and on-disk formats can change. These summaries are
-    reviewed selections, not the complete release notes. Check the full notes before updating
-    important environments.
+    The latest published release predates beta. Commands, flags, and on-disk formats can change.
+    These summaries are reviewed selections, not the complete release notes. Check the full notes
+    before updating important environments.
   </aside>
   <section aria-label="Published releases">
     {#each RELEASE_NOTES as release, index (release.version)}

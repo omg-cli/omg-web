@@ -56,7 +56,15 @@ const TrackingEventSchema = Schema.Union([
     event_type: Schema.Literal('cta_click'),
     properties: Schema.Struct({
       ...CommonProperties,
-      cta_type: Schema.Literals(['download', 'signup', 'pricing', 'docs', 'github', 'install']),
+      cta_type: Schema.Literals([
+        'download',
+        'signup',
+        'pricing',
+        'docs',
+        'github',
+        'install',
+        'install_command_copied',
+      ]),
       cta_label: ShortText,
     }),
   }),

@@ -63,7 +63,9 @@ export function withSiteHeaders(response: Response, deploymentStage: string | un
     headers.set('Content-Security-Policy', renderedContentSecurityPolicy);
   }
   appendVary(headers, 'Accept-Encoding');
-  if (deploymentStage !== 'prod') {
+  const contentType = headers.get('Content-Type') ?? '';
+  const isXmlSitemap = contentType.includes('application/xml');
+  if (deploymentStage !== 'prod' && !isXmlSitemap) {
     headers.set('X-Robots-Tag', SHADOW_ROBOTS_POLICY);
   }
 
@@ -148,7 +150,7 @@ ${entries}
   // on it was an untested variable in the Search Console fetch failure.
   return new Response(body, {
     headers: {
-      'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+      'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=300',
       'Content-Type': 'application/xml; charset=utf-8',
     },
   });

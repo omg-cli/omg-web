@@ -6,34 +6,38 @@
   aria-labelledby="benchmark-title"
 >
   <header>
-    <p class="section-label">Measured, not promised</p>
-    <h2 id="benchmark-title">Fast, with receipts.</h2>
+    <p class="section-label">Performance, with context</p>
+    <h2 id="benchmark-title">Speed deserves a fair test.</h2>
     <p class="benchmark-intro">
-      Search a local package index without waiting on a fresh process to do all the work. Here is
-      one recorded run, not a guarantee for every machine.
+      OMG can use a warm local package index on Arch. A useful speed comparison must measure
+      equivalent work and account for the state of that index.
     </p>
   </header>
   <div class="benchmark-results">
     <p class="benchmark-highlight">
-      <strong>13.1<span>ms</span></strong> <span>Package search / OMG daemon</span>
+      <strong>Evidence first.</strong> <span>How we evaluate package operations</span>
     </p>
     <table>
-      <caption>Arch Linux benchmark · September 3, 2026 · mean duration</caption>
-      <thead
-        ><tr
-          ><th scope="col">Operation</th><th scope="col">OMG daemon</th><th scope="col">pacman</th
-          ></tr
-        ></thead
-      >
+      <caption>What a meaningful comparison includes</caption>
+      <thead><tr><th scope="col">Check</th><th scope="col">Why it matters</th></tr></thead>
       <tbody>
-        <tr><th scope="row">Package search</th><td>13.1 ms</td><td>247 ms</td></tr>
-        <tr><th scope="row">Package info</th><td>26.4 ms</td><td>226 ms</td></tr>
-        <tr><th scope="row">Explicit package count</th><td>10.4 ms</td><td>32 ms</td></tr>
+        <tr
+          ><th scope="row">Same results</th><td>Match package identities, sources, and limits.</td
+          ></tr
+        >
+        <tr
+          ><th scope="row">Same state</th><td>Account for daemon startup and cache preparation.</td
+          ></tr
+        >
+        <tr
+          ><th scope="row">Full record</th><td>Publish samples, variation, and failed cases.</td
+          ></tr
+        >
       </tbody>
     </table>
     <p class="benchmark-method">
-      Intel Core i9-14900K, 31 GiB RAM, local pacman databases. Hyperfine 1.20, three warmups, 20–50
-      runs.
+      A historical Arch development run returned six search lines from OMG and 458 from pacman.
+      Those timings do not establish a search speedup.
     </p>
     <a
       class="text-link"
@@ -79,14 +83,10 @@
   .benchmark-highlight strong {
     color: var(--signal);
     font-family: var(--font-display);
-    font-size: clamp(4rem, 9vw, 7rem);
+    font-size: clamp(2.5rem, 5vw, 4rem);
     font-weight: 550;
     letter-spacing: -0.07em;
-    line-height: 1;
-  }
-  .benchmark-highlight strong span {
-    margin-left: 0.25em;
-    font-size: 0.4em;
+    line-height: 1.05;
   }
   .benchmark-highlight > span,
   caption,
@@ -108,7 +108,7 @@
   td {
     padding: 1rem 0.5rem;
     border-top: 1px solid var(--rule);
-    text-align: right;
+    text-align: left;
     font-weight: 400;
   }
   th:first-child {
@@ -116,9 +116,7 @@
     text-align: left;
   }
   td {
-    font-family: var(--font-mono);
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
+    line-height: 1.5;
   }
   thead th {
     color: var(--ink-muted);

@@ -151,7 +151,7 @@ export const troubleshootingTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'On Arch, policy rejections name the violated rule, such as a grade below minimum_grade or a disallowed AUR source. Native APT, DNF, and Homebrew paths refuse explicit policy because OMG cannot enforce it against the final native transaction. Inspect policy.toml and the active backend before changing either.',
+            'On Arch, policy rejections name the violated rule, such as a grade below minimum_grade or a disallowed AUR source. On native APT, DNF, and Homebrew paths, an explicit policy can stop an install because OMG cannot enforce it against the final native transaction. Inspect policy.toml and the active backend before changing either.',
           ],
         },
         {
@@ -216,7 +216,7 @@ export const troubleshootingTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Official package rollback uses the local package cache. If the old archive is missing, download the exact package from the distribution archive and let OMG validate it as a local file.',
+            'On Arch, official package rollback needs the old archive in the pacman cache. If it is missing, obtain the exact package from a trusted distribution archive, review its provenance, and install the local file explicitly. On Debian or Ubuntu, rollback asks APT to install the recorded package version, which must still be available from configured sources.',
           ],
         },
         {

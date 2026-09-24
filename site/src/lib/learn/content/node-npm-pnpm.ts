@@ -3,116 +3,111 @@ import type { LearningContent } from '../page';
 export const content: LearningContent = {
   sections: [
     {
-      id: 'ownership',
-      heading: 'Decide which tool owns each part of the project',
+      id: 'boundaries',
+      heading: 'Toolchain responsibilities and boundaries',
       blocks: [
         {
+          kind: 'paragraphs',
+          paragraphs: [
+            'Maintaining clean developer environments requires clear boundaries between runtime orchestration and project dependency management. Mixing these responsibilities leads to lockfile corruption and unexpected executable resolution.',
+          ],
+        },
+        {
           kind: 'table',
-          title: 'Toolchain responsibilities',
+          title: 'Layer responsibilities in the Node.js ecosystem',
           columns: ['Layer', 'Responsibility'],
           rows: [
             [
               'OMG',
-              'Select a Node.js runtime and its bundled npm; manage supported system packages and OMG environment workflows.',
+              'Downloads, validates, and activates the Node.js runtime and its bundled npm/npx executables on PATH. Auto-switches versions based on project pins (.node-version, .nvmrc, package.json).',
             ],
-            ['npm', 'Install JavaScript dependencies and maintain package-lock.json.'],
+            [
+              'npm',
+              'Resolves JavaScript/TypeScript dependencies, creates node_modules, and maintains package-lock.json for npm-based repositories.',
+            ],
             [
               'pnpm',
-              'Install dependencies and maintain pnpm-lock.yaml. Current versions can also select runtimes and the package-manager version.',
+              'Manages content-addressable dependencies, hard links, and maintains pnpm-lock.yaml for pnpm-based repositories.',
             ],
             [
-              'Project configuration',
-              'Record the expected runtime, package manager, dependency resolutions, and build commands.',
+              'OMG Task Runner',
+              'Auto-discovers and runs tasks declared in package.json (omg run <task>) across ecosystems with priority 90, passing arbitrary arguments directly.',
             ],
           ],
         },
-        {
-          kind: 'paragraphs',
-          paragraphs: [
-            'OMG does not turn npm install or pnpm install into OMG commands. It gives you a selected runtime on PATH. Keep the repository’s dependency manager and lockfile unless you are intentionally migrating them.',
-            'If pnpm already manages the project runtime, decide whether to keep that policy or use an OMG runtime pin. Do not assume that the Node.js used by pnpm scripts is the same as the Node.js first on your interactive PATH.',
-          ],
-        },
       ],
     },
     {
-      id: 'npm',
-      heading: 'An existing npm project',
+      id: 'working-with-npm',
+      heading: 'Working with an existing npm project',
       blocks: [
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Install the Node.js version required by the project using OMG. Enable the shell hook, enter the project, and confirm the version at the next prompt. Keep the existing .nvmrc or .node-version if it records the correct requirement.',
+            'When entering an npm project, OMG’s shell hook activates the Node.js version pinned in `.node-version` or `.nvmrc`. To ensure repeatable builds from your committed `package-lock.json`, use `npm ci` rather than `npm install`.',
           ],
         },
         {
           kind: 'commands',
-          title: 'Inspect and install from the committed npm lockfile',
-          commands: ['omg which node', 'node --version', 'npm --version', 'npm ci'],
-        },
-        {
-          kind: 'paragraphs',
-          paragraphs: [
-            'npm ci is for an existing project with a compatible package-lock.json. It removes the current node_modules before installing. Use npm install when adding or updating dependencies, and review the resulting lockfile diff. Run the repository’s own checks after installation.',
-          ],
+          title: 'Verify environment and install with npm ci',
+          commands: ['omg which node', 'node --version', 'npm --version', 'npm ci', 'omg run test'],
         },
       ],
     },
     {
-      id: 'pnpm',
-      heading: 'An existing pnpm project',
+      id: 'working-with-pnpm',
+      heading: 'Working with an existing pnpm project',
       blocks: [
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Follow pnpm’s official installation instructions and the repository’s packageManager requirement. Do not assume Corepack is bundled with every Node.js release. Avoid installing a different global pnpm version to repair a project that intentionally pins its own.',
-            'After installing the required pnpm version, inspect both its executable and the runtime used for project commands.',
+            'pnpm uses its own global store and hard-link layout. When using OMG to provide the base Node.js interpreter for pnpm, ensure your frozen lockfile checks match the project requirements.',
           ],
         },
         {
           kind: 'commands',
-          title: 'Inspect the pnpm environment and use its lockfile',
+          title: 'Verify environment and install with pnpm',
           commands: [
             'node --version',
             'pnpm --version',
-            'pnpm exec node --version',
             'pnpm install --frozen-lockfile',
-          ],
-        },
-        {
-          kind: 'paragraphs',
-          paragraphs: [
-            'A frozen install should match the project manifest and committed lockfile. Resolve a mismatch as an intentional dependency change rather than deleting the lockfile. Native dependencies or package-manager policy may still need platform-specific configuration.',
-          ],
-        },
-      ],
-    },
-    {
-      id: 'team',
-      heading: 'Make the same choices visible to the team',
-      blocks: [
-        {
-          kind: 'bullets',
-          items: [
-            'Commit the project’s runtime requirement and dependency lockfile.',
-            'Document the package-manager version and how a fresh machine installs it.',
-            'Run the same dependency and test commands in CI.',
-            'Use OMG environment checks as an additional layer; they do not replace the dependency manager’s lockfile checks.',
+            'omg run build',
           ],
         },
         {
           kind: 'note',
           tone: 'info',
-          text: 'This guide documents tool boundaries and source-reviewed commands. It does not claim that every pnpm runtime feature or dependency installation has been tested with OMG on every platform.',
+          text: 'OMG’s task runner selects npm, pnpm, Yarn, or Bun from package.json packageManager or recognized lockfiles. The published CLI recognizes bun.lockb, but not Bun’s newer bun.lock; set packageManager to bun in package.json for a bun.lock project. Deno tasks are read from deno.json.',
+        },
+      ],
+    },
+    {
+      id: 'task-runner',
+      heading: 'Cross-ecosystem task execution with OMG run',
+      blocks: [
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'In `src/core/task_runner.rs`, OMG inspects `package.json` `scripts` and executes them directly. You do not need to remember whether a repository uses `npm run`, `pnpm run`, or `bun run`: `omg run` detects the appropriate runner automatically.',
+          ],
+        },
+        {
+          kind: 'commands',
+          title: 'Execute project scripts through OMG',
+          commands: ['omg run dev', 'omg run build', 'omg run test -- --watch'],
         },
       ],
     },
   ],
   sources: [
     { title: 'OMG runtime handbook', href: '/docs/runtimes/' },
-    { title: 'npm ci reference', href: 'https://docs.npmjs.com/cli/commands/npm-ci' },
     { title: 'pnpm installation', href: 'https://pnpm.io/installation' },
-    { title: 'pnpm runtime configuration', href: 'https://pnpm.io/package_json' },
+    { title: 'OMG polyglot task runner (src/core/task_runner.rs)', href: '/guides/task-runner/' },
+    { title: 'npm ci command documentation', href: 'https://docs.npmjs.com/cli/commands/npm-ci' },
+    {
+      title: 'Bun lockfile documentation',
+      href: 'https://github.com/oven-sh/bun/blob/main/docs/pm/lockfile.mdx',
+    },
   ],
-  related: ['/runtimes/node/', '/runtimes/bun/', '/guides/reproducible-dev-environments/'],
+  related: ['/runtimes/node/', '/guides/migrate-from-nvm/', '/compare/omg-vs-mise/'],
 };

@@ -3,91 +3,92 @@ import type { LearningContent } from '../page';
 export const content: LearningContent = {
   sections: [
     {
-      id: 'start',
-      heading: 'Install Node.js and inspect the selected runtime',
+      id: 'install',
+      heading: 'Pure Rust Node.js installation without external processes',
       blocks: [
         {
           kind: 'paragraphs',
           paragraphs: [
-            'OMG manages the Node.js runtime and the npm and npx binaries distributed with it. npm continues to install your project dependencies. Start with OMG installed and the shell integration enabled. An existing project should keep its required version; use the LTS example only when choosing a runtime for a new project.',
-            'OMG supports Linux and Apple Silicon macOS through its installer. Windows users run it inside WSL; this is not a native Windows installation method.',
+            'Unlike shell wrappers that spawn curl, tar, and xz subprocesses, OMG manages Node.js entirely in compiled Rust (`src/runtimes/node.rs`). It queries the official index at `nodejs.org/dist/index.json`, downloads release archives directly over HTTPS, and parses `SHASUMS256.txt` to verify the archive hash in memory before extraction.',
+            'Extraction is handled by OMG’s pure-Rust `.tar.xz` streaming unpacker (`extract_tar_xz`) into an isolated temporary directory. Once the regular file at `bin/node` is verified, the installation is published atomically to `~/.local/share/omg/versions/node/<version>`.',
           ],
         },
         {
           kind: 'commands',
-          title: 'Install the current Node.js LTS release and inspect it',
-          commands: ['omg use node lts', 'omg list node', 'omg which node'],
+          title: 'Install Node.js releases and aliases',
+          commands: [
+            'omg use node lts',
+            'omg use node lts/iron',
+            'omg use node 22',
+            'omg list node',
+            'omg which node',
+          ],
         },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Before running node or npm, create a .node-version file in the project containing the exact installed version reported by omg list node, or retain an existing .nvmrc that requests that version. Do not overwrite a project requirement without reviewing it. Let the enabled shell hook run at a new prompt, then check the executable.',
-            'omg use updates OMG’s current selection; it does not by itself put that runtime on an otherwise unpinned shell’s PATH. The hook restores the base PATH when no project pin matches.',
+            'OMG resolves aliases deterministically: `lts` maps to the current active LTS release from `index.json`, `lts/<codename>` (e.g. `lts/iron` or `lts/jod`) maps to that named release, and partial version numbers like `20` or `20.1` resolve to the newest matching release.',
+            'Published OMG releases target Linux x86_64 and Apple Silicon macOS. On Windows, run OMG inside WSL; Intel macOS and Linux ARM64 are not published release targets.',
           ],
-        },
-        {
-          kind: 'commands',
-          title: 'Verify the project pin at a new prompt',
-          commands: ['which -a node', 'node --version', 'npm --version'],
         },
       ],
     },
     {
-      id: 'project',
-      heading: 'Keep the project on the intended version',
+      id: 'version-files',
+      heading: 'Project version pin resolution order',
       blocks: [
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The reviewed runtime implementation checks .node-version, .nvmrc, .tool-versions, and then package.json. The shell hook searches the current directory and its parents. A nearer project pin can override a selection made outside the project.',
-            'Install the required version with omg use node followed by that version. Record the exact version your project requires in .node-version or retain its existing .nvmrc. Check the result in a new prompt before committing the version file.',
+            'When you enter a project directory, OMG’s compiled shell hook (`src/hooks/mod.rs`) walks upward through the directory tree. The nearest directory with a Node.js pin wins. Within one directory, it checks these sources in order:',
+          ],
+        },
+        {
+          kind: 'steps',
+          steps: [
+            {
+              text: 'Explicit `.node-version` file in the project directory or any parent directory.',
+            },
+            {
+              text: 'Legacy `.nvmrc` file (reused directly without configuration translation).',
+            },
+            {
+              text: 'Multi-runtime `.tool-versions` file (asdf and mise compatibility).',
+            },
+            {
+              text: '`package.json` engines (`engines.node`) or Volta pin (`volta.node`).',
+            },
           ],
         },
         {
           kind: 'commands',
-          title: 'Inspect installed and available versions',
-          commands: ['omg list node', 'omg list node --available', 'omg which node'],
+          title: 'Verify active Node.js and npm path in your shell',
+          commands: ['omg which node', 'which -a node', 'node --version', 'npm --version'],
+        },
+      ],
+    },
+    {
+      id: 'npm-boundary',
+      heading: 'Runtime ownership vs package management',
+      blocks: [
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'OMG manages the Node.js executable and the `npm` and `npx` binaries bundled with that release. It activates them by symlinking the selected version to `~/.local/share/omg/versions/node/current/bin` and prepending that directory to your PATH.',
+            'OMG does not intercept or wrap `npm install` or `pnpm install`. Dependency resolution, `node_modules`, and lockfiles (`package-lock.json`, `pnpm-lock.yaml`) remain strictly under the control of their respective package managers.',
+          ],
         },
         {
           kind: 'note',
           tone: 'info',
-          text: 'A Node.js version file does not lock JavaScript dependencies. Keep package-lock.json, pnpm-lock.yaml, or bun.lock with the dependency manager that owns it.',
-        },
-      ],
-    },
-    {
-      id: 'dependencies',
-      heading: 'Continue using npm or pnpm for dependencies',
-      blocks: [
-        {
-          kind: 'paragraphs',
-          paragraphs: [
-            'For an npm project with a committed package-lock.json, npm ci installs from that lockfile and checks its consistency with package.json. Use npm install when intentionally changing dependencies. Do not interchange package managers just to run a runtime manager.',
-            'pnpm is a separate tool with its own version policy and runtime-management features. If pnpm itself selects Node.js for a project, understand that choice before adding an OMG pin. The linked workflow guide explains the ownership boundaries.',
-          ],
-        },
-        {
-          kind: 'commands',
-          title: 'Install an existing npm project',
-          commands: ['node --version', 'npm --version', 'npm ci'],
+          text: 'To run project tasks defined in package.json without switching tools, use OMG’s native task runner: omg run <script> (e.g. omg run build, omg run test).',
         },
       ],
     },
     {
       id: 'troubleshooting',
-      heading: 'When Node.js or npm comes from the wrong place',
+      heading: 'Diagnosing PATH precedence and conflicting shims',
       blocks: [
-        {
-          kind: 'commands',
-          title: 'Inspect the shell before reinstalling',
-          commands: [
-            'omg which node',
-            'which -a node',
-            'which -a npm',
-            'node --version',
-            'npm --version',
-          ],
-        },
         {
           kind: 'paragraphs',
           paragraphs: [
@@ -95,13 +96,23 @@ export const content: LearningContent = {
             'OMG is approaching beta. These instructions are reviewed against the linked source documentation, not a claim of execution on every supported platform. Consult the runtime handbook for verification, storage, and version-file details.',
           ],
         },
+        {
+          kind: 'commands',
+          title: 'Inspect shell runtime resolution',
+          commands: ['omg which node', 'which -a node', 'which -a npm'],
+        },
       ],
     },
   ],
   sources: [
-    { title: 'OMG runtime handbook and source provenance', href: '/docs/runtimes/' },
-    { title: 'npm ci documentation', href: 'https://docs.npmjs.com/cli/commands/npm-ci' },
-    { title: 'pnpm runtime management', href: 'https://pnpm.io/cli/runtime' },
+    { title: 'OMG runtime implementation (src/runtimes/node.rs)', href: '/docs/runtimes/' },
+    { title: 'OMG shell hook resolution (src/hooks/mod.rs)', href: '/docs/architecture/' },
+    { title: 'Node.js official release distribution', href: 'https://nodejs.org/dist/' },
   ],
-  related: ['/guides/node-npm-pnpm/', '/guides/migrate-from-nvm/', '/runtimes/bun/'],
+  related: [
+    '/guides/node-npm-pnpm/',
+    '/guides/migrate-from-nvm/',
+    '/compare/omg-vs-nvm/',
+    '/compare/omg-vs-volta/',
+  ],
 };

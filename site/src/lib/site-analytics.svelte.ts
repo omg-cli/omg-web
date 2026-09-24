@@ -19,7 +19,8 @@ const MAX_RETRY_QUEUE_SIZE = 50;
 // Event types for analytics
 type EventType =
   'pageview' | 'scroll_depth' | 'time_on_page' | 'cta_click' | 'web_vitals' | 'engagement';
-type CtaType = 'download' | 'signup' | 'pricing' | 'docs' | 'github' | 'install';
+type CtaType =
+  'download' | 'signup' | 'pricing' | 'docs' | 'github' | 'install' | 'install_command_copied';
 
 interface AnalyticsPageContext {
   readonly path: string;
@@ -356,6 +357,14 @@ function trackCtaClick(ctaType: CtaType, ctaLabel?: string): void {
   });
 }
 
+/** Record a completed clipboard action as a distinct install-funnel step. */
+export function trackInstallCommandCopied(): void {
+  if (!('navigator' in globalThis)) {
+    return;
+  }
+  trackCtaClick('install_command_copied', 'Install command copied');
+}
+
 /**
  * Report Core Web Vitals
  */
@@ -605,7 +614,7 @@ function initCtaTracking(): void {
 
 function ctaTypeForLink(link: Element): CtaType | undefined {
   const href = link.getAttribute('href') || '';
-  if (href.startsWith('/#install')) return 'install';
+  if (href === '#install' || href === '/#install') return 'install';
   if (href.startsWith('/login/')) return 'signup';
   if (href.startsWith('/docs')) return 'docs';
   if (href.startsWith('https://github.com/')) return 'github';

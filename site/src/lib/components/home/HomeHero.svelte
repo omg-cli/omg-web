@@ -4,13 +4,14 @@
   <div class="hero-introduction">
     <p>
       Manage system packages and <a href="/runtimes/node/">Node.js</a>,
-      <a href="/runtimes/bun/">Bun</a>, and <a href="/runtimes/python/">Python</a> versions with one
-      free CLI for Linux, macOS, and WSL. Keep your
-      <a href="/guides/node-npm-pnpm/">npm and pnpm workflows</a> as they are.
+      <a href="/runtimes/python/">Python</a>, <a href="/runtimes/go/">Go</a>,
+      <a href="/runtimes/rust/">Rust</a>, and <a href="/runtimes/bun/">Bun</a> versions with one
+      free CLI for supported x86_64 Linux distributions and Apple Silicon macOS, including Linux
+      inside WSL2. Keep your <a href="/guides/node-npm-pnpm/">npm and pnpm workflows</a>.
     </p>
     <nav class="hero-actions" aria-label="Homepage introduction">
       <a class="primary-link" href="#install">Install OMG <span aria-hidden="true">↓</span></a>
-      <a class="text-link" href="#workflow">See how it works <span aria-hidden="true">→</span></a>
+      <a class="text-link" href="#workflow">Explore workflows <span aria-hidden="true">→</span></a>
     </nav>
   </div>
   <div class="command-examples" aria-label="Example OMG commands">

@@ -17,7 +17,7 @@
         url: canonicalUrl,
         logo: `${SITE_ORIGIN}/icons/icon-512.png`,
         description:
-          'OMG is a free open-source CLI for system packages, language runtimes, and development environments on Linux, macOS, and WSL.',
+          'OMG is a free open-source CLI for system packages and language runtimes on supported x86_64 Linux distributions and Apple Silicon macOS, including Linux inside WSL2.',
         sameAs: ['https://github.com/omg-cli/omg'],
       },
       {
@@ -31,15 +31,29 @@
         '@type': 'SoftwareApplication',
         name: 'OMG Package Manager',
         applicationCategory: 'DeveloperApplication',
-        operatingSystem: 'Linux, macOS, Windows Subsystem for Linux',
+        applicationSubCategory: 'DeveloperTools',
+        operatingSystem:
+          'Linux (x86_64), macOS (Apple Silicon), Windows Subsystem for Linux (x86_64)',
         description:
-          'A fast package and runtime manager for Linux system packages and reproducible development environments.',
+          'A package and runtime manager for supported Linux distributions and Apple Silicon macOS.',
         url: canonicalUrl,
         downloadUrl: `${SITE_ORIGIN}/install.sh`,
         softwareHelp: `${SITE_ORIGIN}/docs/`,
         codeRepository: 'https://github.com/omg-cli/omg',
         license: 'https://opensource.org/licenses/MIT',
         publisher: { '@id': `${SITE_ORIGIN}/#org` },
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+        featureList: [
+          'Unified system package manager for Linux and macOS',
+          'Multi-language runtime manager for Node.js, Python, Go, Rust, and Bun',
+          'Zero-shim execution with direct PATH shell integration',
+          'Automatic version-file detection (.nvmrc, .node-version, .python-version, .tool-versions)',
+          'Environment capture and drift checks on Arch, Debian, and Ubuntu',
+        ],
         isAccessibleForFree: true,
       },
     ],
@@ -48,7 +62,7 @@
 
 <SeoHead
   title="OMG — Package & Runtime Manager for Linux and macOS"
-  description="Manage system packages and Node.js, Bun, Python, Go, and Rust versions with one free CLI. Keep project runtimes consistent on Linux, macOS, and WSL."
+  description="Manage system packages and Node.js, Bun, Python, Go, and Rust versions with one free CLI for x86_64 Linux and Apple Silicon macOS, including WSL2."
   path="/"
   {structuredData}
 />
