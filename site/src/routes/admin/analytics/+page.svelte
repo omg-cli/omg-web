@@ -202,7 +202,7 @@
           {#each data.analytics.site.calls_to_action as item (`${item.cta_type}:${item.count}`)}
             <li>
               <strong>{formatProductLabel(item.cta_type ?? 'unknown')}</strong>
-              <span>{formatCount(item.count)} clicks</span>
+              <span>{formatCount(item.count)} actions</span>
             </li>
           {/each}
         </ol>

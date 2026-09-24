@@ -3,94 +3,132 @@ import type { LearningContent } from '../page';
 export const content: LearningContent = {
   sections: [
     {
-      id: 'summary',
-      heading: 'Start with the workflow you need',
+      id: 'case',
+      heading: 'If mise already works for you, why try OMG?',
       blocks: [
         {
           kind: 'paragraphs',
           paragraphs: [
-            'OMG brings supported system package operations, language runtime selection, and environment capture/check workflows into one CLI. mise manages development tools and runtimes, environment variables, and tasks. Both can help a developer maintain multiple projects.',
-            'This comparison was reviewed on September 14, 2026 against the linked documentation. It is a feature and workflow comparison, not an independently executed speed benchmark. OMG is approaching beta; validate the commands and platform support your projects need before changing their toolchain.',
+            'For runtime pins, environment variables, and project tasks, mise is hard to beat. It also installs host packages through bootstrap configuration. OMG has to offer more than another way to select Node.',
+            'OMG earns its place when the host package is part of your daily work. Search your configured repositories, inspect a package and its dependencies, preview the transaction, then inspect recorded history and vulnerability findings without changing tools. On Arch, that same CLI also handles AUR builds through its own review and sandbox pipeline.',
+            'That is a workflow difference, not a claim that OMG does everything mise does or that it wins a speed benchmark. Try these commands against the packages and projects you actually use.',
           ],
         },
       ],
     },
     {
-      id: 'differences',
-      heading: 'Compare the responsibilities',
+      id: 'package-work',
+      heading: 'Follow a package beyond installation',
+      blocks: [
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'mise lets you declare packages in [bootstrap.packages], preview an apply, and check whether the declared packages are present. OMG centers the package itself, including packages that were already installed outside a project config.',
+          ],
+        },
+        {
+          kind: 'commands',
+          title: 'An OMG package investigation on a supported Linux system',
+          commands: [
+            'omg search ripgrep',
+            'omg info ripgrep',
+            'omg why ripgrep',
+            'omg install ripgrep --dry-run',
+            'omg history --search ripgrep',
+            'omg audit scan',
+          ],
+        },
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'Search and info use the selected OS package backend. The dry run shows a plan without installing. History records supported mutations; it does not retroactively record work done by other package managers. Audit scan checks installed packages against available advisory sources, so a clean result is not a guarantee that no vulnerability exists. Some releases require a running omgd daemon for this command.',
+            'OMG can also write a CycloneDX system-package inventory with matched vulnerability findings. Availability depends on the release, backend, and advisory source. Check the security reference for the version you installed. This is system package evidence, not an application dependency graph.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'aur',
+      heading: 'On Arch, the AUR path is materially different',
+      blocks: [
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'mise supports AUR packages in [bootstrap.packages], but its AUR manager calls an installed yay or paru. Its documentation says mise adds no independent trust or verification layer to that helper.',
+            'OMG searches official repositories and the AUR together. For an AUR install, it reviews recipe and source metadata, builds as an unprivileged user inside Bubblewrap with network access off by default, and inspects the resulting archive. Archives with privileged content require attended approval that --yes cannot bypass. Some high-risk outputs are rebuilt and compared byte for byte before installation.',
+            'These checks reduce specific risks; they cannot make a malicious recipe safe. They do mean the review and build boundary is part of OMG itself, rather than a property of whichever AUR helper you installed.',
+          ],
+        },
+        {
+          kind: 'commands',
+          title: 'Preview an AUR install on Arch',
+          commands: [
+            'omg search visual-studio-code-bin',
+            'omg install visual-studio-code-bin --dry-run',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'comparison',
+      heading: 'Pick the strength your setup needs',
       blocks: [
         {
           kind: 'table',
-          title: 'Documented behavior and tradeoffs',
-          columns: ['Area', 'OMG and mise'],
+          title: 'What each product is built to do',
+          columns: ['Your priority', 'Better fit and why'],
           rows: [
             [
-              'System package operations',
-              'OMG exposes supported native system-package backends through its CLI. mise describes its core as development tools, environment variables, and tasks; compare your actual system-package workflow rather than treating every tool download as an OS package transaction.',
+              'Investigate and operate OS packages',
+              'OMG: search, info, dependency questions, install plans, update, history, and vulnerability scans are direct CLI workflows on supported backends.',
             ],
             [
-              'Language runtimes',
-              'Both manage multiple languages. Check each tool’s current registry and installation support for the runtime and platform you need.',
+              'Declare a whole machine',
+              'mise: bootstrap covers packages, services, files, repositories, dotfiles, and more. OMG environment capture and drift checks are narrower inventory workflows.',
             ],
             [
-              'Project version files',
-              'The reviewed OMG hook checks files such as .node-version and .nvmrc. mise supports idiomatic files too, with explicit configuration described in its Node guide.',
+              'Handle AUR builds on Arch',
+              'OMG: its own review, sandbox, archive inspection, and attended gates. mise delegates AUR installation to yay or paru.',
             ],
             [
-              'npm versions',
-              'OMG’s Node installation provides the npm bundled with Node. mise documents independent npm pinning alongside Node.',
+              'Use many tool backends and advanced tasks',
+              'mise: wider tool registry, plugins, lockfile support, and a deeper task system. OMG reads supported mise.toml pins, environment values, and tasks, but does not implement all mise behavior.',
             ],
             [
-              'Environment workflows',
-              'OMG documents capture, check, and sharing/sync commands. mise documents environment configuration and task execution. These workflows overlap in purpose but are not identical operations.',
-            ],
-            [
-              'Platform choice',
-              'OMG’s installer targets supported Linux and Apple Silicon macOS; Windows usage is through WSL. Review mise’s own platform documentation for your setup.',
+              'Work on native Windows',
+              'mise: native Windows and PowerShell support. OMG runs on supported Linux distributions in WSL, not native Windows.',
             ],
           ],
         },
       ],
     },
     {
-      id: 'choose',
-      heading: 'When each tool is worth evaluating',
+      id: 'try',
+      heading: 'Give OMG one real package problem',
       blocks: [
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Evaluate OMG when a consistent interface for supported system packages and runtimes is central to your workflow, or when you want to try its environment capture and drift checks.',
-            'Evaluate mise when you want its development-tool registry, task runner, environment configuration, or documented npm pinning. A working mise setup is a reason to compare carefully, not an automatic reason to migrate.',
-            'For either tool, use a representative project and verify shell startup, directory switching, CI, dependency installation, and recovery. List the specific integrations your team relies on.',
+            'Keep mise in your project. Install OMG on a supported machine and use it to investigate a package you already depend on. Start with search, info, why, and a dry run. Those commands let you judge the package workflow before making a system change.',
+            'If that workflow saves you trips between your runtime manager, package manager, and security tools, OMG has earned a place beside your existing setup. If your main need is reproducible machine bootstrap, native Windows, or the full mise task and plugin ecosystem, stay with mise.',
           ],
         },
-      ],
-    },
-    {
-      id: 'evidence',
-      heading: 'Keep performance claims tied to the operation',
-      blocks: [
         {
-          kind: 'paragraphs',
-          paragraphs: [
-            'OMG’s homepage links a recorded Arch Linux package-search benchmark against pacman. It does not establish faster JavaScript execution, faster npm installs, or an overall speed advantage over mise.',
-            'A fair benchmark would state the tools and versions, machine, operating system, cache conditions, exact commands, repetitions, and raw results. No OMG-versus-mise speed claim is made on this page.',
-          ],
+          kind: 'note',
+          tone: 'info',
+          text: 'OMG supports Arch, Debian, Ubuntu, and Apple Silicon macOS; Fedora package support is experimental. Security and environment commands vary by backend. Check the linked references for your platform before relying on them.',
         },
       ],
     },
   ],
   sources: [
-    { title: 'OMG runtime handbook', href: '/docs/runtimes/' },
-    { title: 'OMG architecture and backend model', href: '/docs/architecture/' },
-    { title: 'mise development tools', href: 'https://mise.jdx.dev/dev-tools/' },
-    { title: 'mise Node.js and npm configuration', href: 'https://mise.jdx.dev/lang/node.html' },
-    { title: 'mise environments', href: 'https://mise.jdx.dev/environments/' },
+    { title: 'OMG package and CLI reference', href: '/docs/cli/' },
+    { title: 'OMG security model and SBOM limits', href: '/docs/security/' },
+    { title: 'OMG architecture and AUR pipeline', href: '/docs/architecture/' },
+    { title: 'OMG installation and platform matrix', href: '/docs/installation/' },
+    { title: 'mise bootstrap packages', href: 'https://mise.jdx.dev/bootstrap/packages/' },
+    { title: 'mise AUR manager', href: 'https://mise.jdx.dev/bootstrap/packages/aur.html' },
     { title: 'mise tasks', href: 'https://mise.jdx.dev/tasks/' },
   ],
-  related: [
-    '/guides/migrate-from-nvm/',
-    '/guides/reproducible-dev-environments/',
-    '/runtimes/node/',
-  ],
+  related: ['/compare/omg-vs-yay/', '/guides/reproducible-dev-environments/', '/docs/security/'],
 };

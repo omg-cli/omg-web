@@ -20,7 +20,7 @@
     },
     {
       number: '03',
-      title: 'An environment you can take with you.',
+      title: 'An environment record you can share.',
       detail:
         'On Arch, Debian, and Ubuntu, capture a working setup in omg.lock and check another machine against it.',
       command: 'omg env capture',

@@ -1,91 +1,120 @@
+import { SITE_ORIGIN } from '../../../../../shared/public-site';
 import type { LearningContent } from '../page';
 
 export const content: LearningContent = {
   sections: [
     {
-      id: 'before',
-      heading: 'Keep the existing installation while you check the replacement',
+      id: 'why-migrate',
+      heading: 'How the shell integrations differ',
       blocks: [
         {
           kind: 'paragraphs',
           paragraphs: [
-            'OMG reads .nvmrc, so an existing version file can stay in the project. It does not import nvm’s installed Node.js directories or move global npm packages automatically. Treat the migration as a change to runtime and shell ownership.',
-            'Before editing your shell profile, save a copy and record the currently selected Node.js and npm versions. Keep nvm installed until the new shell and project checks succeed. OMG targets Linux, Apple Silicon macOS, and WSL; this guide is not a migration path for native Windows nvm-windows.',
+            'nvm is a shell tool commonly sourced during shell startup. Its nvm use command selects a version from .nvmrc; automatic switching on directory changes requires extra shell integration.',
+            'OMG uses a compiled Rust binary (`src/runtimes/node.rs` and `src/hooks/mod.rs`) and a shell hook that evaluates project pins at the prompt, then adjusts PATH to the installed runtime. The actual shell cost depends on your configuration and machine.',
+            'OMG reads existing `.nvmrc` files without changing them, so you can test one project before changing your established setup.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'command-mapping',
+      heading: 'Command mapping from nvm to OMG',
+      blocks: [
+        {
+          kind: 'table',
+          title: 'Direct command equivalents',
+          columns: ['nvm command', 'OMG equivalent and notes'],
+          rows: [
+            [
+              'nvm install <version>',
+              'omg use node <version> (downloads prebuilt binary, verifies SHA-256 in memory, extracts with pure-Rust tar.xz unpacker, and activates).',
+            ],
+            [
+              'nvm install --lts',
+              'omg use node lts (or omg use node lts/<codename> like lts/iron).',
+            ],
+            ['nvm use <version>', 'omg use node <version> (switches active version via symlink).'],
+            [
+              'nvm ls',
+              'omg list node (displays installed Node.js versions and indicates active symlink).',
+            ],
+            [
+              'nvm ls-remote',
+              'omg list node --available (queries nodejs.org/dist/index.json in pure Rust).',
+            ],
+            [
+              'nvm current',
+              'omg which node (reports the selected version); use command -v node to see the executable path.',
+            ],
+          ],
+        },
+      ],
+    },
+    {
+      id: 'step-by-step',
+      heading: 'Safe, step-by-step migration process',
+      blocks: [
+        {
+          kind: 'steps',
+          steps: [
+            {
+              text: 'Audit your current Node.js setup and list globally installed packages.',
+              command: 'node --version && which -a node && npm list -g --depth=0',
+            },
+            {
+              text: 'Install OMG and enable shell integration for your shell (Bash, Zsh, or Fish).',
+              command: `curl -fsSL ${SITE_ORIGIN}/install.sh | bash`,
+            },
+            {
+              text: 'Install your desired Node.js version using OMG.',
+              command: 'omg use node lts',
+            },
+            {
+              text: 'Comment out the nvm sourcing lines in your ~/.bashrc or ~/.zshrc file.',
+              command: '# source ~/.nvm/nvm.sh\n# [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"',
+            },
+            {
+              text: 'Open a fresh terminal and verify the selected version and executable path.',
+              command: 'node --version && omg which node && command -v node',
+            },
+          ],
+        },
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'Keep your `~/.nvm` directory while you test your local repositories. OMG reads existing `.nvmrc` files; check each project’s requested version, installed runtime, and command path before removing your nvm shell setup.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'beyond-node',
+      heading: 'What you gain beyond Node.js',
+      blocks: [
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'While nvm only manages Node.js, OMG is a polyglot manager. You can use the exact same CLI syntax and fast shell hook for 14 runtimes (Python, Go, Rust, Bun, Deno, Ruby, Java, PHP, Swift, Zig, .NET), 54 curated developer CLI tools (`ripgrep`, `starship`, `fzf`, `bat`, `eza`), and native system packages across Linux and macOS.',
           ],
         },
         {
           kind: 'commands',
-          title: 'Record the current project environment',
+          title: 'Explore polyglot management with OMG',
           commands: [
-            'node --version',
-            'npm --version',
-            'which -a node',
-            'which -a npm',
-            'npm list --global --depth=0',
-          ],
-        },
-      ],
-    },
-    {
-      id: 'select',
-      heading: 'Install the version your project already requires',
-      blocks: [
-        {
-          kind: 'paragraphs',
-          paragraphs: [
-            'Read the project’s .nvmrc and install its required Node.js release with omg use node followed by the version. Use an explicit version for the initial migration if an alias is ambiguous.',
-            'Follow the OMG installation guide to enable the hook for your shell. Disable the nvm initialization line in your saved shell profile only after you have identified it. Avoid running two auto-switching hooks for the same project.',
-          ],
-        },
-        {
-          kind: 'commands',
-          title: 'Inspect the selected runtime after opening a fresh shell',
-          commands: [
-            'omg which node',
-            'node --version',
-            'npm --version',
-            'which -a node',
-            'which -a npm',
-          ],
-        },
-      ],
-    },
-    {
-      id: 'verify',
-      heading: 'Check the project before removing anything',
-      blocks: [
-        {
-          kind: 'paragraphs',
-          paragraphs: [
-            'Enter the project and let the shell hook run. Confirm that .nvmrc selects the required installed runtime. In the reviewed OMG implementation, .node-version has priority over .nvmrc; resolve conflicting files deliberately.',
-            'Run the repository’s documented dependency installation and tests. Global npm tools installed under nvm may need a separate installation or an explicit project dependency. Do not copy an old runtime’s bin directory into the new one.',
-          ],
-        },
-        {
-          kind: 'note',
-          tone: 'warning',
-          text: 'omg migrate is an environment-manifest import/export command. It is not an automatic migration command for nvm, pyenv, or rustup.',
-        },
-      ],
-    },
-    {
-      id: 'rollback',
-      heading: 'Return to nvm if a project is not ready',
-      blocks: [
-        {
-          kind: 'paragraphs',
-          paragraphs: [
-            'Restore the saved shell profile or re-enable the nvm initialization and disable the OMG hook for that shell. Open a fresh shell and check node --version and which -a node again.',
-            'Keep the existing .nvmrc and dependency lockfile. Removing an old runtime installation is a separate cleanup decision after every dependent project has been checked.',
+            'omg use go 1.24',
+            'omg use rust stable',
+            'omg tool install ripgrep',
+            'omg run build',
           ],
         },
       ],
     },
   ],
   sources: [
-    { title: 'OMG runtime migration behavior', href: '/docs/runtimes/' },
-    { title: 'OMG shell installation', href: '/docs/installation/' },
-    { title: 'nvm documentation', href: 'https://github.com/nvm-sh/nvm' },
+    { title: 'OMG Node.js manager (src/runtimes/node.rs)', href: '/docs/runtimes/' },
+    { title: 'OMG shell hook architecture (src/hooks/mod.rs)', href: '/docs/architecture/' },
+    { title: 'nvm project documentation', href: 'https://github.com/nvm-sh/nvm' },
   ],
-  related: ['/runtimes/node/', '/guides/node-npm-pnpm/', '/docs/troubleshooting/'],
+  related: ['/runtimes/node/', '/compare/omg-vs-nvm/', '/guides/node-npm-pnpm/'],
 };

@@ -20,7 +20,7 @@ const EDGE_CACHE_POLICY =
 
 describe('public file endpoints', () => {
   it.each([
-    ['install.sh', '334d1e2e9cc43300ba3036752fc90c43e83778c6a22a738c04000305e7aaa069'],
+    ['install.sh', '6943fd1930367af2045bcb4636f9b26da1c5840a038c34944e8df3d63c7d5649'],
     ['install.ps1', '842141cc4cc23318b24437d363bb696e69194c1fbf719f677c007f616b3b13e7'],
     [
       '.well-known/omg-license-ed25519-v1.pem',

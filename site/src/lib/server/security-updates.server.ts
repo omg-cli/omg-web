@@ -31,7 +31,7 @@ async function refresh(fetcher: typeof fetch): Promise<SecurityFeed> {
   const results = await Promise.allSettled(
     SOURCES.map(async source => {
       const response = await fetcher(
-        `https://api.github.com/repos/PyRo1121/${source.repository}/commits?sha=${encodeURIComponent(source.ref)}&per_page=100`,
+        `https://api.github.com/repos/omg-cli/${source.repository}/commits?sha=${encodeURIComponent(source.ref)}&per_page=100`,
         {
           headers: {
             Accept: 'application/vnd.github+json',

@@ -27,7 +27,10 @@ export const configurationTopic: DocsTopic = {
               '~/.config/omg/config.toml',
               'General settings such as telemetry and AUR build tuning',
             ],
-            ['~/.config/omg/policy.toml', 'Security policy for what may be installed'],
+            [
+              '~/.config/omg/policy.toml',
+              'Package policy enforced against prepared Arch transactions',
+            ],
             ['~/.local/share/omg/versions/', 'Installed runtime versions'],
             ['~/.local/share/omg/tools/', 'CLI tools installed with omg tool'],
             ['~/.local/share/omg/status-cache.json', 'Versioned daemon status snapshot'],
@@ -78,7 +81,7 @@ export const configurationTopic: DocsTopic = {
             'telemetry_enabled = false',
             '',
             '[aur]',
-            'build_concurrency = 16',
+            'build_concurrency = 8',
             'enable_ccache = true',
             'cache_builds = true',
           ],
@@ -89,7 +92,10 @@ export const configurationTopic: DocsTopic = {
           columns: ['Setting', 'Default and meaning'],
           rows: [
             ['build_method', '"bubblewrap" by default; alternatives are "chroot" and "native"'],
-            ['build_concurrency', 'CPU count by default; parallel AUR builds'],
+            [
+              'build_concurrency',
+              '1 by default; the config command accepts 1 through 8 parallel AUR builds',
+            ],
             [
               'review_pkgbuild',
               'true by default; requires interactive PKGBUILD review before building',

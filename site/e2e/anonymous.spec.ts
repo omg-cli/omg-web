@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { Schema } from 'effect';
 import { SITE_ORIGIN } from '../../shared/public-site';
+import { docsSourceHref, docsTopicMeta } from '../src/lib/docs/topics';
+import { RELEASE_NOTES } from '../src/lib/release-notes';
 import { AUTH_FIELDS } from './helpers';
 
 const DocsTopicNodeSchema = Schema.Struct({
@@ -30,11 +32,74 @@ const TimingBatchSchema = Schema.Struct({
   ),
 });
 const decodeTimingBatch = Schema.decodeUnknownSync(Schema.fromJsonString(TimingBatchSchema));
+const CtaBatchSchema = Schema.Struct({
+  events: Schema.Array(
+    Schema.Struct({
+      event_type: Schema.optional(Schema.String),
+      properties: Schema.optional(Schema.Struct({ cta_type: Schema.optional(Schema.String) })),
+    })
+  ),
+});
+const decodeCtaBatch = Schema.decodeUnknownSync(Schema.fromJsonString(CtaBatchSchema));
+const HomeStructuredDataSchema = Schema.Struct({
+  '@graph': Schema.Array(
+    Schema.Struct({
+      '@type': Schema.String,
+      offers: Schema.optional(
+        Schema.Struct({
+          '@type': Schema.String,
+          price: Schema.String,
+          priceCurrency: Schema.String,
+        })
+      ),
+    })
+  ),
+});
+const decodeHomeStructuredData = Schema.decodeUnknownSync(
+  Schema.fromJsonString(HomeStructuredDataSchema)
+);
 const externalBaseUrl = process.env['E2E_BASE_URL']?.trim();
 
 test.use({ contextOptions: { reducedMotion: 'reduce' } });
 
 test.describe('Svelte public surfaces', () => {
+  test('guides a visitor from install intent to a first command', async ({ page, context }) => {
+    const recordedCtas: string[] = [];
+    await page.route('**/api/analytics/site/', async route => {
+      const batch = decodeCtaBatch(route.request().postData() ?? '{"events":[]}');
+      for (const event of batch.events) {
+        if (event.event_type === 'cta_click' && event.properties?.cta_type) {
+          recordedCtas.push(event.properties.cta_type);
+        }
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: '{"success":true,"processed":1}',
+      });
+    });
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.goto('/', { waitUntil: 'networkidle' });
+
+    await page
+      .getByRole('navigation', { name: 'Homepage introduction' })
+      .getByRole('link', { name: 'Install OMG' })
+      .click();
+    await expect(page.getByRole('button', { name: 'Copy install command' })).toBeInViewport({
+      ratio: 0.9,
+    });
+    await expect(page.locator('#install')).toContainText('WSL2');
+    await expect(page.locator('#install')).toContainText('omg search ripgrep');
+    await page.getByRole('button', { name: 'Copy install command' }).click();
+    await expect(page.getByRole('status')).toHaveText('Install command copied.');
+    await expect
+      .poll(() => ({
+        install: recordedCtas.includes('install'),
+        copied: recordedCtas.includes('install_command_copied'),
+      }))
+      .toEqual({ install: true, copied: true });
+  });
+
   test('copies the complete installer command without the shell prompt', async ({
     page,
     context,
@@ -110,15 +175,21 @@ test.describe('Svelte public surfaces', () => {
       `${SITE_ORIGIN}/updates/`
     );
     await expect(page.locator('.updates-shell details').first()).toHaveAttribute('open', '');
+    const olderReleaseData = RELEASE_NOTES.at(1);
+    if (olderReleaseData === undefined) {
+      throw new Error('Release note navigation requires an older release');
+    }
     const olderRelease = page.locator('.updates-shell details').nth(1);
-    const notesLink = olderRelease.getByRole('link', { name: 'Full v0.1.218 release notes' });
+    const notesLink = olderRelease.getByRole('link', {
+      name: `Full ${olderReleaseData.version} release notes`,
+    });
     await expect(notesLink).not.toBeVisible();
     await olderRelease.locator('summary').focus();
     await olderRelease.locator('summary').press('Enter');
     await expect(notesLink).toBeVisible();
     await expect(notesLink).toHaveAttribute(
       'href',
-      'https://github.com/omg-cli/omg/releases/tag/v0.1.218'
+      `https://github.com/omg-cli/omg/releases/tag/${olderReleaseData.version}`
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true
@@ -155,7 +226,10 @@ test.describe('Svelte public surfaces', () => {
       .evaluate(node => node.textContent ?? '');
     expect(structuredDataText).toContain(`${SITE_ORIGIN}/install.sh`);
     expect(structuredDataText).toContain('"isAccessibleForFree":true');
-    expect(structuredDataText).not.toContain('"offers"');
+    const structuredData = decodeHomeStructuredData(structuredDataText);
+    expect(
+      structuredData['@graph'].find(entry => entry['@type'] === 'SoftwareApplication')?.offers
+    ).toEqual({ '@type': 'Offer', price: '0', priceCurrency: 'USD' });
     await expect(
       page.getByText('Free and open source. Built in Rust. No account required.', { exact: true })
     ).toBeVisible();
@@ -176,7 +250,7 @@ test.describe('Svelte public surfaces', () => {
     await expect(
       page.getByRole('heading', { name: /One interface\.\s*Three jobs\./ })
     ).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Fast, with receipts.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Speed deserves a fair test.' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Inspect the benchmark record' })).toHaveAttribute(
       'href',
       'https://github.com/omg-cli/omg/tree/fe72b92b6e61c13a19f00627d22f3d1bc5713347/benchmarks/records/20260903_015949-5c43ddcc'
@@ -203,7 +277,7 @@ test.describe('Svelte public surfaces', () => {
       page.getByRole('heading', { name: 'Manage Node.js, Python, Go, and Rust versions' })
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: 'Capture reproducible project environments' })
+      page.getByRole('heading', { name: 'Capture and compare project environments' })
     ).toBeVisible();
     for (const topicSlug of [
       'installation',
@@ -234,7 +308,7 @@ test.describe('Svelte public surfaces', () => {
     for (const topicSlug of ['installation', 'cli', 'architecture']) {
       expect(sitemapText).toContain(`<loc>${SITE_ORIGIN}/docs/${topicSlug}/</loc>`);
     }
-    expect(sitemapText).toContain('<lastmod>2026-09-14</lastmod>');
+    expect(sitemapText).toContain(`<lastmod>${docsTopicMeta('cli').source.reviewedAt}</lastmod>`);
     expect(sitemapText).not.toContain('<changefreq>');
     expect(sitemapText).not.toContain('<priority>');
     expect(sitemapText).not.toContain(`${SITE_ORIGIN}/dashboard`);
@@ -273,17 +347,18 @@ test.describe('Svelte public surfaces', () => {
     const structuredData = decodeDocsTopicStructuredData(breadcrumbText);
     const breadcrumb = structuredData['@graph'].find(node => node['@type'] === 'BreadcrumbList');
     const article = structuredData['@graph'].find(node => node['@type'] === 'TechArticle');
+    const cliTopic = docsTopicMeta('cli');
     expect(breadcrumb?.itemListElement?.map(item => item.name)).toEqual([
       'Home',
       'Docs',
       'CLI reference',
     ]);
     expect(article?.headline).toBe('CLI reference');
-    expect(article?.dateModified).toBe('2026-09-21');
+    expect(article?.dateModified).toBe(cliTopic.source.reviewedAt);
 
     await expect(page.getByRole('link', { name: /omg-cli\/omg\/docs\/cli\.md/ })).toHaveAttribute(
       'href',
-      'https://github.com/omg-cli/omg/blob/d5e4bddc48a368342ee21bb6cf193affac6f7603/docs/cli.md'
+      docsSourceHref(cliTopic.source)
     );
 
     await page

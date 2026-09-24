@@ -34,9 +34,17 @@ describe('public discovery contracts', () => {
   it('makes authored runtime and workflow pages discoverable with truthful dates', async () => {
     const xml = await sitemapResponse().text();
     expect(xml).toContain('<loc>https://getomg.xyz/runtimes/node/</loc>');
+    expect(xml).toContain('<loc>https://getomg.xyz/runtimes/go/</loc>');
+    expect(xml).toContain('<loc>https://getomg.xyz/runtimes/rust/</loc>');
     expect(xml).toContain('<loc>https://getomg.xyz/guides/node-npm-pnpm/</loc>');
+    expect(xml).toContain('<loc>https://getomg.xyz/guides/migrate-from-asdf/</loc>');
     expect(xml).toContain('<loc>https://getomg.xyz/compare/omg-vs-mise/</loc>');
-    expect(xml).toContain('<lastmod>2026-09-14</lastmod>');
+    expect(xml).toContain('<loc>https://getomg.xyz/compare/omg-vs-asdf/</loc>');
+    expect(xml).toContain('<loc>https://getomg.xyz/compare/omg-vs-nvm/</loc>');
+    expect(xml).toContain('<loc>https://getomg.xyz/compare/omg-vs-pyenv/</loc>');
+    expect(xml).toContain('<loc>https://getomg.xyz/compare/omg-vs-volta/</loc>');
+    expect(xml).toContain('<lastmod>2026-09-22</lastmod>');
+    expect(xml).toContain('<lastmod>2026-09-21</lastmod>');
     expect(xml).not.toContain('/dashboard/');
     expect(xml).not.toContain('/api/');
   });

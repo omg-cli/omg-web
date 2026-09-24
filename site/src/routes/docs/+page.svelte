@@ -4,6 +4,7 @@
   import { DOCS_TOPICS, docsTopicHref } from '../../lib/docs/topics';
 
   const canonicalUrl = `${SITE_ORIGIN}/docs/`;
+  const sourceDocsUrl = `https://github.com/omg-cli/omg/tree/${DOCS_TOPICS[0].source.reviewedCommit}/docs`;
   const installCommand = `curl -fsSL ${SITE_ORIGIN}/install.sh -o omg-install.sh\nless omg-install.sh && bash omg-install.sh`;
   const structuredData = serializeJsonLd({
     '@context': 'https://schema.org',
@@ -19,7 +20,7 @@
         '@type': 'CollectionPage',
         name: 'OMG Documentation',
         description:
-          'Install OMG, learn its package and runtime commands, capture reproducible environments, and browse the curated handbook.',
+          'Install OMG, learn its package and runtime commands, capture supported system state, check drift, and browse the curated handbook.',
         url: canonicalUrl,
         isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
         hasPart: DOCS_TOPICS.map(topic => ({
@@ -47,8 +48,9 @@
     },
     {
       number: '03',
-      title: 'Capture reproducible project environments',
-      description: 'Capture the machine state, check drift, and restore a shared environment.',
+      title: 'Capture and compare project environments',
+      description:
+        'On Arch, Debian, and Ubuntu, capture supported package and runtime state, check drift, and fetch a shared lockfile for comparison.',
       commands: ['omg env capture', 'omg env check', 'omg env sync <share-url>'],
     },
   ] as const;
@@ -56,7 +58,7 @@
 
 <SeoHead
   title="OMG Documentation - Install, Commands, and Platforms"
-  description="Install OMG, learn its package and runtime commands, capture reproducible environments, and browse the curated handbook."
+  description="Install OMG, learn its package and runtime commands, capture supported system state, check drift, and browse the curated handbook."
   path="/docs/"
   {structuredData}
 />
@@ -95,13 +97,18 @@
         <h2>Install OMG</h2>
         <p class="section-copy">
           The universal installer detects Linux or macOS and downloads the matching release. On
-          Windows, run it inside WSL2. Download the script, review it, then run it.
+          Windows, run it inside WSL2. The GitHub CLI (gh) is required to verify the release
+          attestation. Download the script, review it, then run it.
         </p>
         <pre class="install-command"><code><span>$ </span>{installCommand}</code></pre>
         <p class="install-note">
           Prefer a direct download? <a href="https://github.com/omg-cli/omg/releases"
             >Download release binaries on GitHub</a
           >.
+        </p>
+        <p class="install-note">
+          The installer currently serves v0.1.223. This handbook calls out behavior added in the
+          newer main checkout where it differs from that release.
         </p>
       </section>
 
@@ -130,8 +137,8 @@
           <div>
             <dt>Linux</dt>
             <dd>
-              Arch, Debian, Ubuntu, and Fedora releases. RHEL and CentOS-family hosts receive a
-              Fedora-artifact fallback; that is not a compatibility guarantee.
+              Arch, Debian 12, Ubuntu 24.04, and Fedora releases. RHEL and CentOS-family hosts
+              receive a Fedora-artifact fallback; that is not a compatibility guarantee.
             </dd>
           </div>
           <div>
@@ -140,7 +147,9 @@
           </div>
           <div>
             <dt>Windows</dt>
-            <dd>Use OMG inside WSL. Native Windows is not supported.</dd>
+            <dd>
+              Use OMG inside WSL with a supported Linux guest. Native Windows is not supported.
+            </dd>
           </div>
           <div>
             <dt>Architecture</dt>
@@ -157,7 +166,12 @@
         <p class="section-copy">
           Eight concise topics answer common tasks on this site. Each topic links to its pinned
           upstream reference. The pages were checked against the CLI code and documentation at that
-          commit.
+          commit. For the complete set of guides, including AUR builds, task detection, migration,
+          containers, and release operations, browse the <a
+            href={sourceDocsUrl}
+            target="_blank"
+            rel="noopener noreferrer">OMG source documentation</a
+          >.
         </p>
         <ul class="reference-list">
           {#each DOCS_TOPICS as topic (topic.slug)}

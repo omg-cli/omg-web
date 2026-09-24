@@ -3,81 +3,105 @@ import type { LearningContent } from '../page';
 export const content: LearningContent = {
   sections: [
     {
-      id: 'roles',
-      heading: 'A runtime manager and a package manager do different jobs',
-      blocks: [
-        {
-          kind: 'paragraphs',
-          paragraphs: [
-            'Bun includes a JavaScript runtime and a package manager. OMG installs and selects the Bun binary. Bun then runs your application or installs its dependencies. Choosing a Bun version with OMG does not automatically migrate an npm or pnpm project.',
-            'Use OMG on supported Linux distributions, Apple Silicon macOS, or Linux inside WSL. Native Windows is not supported by OMG even though Bun itself offers Windows builds.',
-          ],
-        },
-      ],
-    },
-    {
       id: 'install',
-      heading: 'Install Bun and check the selected binary',
+      heading: 'Pure Rust Bun installation from verified GitHub releases',
       blocks: [
-        {
-          kind: 'commands',
-          title: 'Install the latest Bun release for a new project',
-          commands: ['omg use bun latest', 'omg list bun', 'omg which bun'],
-        },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Enable OMG shell integration first. For a new project, create .bun-version containing the exact installed version reported by omg list bun. For a project that already pins Bun, install its required version instead of changing it to latest.',
-            'Let the hook run at the next prompt before checking bun. Without a matching project pin, omg use alone does not add the selected Bun binary to the shell PATH.',
+            'OMG manages the Bun runtime using a compiled Rust pipeline in `src/runtimes/bun.rs`. Rather than relying on external install scripts or cURL pipelines, OMG communicates directly with GitHub Releases (`oven-sh/bun`), fetches platform release archives over HTTPS, and parses the release asset SHA-256 digest directly from the release metadata before allowing any disk writes.',
+            'The downloaded zip archive is unpacked into a staging directory using OMG’s pure-Rust zip decompressor (`extract_zip`) with single-directory component stripping. Upon successful extraction, OMG publishes the installation atomically to `~/.local/share/omg/versions/bun/<version>` and updates the `current` symlink.',
           ],
         },
         {
           kind: 'commands',
-          title: 'Verify the project pin at a new prompt',
-          commands: ['which -a bun', 'bun --version'],
+          title: 'Install and inspect Bun releases',
+          commands: ['omg use bun latest', 'omg use bun 1.2.4', 'omg list bun', 'omg which bun'],
+        },
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'OMG’s version resolver deterministically filters out release candidates and prereleases when resolving `latest` or partial version requests like `1.0`. Only stable production releases are selected unless an explicit prerelease tag is requested.',
+            'Published OMG releases target Linux x86_64 and Apple Silicon macOS. On Windows, run OMG inside WSL; Intel macOS and Linux ARM64 are not published release targets.',
+          ],
         },
       ],
     },
     {
-      id: 'pin',
-      heading: 'Pin the version a project needs',
+      id: 'version-files',
+      heading: 'Project version pins and shell detection',
       blocks: [
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The reviewed OMG shell hook checks .bun-version, .tool-versions, then package.json for Bun. Keep the exact required version in the project version file and install that version with omg use bun followed by the version.',
-            'A Bun runtime pin and bun.lock serve different purposes. The pin chooses the executable; the lockfile records dependency resolutions. Commit both when your project relies on both.',
+            'When navigating between repositories, OMG’s directory hook (`src/hooks/mod.rs`) checks the nearest directory with a Bun pin first. Within one directory, it checks these sources in order:',
+          ],
+        },
+        {
+          kind: 'steps',
+          steps: [
+            {
+              text: 'Project `.bun-version` file in the current working directory or any parent directory.',
+            },
+            {
+              text: 'Multi-runtime `.tool-versions` file (asdf and mise compatible).',
+            },
+            {
+              text: '`package.json` engines (`engines.bun`) or Volta configuration (`volta.bun`).',
+            },
           ],
         },
         {
           kind: 'commands',
-          title: 'Check the active version',
+          title: 'Verify active Bun version at a new prompt',
+          commands: ['bun --version', 'omg which bun', 'which -a bun'],
+        },
+      ],
+    },
+    {
+      id: 'bun-boundary',
+      heading: 'Separating runtime management from package dependencies',
+      blocks: [
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'OMG is responsible for fetching, validating, and activating the Bun binary on PATH. All project-level dependency operations—such as `bun install`, `bun add`, and managing `bun.lock` / `bun.lockb`—are handled natively by Bun itself.',
+            'If your project contains a `package.json` with scripts, you can execute them through Bun directly (`bun run build`) or through OMG’s task runner (`omg run build`). The published OMG task runner selects Bun when package.json names Bun in packageManager or when the project has a legacy bun.lockb. For a project using bun.lock, set packageManager to Bun to make runner selection explicit.',
+          ],
+        },
+        {
+          kind: 'commands',
+          title: 'Install dependencies and run project tasks',
+          commands: ['bun install --frozen-lockfile', 'omg run build', 'omg run test'],
+        },
+      ],
+    },
+    {
+      id: 'troubleshooting',
+      heading: 'Diagnosing unexpected Bun executables',
+      blocks: [
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'If your shell finds an unexpected Bun binary, check if an existing installation from `~/.bun/bin` or a system package manager precedes OMG in your PATH. Ensure the OMG shell hook is initialized in your shell configuration file.',
+          ],
+        },
+        {
+          kind: 'commands',
+          title: 'Inspect shell PATH resolution',
           commands: ['omg which bun', 'which -a bun', 'bun --version'],
-        },
-      ],
-    },
-    {
-      id: 'workflows',
-      heading: 'Use Bun without accidentally changing the toolchain',
-      blocks: [
-        {
-          kind: 'paragraphs',
-          paragraphs: [
-            'Bun documents its package manager as usable in existing Node.js projects. That does not mean you should replace a committed npm or pnpm lockfile without reviewing the migration. Follow the dependency manager selected by the repository.',
-            'For an existing Bun project, follow its documented install and CI commands. For a migration, work in a separate Git branch, review the generated lockfile, and run the project tests. Package compatibility, lifecycle scripts, and native dependencies need project-specific validation.',
-          ],
-        },
-        {
-          kind: 'note',
-          tone: 'info',
-          text: 'OMG package-search benchmarks do not measure bun install, npm install, or JavaScript runtime execution. No performance comparison between those operations is claimed here.',
         },
       ],
     },
   ],
   sources: [
-    { title: 'OMG runtime handbook and source provenance', href: '/docs/runtimes/' },
-    { title: 'Bun package manager documentation', href: 'https://bun.com/docs/pm/cli/install' },
+    { title: 'OMG Bun runtime implementation (src/runtimes/bun.rs)', href: '/docs/runtimes/' },
+    { title: 'OMG shell hook resolution (src/hooks/mod.rs)', href: '/docs/architecture/' },
+    { title: 'Bun official GitHub releases', href: 'https://github.com/oven-sh/bun/releases' },
+    {
+      title: 'Bun lockfile documentation',
+      href: 'https://github.com/oven-sh/bun/blob/main/docs/pm/lockfile.mdx',
+    },
   ],
-  related: ['/runtimes/node/', '/guides/node-npm-pnpm/', '/docs/configuration/'],
+  related: ['/runtimes/node/', '/guides/node-npm-pnpm/', '/compare/omg-vs-mise/'],
 };

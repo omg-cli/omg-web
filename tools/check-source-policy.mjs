@@ -18,6 +18,7 @@ const consumerSourceDirectories = [
   'workers/api/tests',
 ];
 const frameworkEntryPoints = new Set([
+  'site/worker.js',
   'site/src/hooks.server.ts',
   'site/src/params.ts',
   'workers/api/src/worker.ts',
@@ -290,6 +291,10 @@ for (const directory of runtimeSourceDirectories) {
     }
   }
 }
+runtimeSourceMap.set(
+  'site/worker.js',
+  await readFile(new URL('site/worker.js', workspaceRoot), 'utf8')
+);
 
 const publicSiteSource = runtimeSourceMap.get('shared/public-site.ts');
 if (
@@ -396,7 +401,9 @@ for (const [path, source] of consumerFiles) {
       }
       if (specifier.startsWith('.') || specifier.startsWith('$lib/')) {
         const resolved = resolveImport(path, specifier);
-        if (resolved === null && specifier !== './$types') {
+        const generatedWorkerImport =
+          path === 'site/worker.js' && specifier === './.svelte-kit/cloudflare/_worker.js';
+        if (resolved === null && specifier !== './$types' && !generatedWorkerImport) {
           report(path, `local import does not resolve to a checked source file: ${specifier}`);
         } else if (
           resolved !== null &&

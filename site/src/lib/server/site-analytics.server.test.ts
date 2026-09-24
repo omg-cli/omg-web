@@ -29,6 +29,38 @@ function failureOf(exit: Exit.Exit<number, SiteAnalyticsRejected>): SiteAnalytic
 }
 
 describe('site analytics forwarding', () => {
+  it('accepts a completed installer-copy action for the site funnel', async () => {
+    const service = new AnalyticsServiceStub();
+    const processed = await Effect.runPromise(
+      forwardSiteAnalytics(
+        request(
+          JSON.stringify({
+            events: [
+              {
+                event_type: 'cta_click',
+                event_name: 'cta_interaction',
+                session_id: 'ses_test',
+                timestamp: 1_788_086_400_000,
+                properties: {
+                  path: '/',
+                  pv_id: 'pv_test',
+                  cta_type: 'install_command_copied',
+                  cta_label: 'Install command copied',
+                },
+              },
+            ],
+          })
+        ),
+        service
+      )
+    );
+
+    expect(processed).toBe(1);
+    expect(await service.request?.json()).toMatchObject({
+      events: [{ properties: { cta_type: 'install_command_copied' } }],
+    });
+  });
+
   it('decodes the browser batch and forwards only selected edge context', async () => {
     const service = new AnalyticsServiceStub();
     const processed = await Effect.runPromise(

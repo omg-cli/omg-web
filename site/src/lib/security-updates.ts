@@ -25,7 +25,7 @@ export type SecurityFeed = typeof SecurityFeedSchema.Type;
 export type SecurityUpdate = typeof SecurityUpdateSchema.Type;
 
 export function commitHref(update: SecurityUpdate): string {
-  return `https://github.com/PyRo1121/${update.repository}/commit/${update.sha}`;
+  return `https://github.com/omg-cli/${update.repository}/commit/${update.sha}`;
 }
 
 export function securityCategory(repository: string, title: string): string {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { serializeJsonLd, SITE_ORIGIN } from '../../../../../shared/public-site';
   import {
     LEARNING_CATEGORIES,
@@ -7,10 +8,17 @@
     type LearningPageMeta,
   } from '../../learn/catalog';
   import type { LearningContent } from '../../learn/page';
+  import { LatestReleaseView } from '../../latest-release.svelte';
   import DocsBlocks from '../docs/DocsBlocks.svelte';
   import SeoHead from '../SeoHead.svelte';
 
   let { meta, content }: { meta: LearningPageMeta; content: LearningContent } = $props();
+  const latestRelease = new LatestReleaseView();
+
+  onMount(() => {
+    if (meta.slug !== 'omg-vs-mise') return;
+    latestRelease.load();
+  });
   const path = $derived(learningHref(meta));
   const section = $derived(LEARNING_CATEGORIES[meta.category]);
   const related = $derived(
@@ -77,6 +85,12 @@
       OMG maintainers · Updated <time datetime={meta.modified}>{meta.modified}</time> · Source-reviewed
       guide
     </p>
+    {#if meta.slug === 'omg-vs-mise' && latestRelease.version}
+      <p class="byline">
+        Current download: {latestRelease.version} ·
+        <a href="https://releases.omg.latham.cloud/latest-version">Cloudflare release marker</a>
+      </p>
+    {/if}
   </header>
   <div class="article-layout">
     <aside>

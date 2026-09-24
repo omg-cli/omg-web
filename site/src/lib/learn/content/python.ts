@@ -3,88 +3,123 @@ import type { LearningContent } from '../page';
 export const content: LearningContent = {
   sections: [
     {
-      id: 'layers',
-      heading: 'Select Python, then isolate project dependencies',
+      id: 'install',
+      heading: 'Precompiled CPython from standalone builds',
       blocks: [
         {
           kind: 'paragraphs',
           paragraphs: [
-            'OMG selects the Python runtime. A virtual environment isolates the libraries a project installs. These are separate layers: changing a runtime does not recreate an existing virtual environment.',
-            'Install OMG and its shell integration on supported Linux, Apple Silicon macOS, or WSL. Keep distribution-managed Python available for operating-system tools; do not replace it globally with an application environment.',
+            'Compiling Python from source on every new machine requires C build toolchains, header files, and system development packages (like zlib, openssl, and libffi). OMG avoids this overhead by downloading validated, precompiled CPython distributions from the `python-build-standalone` project (`src/runtimes/python.rs` and `src/runtimes/python/catalog.rs`).',
+            'The published OMG release queries python-build-standalone releases on GitHub to select a binary matching the host platform target. It downloads the archive, validates its SHA-256 digest, and performs a pure-Rust `.tar.gz` extraction into a staged directory. Once extracted, the interpreter is published atomically to `~/.local/share/omg/versions/python/<version>`.',
+          ],
+        },
+        {
+          kind: 'commands',
+          title: 'Install and switch Python versions',
+          commands: [
+            'omg use python 3.12',
+            'omg use python 3.11',
+            'omg list python',
+            'omg which python',
+          ],
+        },
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'Published OMG releases target Linux x86_64 and Apple Silicon macOS. On Windows, run OMG inside WSL; Intel macOS and Linux ARM64 are not published release targets.',
           ],
         },
       ],
     },
     {
-      id: 'runtime',
-      heading: 'Install and inspect Python',
+      id: 'version-files',
+      heading: 'Project version detection and pyproject.toml support',
       blocks: [
-        {
-          kind: 'commands',
-          title: 'Install and inspect a Python release',
-          commands: ['omg use python 3.12', 'omg list python', 'omg which python'],
-        },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The version is an example, not a recommendation to change a project that requires another release. In a new project, create .python-version containing the exact installed release reported by omg list python. Keep an existing project’s requirement and install that release instead. The shell hook needs a matching project pin to put the runtime on PATH; omg use alone does not change an unpinned shell.',
-            'The reviewed hook checks .python-version, pyproject.toml, then .tool-versions. Allow the hook to run at a new prompt and compare which -a python3 and python3 --version with omg which python before creating the environment.',
+            'OMG’s shell hook (`src/hooks/mod.rs`) searches the current directory and then its ancestors. The nearest directory with a Python requirement wins. Within one directory, the sources are checked in this order:',
           ],
+        },
+        {
+          kind: 'steps',
+          steps: [
+            {
+              text: 'Project `.python-version` file: first priority within the same directory.',
+            },
+            {
+              text: '`pyproject.toml`: OMG reads the `[project] requires-python` specification if no `.python-version` is present.',
+            },
+            {
+              text: '`.tool-versions`: multi-runtime configuration file for asdf and mise compatibility.',
+            },
+          ],
+        },
+        {
+          kind: 'commands',
+          title: 'Verify Python version selection',
+          commands: ['python3 --version', 'omg which python', 'which -a python3'],
         },
       ],
     },
     {
       id: 'venv',
-      heading: 'Create a virtual environment for the selected interpreter',
+      heading: 'Virtual environments and dependency boundaries',
       blocks: [
         {
+          kind: 'paragraphs',
+          paragraphs: [
+            'OMG provides the selected Python interpreter. Project libraries should be isolated in a standard virtual environment created by that interpreter. This maintains a clean boundary between runtime management and package dependencies.',
+          ],
+        },
+        {
           kind: 'commands',
-          title: 'Create an environment and invoke its interpreter explicitly',
+          title: 'Create and use an isolated virtual environment',
           commands: [
             'python3 -m venv .venv',
             '.venv/bin/python --version',
-            '.venv/bin/python -m pip --version',
+            '.venv/bin/pip install -r requirements.txt',
           ],
         },
         {
           kind: 'note',
-          tone: 'warning',
-          text: 'The reviewed OMG Bash and Zsh hooks restore their saved base PATH at each prompt. Activating a virtual environment can therefore lose its PATH priority. Use .venv/bin/python and .venv/bin/python -m pip explicitly instead of relying on activation while that hook is enabled.',
-        },
-        {
-          kind: 'paragraphs',
-          paragraphs: [
-            'Use the environment’s explicit interpreter path when installing dependencies according to the repository documentation and its selected locking tool. A virtual environment alone does not lock dependency versions.',
-            'When changing Python versions, create a fresh virtual environment following the project instructions. Do not assume an existing .venv has switched interpreters because the project pin changed.',
-          ],
+          tone: 'info',
+          text: 'OMG’s task runner discovers [tool.poetry.scripts] entries in pyproject.toml and [scripts] entries in Pipfile, with Python task priority 80. It does not currently discover PDM, Rye, or [project.scripts] entries.',
         },
       ],
     },
     {
       id: 'diagnose',
-      heading: 'Diagnose an unexpected interpreter',
+      heading: 'Diagnosing system Python conflicts',
       blocks: [
-        {
-          kind: 'commands',
-          title: 'Check runtime and environment selection',
-          commands: ['omg which python', 'which -a python3', 'python3 --version'],
-        },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'An active virtual environment or another tool manager may intentionally take priority. Compare the selected interpreter with the project requirements before editing PATH or your shell profile.',
-            'These commands are source-reviewed guidance. Python builds, optional native libraries, shell configuration, and dependency installation need validation on your own supported platform.',
+            'Most Linux distributions and macOS ship a system-managed Python for operating-system utilities. OMG does not overwrite or mutate system Python packages in `/usr/bin/python3`. Instead, OMG manages user-space versions under `~/.local/share/omg/versions/python` and prepends the active symlink to your PATH.',
           ],
+        },
+        {
+          kind: 'commands',
+          title: 'Check interpreter locations across your PATH',
+          commands: ['omg which python', 'which -a python3', 'python3 --version'],
         },
       ],
     },
   ],
   sources: [
-    { title: 'OMG runtime handbook and source provenance', href: '/docs/runtimes/' },
     {
-      title: 'Python virtual environment documentation',
-      href: 'https://docs.python.org/3/library/venv.html',
+      title: 'OMG Python manager implementation (src/runtimes/python.rs)',
+      href: '/docs/runtimes/',
     },
+    {
+      title: 'python-build-standalone GitHub releases',
+      href: 'https://github.com/indygreg/python-build-standalone/releases',
+    },
+    { title: 'Python venv documentation', href: 'https://docs.python.org/3/library/venv.html' },
   ],
-  related: ['/guides/reproducible-dev-environments/', '/docs/troubleshooting/', '/runtimes/node/'],
+  related: [
+    '/compare/omg-vs-pyenv/',
+    '/guides/reproducible-dev-environments/',
+    '/docs/troubleshooting/',
+  ],
 };
