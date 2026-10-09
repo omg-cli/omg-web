@@ -24,16 +24,17 @@ returned one matching analytics completion row; it independently confirms the
 version and scheduledTime but does not prove all three persisted completions.
 The owned tail was deleted and its absence verified.
 
-A later runtime check found that staging native five-minute runs continued through
-`2026-10-09T21:30:51Z` despite the Cron API returning an empty list after the
-21:02 UTC cleanup. The empty staging list was reapplied at 21:28 UTC; readback
-still shows no configured triggers, with production schedules unchanged.
-The retained 21:30 native invocation completed successfully at 21:31:41 UTC,
-after that refresh. This is continuing runtime evidence, not just delayed API
-readback; allow the documented propagation window before a further diagnosis.
-Configuration restoration is verified, but runtime cessation is not yet verified.
-Treat this as open cleanup work rather than assuming API readback stops dispatch
-immediately. No additional provider work or production failure was injected.
+A later untruncated live tail found that staging native five-minute runs continued
+through `2026-10-09T21:45:51Z` despite empty configured schedules after the 21:02 UTC
+cleanup and 21:28 UTC refresh. The latter invocation occurred beyond the documented
+15-minute propagation window. A staging-only Wrangler trigger deployment reapplied
+empty schedules at 21:47:40 UTC, without uploading runtime, routes, bindings or
+secrets. Readback confirms empty schedules, unchanged production/staging deployment
+IDs, unchanged production Cron, and disabled staging workers.dev/previews. The owned
+tail was deleted with empty inventory readback. Runtime cessation after this direct
+client repair remains unverified; inspect the first post-propagation 22:05 UTC
+boundary after invocation/log latency. API readback alone does not prove dispatch
+stopped. No additional provider work or production failure was injected.
 
 ## Coverage
 
@@ -129,9 +130,36 @@ successful coordinator signal expresses the required outcome.
 The live Traces dashboard also verifies an actual staging native scheduled trace
 on version `38887e7f-e0c5-4f12-b9c6-a8c2082b51d1`: one scheduled root and three D1
 spans, 292 ms root duration, with no errors. The D1 spans show the read-only inbox
-health query and analytics batches. Recent production-version trace queries
-returned no rows under 1% trace sampling; this does not establish a tracing failure
-or prove production trace acceptance.
+health query and analytics batches.
+
+Current production tracing was subsequently accepted for both actual deployed
+versions without changing 1% sampling:
+
+- API trace `845669cce5ad52641cd1172bb6a6d243` on version
+  `9153c55b-0bdb-4bd0-9781-345e50504975` records the native 21:35:51 UTC five-minute
+  invocation: one scheduled root and three D1 spans, 432 ms trace duration, no
+  errors and outcome `ok`. Invocation wall time is separately 461 ms and CPU 19 ms.
+  Retained inbox-health, analytics and coordinator completions match the same
+  request ID, trace ID, version, Cron expression and scheduledTime.
+- Site trace `aa5dbaf1e6ccdb0f2664f7c639545928` on version
+  `65974306-855b-4aa7-9c40-eadb911eeb00` records a public CSS asset GET with a cache
+  span: 238 ms trace duration, no errors, outcome `ok` and HTTP 200. Its invocation
+  log and dashboard root independently confirm the actual version. This proves
+  site tracing, not an authenticated application latency baseline.
+
+A traces-view query filtered by both service and script version returned no site
+rows even though the service-only query exposed the above current-version trace.
+Use `$metadata.service` to find traces, then verify the actual version with a
+trace-ID-correlated invocation event and the dashboard root. An empty traces-view
+version filter is not sufficient evidence of absent tracing. Keep HTTP evidence
+bounded; do not retain headers, cookies, customer data or precise location.
+
+The API inbox-health span has 258 ms duration while its D1 SQL reports 0.3041 ms,
+zero changes, and zero rows written. The Worker ran at LHR and the D1 primary at
+LAX. Binding/network overhead is a performance lead, not a network-only measurement
+or an interactive p95 baseline. Placement affects fetch handlers, not Cron; changing
+Smart Placement does not address this scheduled sample. D1 read replication would
+require a Sessions API consistency design before adoption.
 
 ## Saved queries and measured baseline
 
@@ -145,25 +173,25 @@ The following queries were validated against live data and saved on 2026-10-09 i
 
 The sampled 15-minute window had no matching 5xx rows and three five-minute scheduled invocations with runtime outcome `ok`. The 24-hour query reported 289 scheduled invocations with `ok`; before the scheduled-error fix is published, caught task failures can still appear successful. A read-only D1 aggregate found three processed Stripe events and no other statuses. These are point-in-time observations, not an uptime or delivery guarantee.
 
-The pending production API release changes scheduled tasks to emit `<task>_completed` only after success and `<task>_failed` on failure. All independent tasks settle before the handler rejects with an aggregate error. `scheduled.completed` is emitted only when every selected task succeeds. Audit-log cleanup propagates its error to this coordinator. Tests remove individual D1 tables and verify that the invocation rejects while independent Stripe retention still runs. This code is in staging, whose cron triggers remain disabled; it is not yet deployed to the production API.
+The deployed production API emits `<task>_completed` only after success and `<task>_failed` on failure. All independent tasks settle before the handler rejects with an aggregate error. `scheduled.completed` is emitted only when every selected task succeeds. Audit-log cleanup propagates its error to this coordinator. Tests remove individual D1 tables and verify that the invocation rejects while independent Stripe retention still runs. Production native five-minute success is accepted; native daily execution remains pending. Staging configured Cron is empty, but runtime cessation remains open as described above.
 
-The pending scheduler additionally runs `stripe_inbox.health` independently of
+The deployed scheduler additionally runs `stripe_inbox.health` independently of
 aggregation and retention. It emits `stripe_inbox.health_completed` on success
 or `stripe_inbox.health_failed` and rejects the invocation when the inbox needs
 review. Its error text contains no event IDs, customer data, payload, or claim.
 Real Worker/D1 tests verify dead/stale detection, fresh lease protection, missing
 timestamps, inbox preservation, and independent daily retention. The scheduler,
-webhook, and reconciliation suites pass 40 tests. This code is not deployed;
-staging cron triggers remain disabled, and live notification acceptance remains
-required after production promotion.
+webhook, and reconciliation suites pass 40 tests. Production native healthy
+completion is accepted; actual incident notification delivery remains unverified.
 
 The webhook follow-up emits `stripe_webhook.retry_limit_exhausted` when an incoming
 delivery finds an exhausted failed row or an exhausted processing row whose lease
 has expired. The atomic transition clears the raw payload and claim and records a
 dead event without starting a twenty-first attempt. Subsequent deliveries are
 acknowledged. An active final lease is still busy and can complete. This code is
-deployed to staging at `5925bce` but not production; it does not detect an abandoned event without another delivery,
-so the pending scheduled health check remains necessary.
+included in the accepted production API source `b2ef8e9`; it does not detect an
+abandoned event without another delivery, so the deployed scheduled health check
+remains necessary. Paid webhook acceptance is deferred.
 
 A refreshed 24-hour query ending at `2026-10-09T18:04:37Z` reported 2,678 site
 requests with p95 wall time of 138 ms and 38 API requests with p95 of 885 ms.
@@ -183,7 +211,7 @@ Use Cloudflare Workers Logs to monitor:
 
 Correlate by Cloudflare invocation metadata and trace identifiers. Do not introduce customer identifiers solely for log correlation.
 
-Both implementations expose `version` from `CF_VERSION_METADATA` in `/health`: Cloudflare's version ID, deployment tag, and upload timestamp. The production API still awaits this release. Current staging source `ddee760` runs with `BILLING_ENABLED=false`; both health endpoints return200 with verified source/version identities, and API health reports `features.billing=disabled`. Stripe test configuration is only required when staging billing is enabled. Live site health responses carry the verified version tags. Missing metadata is `null`; an empty tag does not establish a source revision. Releases must use the full Git SHA as `wrangler deploy --tag` and retain both Worker version IDs. Health probes do not verify OAuth, paid billing, or CLI activation; paid-tier acceptance is deferred.
+Both implementations expose `version` from `CF_VERSION_METADATA` in `/health`: Cloudflare's version ID, deployment tag, and upload timestamp. Production API identity is accepted for source `b2ef8e9` and its actual version above. Current staging source `ddee760` runs with `BILLING_ENABLED=false`; both health endpoints return200 with verified source/version identities, and API health reports `features.billing=disabled`. Stripe test configuration is only required when staging billing is enabled. Live site health responses carry the verified version tags. Missing metadata is `null`; an empty tag does not establish a source revision. Releases must use the full Git SHA as `wrangler deploy --tag` and retain both Worker version IDs. Health probes do not verify OAuth, paid billing, or CLI activation; paid-tier acceptance is deferred.
 
 ## Release validation
 
@@ -203,6 +231,9 @@ Never mutate production bindings or sampling settings during an audit-only task.
 - [Enable Issues detection](https://developers.cloudflare.com/workers/observability/issues/)
 - [Issue automation semantics and notification runs](https://developers.cloudflare.com/workers/observability/issues/automations/)
 - [Workers traces](https://developers.cloudflare.com/workers/observability/traces/)
+- [Placement scope and requirements](https://developers.cloudflare.com/workers/configuration/placement/)
+- [D1 read replication and Sessions API consistency](https://developers.cloudflare.com/d1/best-practices/read-replication/)
+- [Cron trigger propagation](https://developers.cloudflare.com/workers/configuration/cron-triggers/)
 - [Wrangler observability configuration](https://developers.cloudflare.com/workers/wrangler/configuration/#observability)
 - [Scheduled handler failure and lifetime semantics](https://developers.cloudflare.com/workers/runtime-apis/handlers/scheduled/)
 - [Worker version metadata](https://developers.cloudflare.com/workers/runtime-apis/bindings/version-metadata/)
