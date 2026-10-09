@@ -54,11 +54,11 @@ test('mobile navigation reaches a runtime guide and updates canonical metadata',
   await expect(page.locator('h1')).toHaveText('Manage Node.js versions with OMG');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     'href',
-    'https://getomg.xyz/runtimes/node/'
+    'https://getomg.dev/runtimes/node/'
   );
   await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
     'content',
-    'https://getomg.xyz/runtimes/node/'
+    'https://getomg.dev/runtimes/node/'
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('node-mobile.png') });
@@ -67,7 +67,7 @@ test('mobile navigation reaches a runtime guide and updates canonical metadata',
     .click();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     'href',
-    'https://getomg.xyz/guides/node-npm-pnpm/'
+    'https://getomg.dev/guides/node-npm-pnpm/'
   );
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
     'content',
@@ -105,7 +105,7 @@ test('public sitemap, raw HTML and Markdown agree on published guides', async ({
     const html = await response.text();
     expect(html.match(/<h1\b/g), path).toHaveLength(1);
     expect(html.match(/rel="canonical"/g), path).toHaveLength(1);
-    expect(html, path).toContain(`href="https://getomg.xyz${path}"`);
+    expect(html, path).toContain(`href="https://getomg.dev${path}"`);
     expect(html, path).toContain('name="twitter:card"');
     expect(html, path).not.toContain('content="noindex');
   }

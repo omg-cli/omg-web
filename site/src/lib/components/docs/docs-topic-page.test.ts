@@ -58,7 +58,7 @@ describe('docs topic page renderer', () => {
   });
 
   it('emits canonical, sharing, and provenance metadata', () => {
-    expect(rendered.head).toContain('<link rel="canonical" href="https://getomg.xyz/docs/cli/"');
+    expect(rendered.head).toContain('<link rel="canonical" href="https://getomg.dev/docs/cli/"');
     expect(rendered.head).toContain('property="og:title"');
     expect(rendered.head).toContain('name="twitter:card"');
     expect(rendered.head).toContain(`<meta name="description" content="${cliTopic.summary}"`);

@@ -52,7 +52,7 @@ const repositoryConfigFiles = [
   'tools/check-unused-exports.mjs',
 ];
 const privacyRouteFiles = ['site/src/routes/privacy/+page.svelte'];
-const canonicalSiteHostname = 'getomg.xyz';
+const canonicalSiteHostname = 'getomg.dev';
 const retiredSiteOrigin = 'https://omg.latham.cloud';
 const canonicalPublicArtifacts = ['site/static/install.ps1', 'site/static/og/omg-og.svg'];
 const forbiddenFrameworkImport = /^(?:@solidjs\/|solid-js(?:\/|$)|vinxi(?:\/|$))/u;

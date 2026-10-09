@@ -23,8 +23,8 @@ import {
 } from './contracts/stripe';
 
 /**
- * Terminal subscription states outrank transient ones so a stale concurrent
- * snapshot can never resurrect a canceled subscription at equal period end.
+ * Retain the historical status_rank representation for existing consumers.
+ * It is not an ordering clock: past_due and unpaid can recover to active.
  *
  * Must stay in lockstep with the SQL CASE expression in
  * migrations/017_subscription_status_rank.sql — a new rank level added in one
@@ -219,11 +219,12 @@ function effectiveTierFor(correlation: string): string {
  * active one. All statements share one serialized batch, so concurrent webhook
  * deliveries converge on the same aggregate answer.
  */
-export async function applyStripeSubscriptionProjection(
+async function applyStripeSubscriptionProjection(
   db: D1Database,
   customerId: string,
   subscription: StripeSubscription,
-  catalog: BillingCatalog
+  catalog: BillingCatalog,
+  reconciliationToken: string
 ): Promise<void> {
   const projected = await resolveProjectedEntitlement(subscription, catalog);
 
@@ -253,18 +254,19 @@ export async function applyStripeSubscriptionProjection(
         `INSERT INTO subscriptions (
            id, customer_id, stripe_subscription_id, stripe_price_id,
            status, current_period_end, status_rank
-         ) VALUES (?, ?, ?, ?, ?, datetime(?, 'unixepoch'), ?)
+         ) SELECT ?, ?, ?, ?, ?, datetime(?, 'unixepoch'), ?
+           WHERE EXISTS (
+             SELECT 1 FROM stripe_subscription_reconciliations
+             WHERE stripe_subscription_id = ? AND token = ?
+           )
          ON CONFLICT(stripe_subscription_id) DO UPDATE SET
            customer_id = excluded.customer_id,
            stripe_price_id = excluded.stripe_price_id,
            status = excluded.status,
            current_period_end = excluded.current_period_end,
            status_rank = excluded.status_rank
-           WHERE excluded.current_period_end > subscriptions.current_period_end
-              OR (
-                excluded.current_period_end = subscriptions.current_period_end
-                AND excluded.status_rank >= subscriptions.status_rank
-              )`
+           WHERE subscriptions.status NOT IN ('canceled', 'incomplete_expired')
+              OR excluded.status = subscriptions.status`
       )
       .bind(
         crypto.randomUUID(),
@@ -275,7 +277,9 @@ export async function applyStripeSubscriptionProjection(
         projected?.priceId ?? subscription.items.data[0]?.price.id ?? null,
         subscription.status,
         subscription.current_period_end,
-        statusRank(subscription.status)
+        statusRank(subscription.status),
+        subscription.id,
+        reconciliationToken
       ),
     db
       .prepare(
@@ -380,7 +384,12 @@ export async function applyStripeSubscriptionProjection(
       ),
   ];
 
-  await db.batch(statements);
+  const results = await db.batch(statements);
+  if (results[0]?.meta.changes !== 1) {
+    // Entitlements in this batch were recomputed from stored rows, never the
+    // rejected snapshot. Let the webhook inbox retry a fresh Stripe read.
+    throw new StripeReconciliationError('Subscription reconciliation superseded or terminal');
+  }
 
   await Effect.runPromise(
     logAudit(
@@ -403,6 +412,18 @@ export async function reconcileStripeSubscriptionSignal(
   catalog: BillingCatalog,
   stripeFetch: StripeFetch
 ): Promise<void> {
+  // Reserve BEFORE the provider read. D1 serializes this write with projection
+  // batches, so an older in-flight read cannot overwrite a newer reservation.
+  // A failed newer read leaves its signal retryable; no lease can get stuck.
+  const reconciliationToken = crypto.randomUUID();
+  await db
+    .prepare(
+      `INSERT INTO stripe_subscription_reconciliations (stripe_subscription_id, token)
+       VALUES (?, ?)
+       ON CONFLICT(stripe_subscription_id) DO UPDATE SET token = excluded.token`
+    )
+    .bind(subscriptionId, reconciliationToken)
+    .run();
   const response = await stripeFetch(
     `https://api.stripe.com/v1/subscriptions/${encodeURIComponent(subscriptionId)}`,
     { headers: { Authorization: `Bearer ${secret}` } }
@@ -417,6 +438,15 @@ export async function reconcileStripeSubscriptionSignal(
     StripeSubscriptionSchema,
     'Current Stripe subscription has an invalid shape'
   );
+  if (subscription.id !== subscriptionId) {
+    throw new StripeReconciliationError('Stripe subscription lookup returned a different id');
+  }
   const customer = await ensureBillingCustomer(db, subscription.customer, secret, stripeFetch);
-  await applyStripeSubscriptionProjection(db, customer.id, subscription, catalog);
+  await applyStripeSubscriptionProjection(
+    db,
+    customer.id,
+    subscription,
+    catalog,
+    reconciliationToken
+  );
 }

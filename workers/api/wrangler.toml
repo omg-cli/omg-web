@@ -52,6 +52,7 @@ simple = { limit = 3, period = 60 }
 
 [observability]
 enabled = true
+redact_query_string = true
 
 [observability.logs]
 enabled = true

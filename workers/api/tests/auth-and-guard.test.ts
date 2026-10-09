@@ -1,7 +1,7 @@
 import '../src/cloudflare-test.d.ts';
 import { Effect } from 'effect';
 import * as Schema from 'effect/Schema';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import worker from '../src/worker';
 import { sendVerificationCode } from '../src/handlers/auth';
@@ -12,6 +12,25 @@ import { LicensingRoutes } from '../../../shared/licensing-routes';
 const TEST_EMAIL = 'otp@example.com';
 const VICTIM_EMAIL = 'victim@example.com';
 const TEST_JWT_SECRET = 'test-jwt-secret-for-otp-hmac';
+const TEST_TURNSTILE_SECRET = 'test-turnstile-secret';
+
+/** Stub only the provider transport; keep verification, OTP and D1 logic real. */
+function mockTurnstileTransport() {
+  env.TURNSTILE_SECRET_KEY = TEST_TURNSTILE_SECRET;
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+    const request = new Request(input, init);
+    if (request.url !== 'https://challenges.cloudflare.com/turnstile/v0/siteverify') {
+      throw new Error(`Unexpected network request in OTP test: ${request.url}`);
+    }
+    expect(request.method).toBe('POST');
+    const body = new URLSearchParams(await request.text());
+    expect(body.get('secret')).toBe(TEST_TURNSTILE_SECRET);
+    expect(body.get('response')).toBe('XXXXXXX');
+    return Response.json({ success: true });
+  });
+}
+
+afterEach(() => vi.restoreAllMocks());
 const ALLOW_ALL_RATE_LIMITER: NonNullable<(typeof env)['AUTH_RATE_LIMITER']> = {
   limit: async () => ({ success: true }),
 };
@@ -212,6 +231,7 @@ describe('secure OTP migration', () => {
 
 describe('POST /api/auth/send-code', () => {
   beforeEach(async () => {
+    mockTurnstileTransport();
     await ensureSchema();
     env.JWT_SECRET = TEST_JWT_SECRET;
     env.RESEND_API_KEY = undefined;
@@ -233,6 +253,7 @@ describe('POST /api/auth/send-code', () => {
   });
 
   it('returns 503 for OTP delivery when Turnstile verification is unavailable', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('Siteverify unavailable'));
     const ctx = createExecutionContext();
     const response = await worker.fetch(
       postJson(
@@ -242,10 +263,36 @@ describe('POST /api/auth/send-code', () => {
       env,
       ctx
     );
-    // Turnstile siteverify call fails in test env (no real backend) -> 503
     await waitOnExecutionContext(ctx);
-    expect([503, 200]).toContain(response.status);
+    expect(response.status).toBe(503);
+    expect(
+      await env.DB.prepare('SELECT id FROM auth_codes WHERE email = ?').bind(TEST_EMAIL).first()
+    ).toBeNull();
   });
+
+  it.each([
+    { decision: { success: false, 'error-codes': ['invalid-input-response'] }, status: 403 },
+    { decision: { success: 'yes' }, status: 503 },
+  ])(
+    'rejects provider decision $decision with $status before creating an OTP',
+    async ({ decision, status }) => {
+      vi.mocked(fetch).mockResolvedValueOnce(Response.json(decision));
+      const ctx = createExecutionContext();
+      const response = await worker.fetch(
+        postJson(
+          '/api/auth/send-code',
+          JSON.stringify({ email: TEST_EMAIL, turnstileToken: 'XXXXXXX' })
+        ),
+        env,
+        ctx
+      );
+      await waitOnExecutionContext(ctx);
+      expect(response.status).toBe(status);
+      expect(
+        await env.DB.prepare('SELECT id FROM auth_codes WHERE email = ?').bind(TEST_EMAIL).first()
+      ).toBeNull();
+    }
+  );
 
   it('stores only a keyed digest of the delivered code', async () => {
     const deliveredCode = await sendCodeWithTestMailer();
@@ -275,6 +322,7 @@ describe('POST /api/auth/send-code', () => {
 
 describe('POST /api/auth/verify-code', () => {
   beforeEach(async () => {
+    mockTurnstileTransport();
     await ensureSchema();
     env.JWT_SECRET = TEST_JWT_SECRET;
   });
