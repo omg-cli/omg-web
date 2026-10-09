@@ -54,8 +54,11 @@ CLI preparation found that staging tokens still declared the production issuer.
 A real Worker regression reproduced the mismatch. The pending correction chooses
 `https://staging-api.getomg.xyz` only for the configured staging environment and
 retains the production issuer otherwise; request hosts cannot choose the issuer.
-This change is not deployed. The current OMG CLI uses `omg account link <token>`
-for optional dashboard identity, with no feature gating. Its staging acceptance
+This change is not deployed. Both CI jobs passed for runtime revision `c7f7509`
+(run `37969502436`): 364 site tests, 348 API tests, and 22 public browser tests,
+with three deployed-auth skips. The current OMG CLI uses
+`omg account link --token-stdin` (or `OMG_DASHBOARD_TOKEN`) for optional dashboard
+identity, with no feature gating. Its staging acceptance
 build still needs the separate staging API origin and public verification key;
 keep its signature, audience, expiry, and issuer validation intact.
 
