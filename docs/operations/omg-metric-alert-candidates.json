@@ -1,11 +1,11 @@
 {
-  "status": "http-enabled-missing-jobs-not-provisioned",
+  "status": "http-enabled-scheduled-candidates-validated-not-provisioned",
   "dataset": "logs.workersLogs",
   "datasetSampling": "adaptive",
   "detectionMethod": "threshold",
   "timeRangeMode": "manual",
   "evaluationWindow": "1m",
-  "note": "This is an operational record, not a Notifications API request. Two HTTP policies are enabled with the explicitly authorized existing email destination; update their recorded IDs rather than creating duplicates. Missing-job candidates remain disabled and have no delivery configured. Rate calculations use represented events under adaptive sampling; they are not exact raw counts. Missing-run checks depend on retained completion logs and can be affected by sampling or ingestion failures.",
+  "note": "Operational record, not a Notifications API request. Two HTTP policies remain enabled with their existing authorized destination and IDs unchanged. Three scheduled candidates have no policy/delivery configured. Exact structured attributes replace the broken message text search. Counts represent adaptively sampled events, not exact raw totals; missing-log signals can reflect ingestion or sampling gaps. Daily candidate stays disabled until actual native daily healthy completion is verified.",
   "candidates": [
     {
       "name": "OMG API HTTP failure rate",
@@ -36,26 +36,41 @@
     {
       "name": "OMG missing successful aggregation",
       "enabled": false,
-      "validation": "pending production scheduled release, SQL query permission, and structured-event field verification",
+      "validation": "Signed-in SQL preview: corrected exact structured attribute finds known native completions, healthy absence expression returns0, nonexistent-event control returns1. Old message-LIKE draft returned0 despite live completions. No delivery test or policy creation.",
       "executionInterval": "5m",
       "repeatNotificationInterval": "1h",
       "comparison": {
-        "operator": "==",
-        "value": 0
+        "operator": ">=",
+        "value": 1
       },
-      "query": "SELECT COUNT(*) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND message LIKE '%docs_analytics.aggregate_completed%' AND timestamp >= NOW() - INTERVAL '20' MINUTE"
+      "query": "SELECT if(COUNT(*) = 0, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND invocationType = 'scheduled' AND logType = 'cf-worker' AND attributes['message.event'] = 'docs_analytics.aggregate_completed' AND timestamp >= NOW() - INTERVAL '20' MINUTE",
+      "authorization": "pending explicit additional notification delivery authorization"
     },
     {
       "name": "OMG missing successful daily retention",
       "enabled": false,
-      "validation": "pending production scheduled release, SQL query permission, and structured-event field verification",
+      "validation": "SQL accepted; native five-minute coordinator control matches invocationLabel and exact structured event. Daily absence signal returns1 before the first native daily completion. Keep disabled until the actual02:00UTC daily run and its healthy signal are verified; no delivery test.",
       "executionInterval": "15m",
       "repeatNotificationInterval": "1h",
       "comparison": {
         "operator": ">=",
         "value": 1
       },
-      "query": "SELECT if(countIf(message LIKE '%analytics_retention.cleanup_completed%') = 0 OR countIf(message LIKE '%stripe_events.cleanup_completed%') = 0 OR countIf(message LIKE '%marketing_offer.cleanup_completed%') = 0 OR countIf(message LIKE '%audit_log.cleanup_completed%') = 0, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND timestamp >= NOW() - INTERVAL '26' HOUR"
+      "query": "SELECT if(COUNT(*) = 0, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND invocationType = 'scheduled' AND logType = 'cf-worker' AND invocationLabel = '0 2 * * *' AND attributes['message.event'] = 'scheduled.completed' AND timestamp >= NOW() - INTERVAL '26' HOUR",
+      "authorization": "not requested; native daily acceptance prerequisite pending"
+    },
+    {
+      "name": "OMG scheduled task failures",
+      "enabled": false,
+      "validation": "SQL preview accepted with0 for current healthy production; same six-event OR predicate using completion names has positive matches. All six failure names are checked against scheduler source. No production failure was injected and incident delivery is unverified.",
+      "authorization": "pending explicit additional notification delivery authorization",
+      "executionInterval": "5m",
+      "repeatNotificationInterval": "1h",
+      "comparison": {
+        "operator": ">=",
+        "value": 1
+      },
+      "query": "SELECT COUNT(*) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND invocationType = 'scheduled' AND logType = 'cf-worker' AND (attributes['message.event'] = 'stripe_inbox.health_failed' OR attributes['message.event'] = 'docs_analytics.aggregate_failed' OR attributes['message.event'] = 'analytics_retention.cleanup_failed' OR attributes['message.event'] = 'stripe_events.cleanup_failed' OR attributes['message.event'] = 'marketing_offer.cleanup_failed' OR attributes['message.event'] = 'audit_log.cleanup_failed') AND timestamp >= NOW() - INTERVAL '15' MINUTE"
     }
   ]
 }

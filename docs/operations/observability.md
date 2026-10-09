@@ -73,7 +73,44 @@ The available SQL dataset catalogue was readable on 2026-10-09, but a SQL log qu
 
 After dashboard sign-in on 2026-10-09, Alerts → Create an alert → Custom alert → Custom SQL successfully previewed `logs.workersLogs` without changing credentials. One preview initially returned a permission-service 503; retry succeeded. The proposed `logType = 'invocation'` filter returned no site requests. The documented invocation value `cf-worker-event` returned live site fetches with HTTP status values. Both corrected HTTP failure expressions previewed as 0, and a read-only positive control using known successful responses returned 1. These are query-validation results, not notification delivery tests.
 
-The [metric alert record](./omg-metric-alert-candidates.json) contains the two enabled HTTP policies and two disabled missing-job candidates. It is an operational record, not an API request body; update the enabled policy IDs rather than creating duplicates. The HTTP expressions use threshold detection and a manual SQL time range because they already contain their rolling five-minute window. The saved one-minute evaluation window avoids averaging the boolean result over a longer period. Missing-job structured-event fields and completion availability still need validation after the pending production release, and those candidates have no delivery configured. Missing completion logs can also reflect ingestion or sampling gaps; these queries are not independent synthetic uptime checks.
+The [metric alert record](./omg-metric-alert-candidates.json) contains the two enabled HTTP policies and three disabled scheduled-job candidates. It is an operational record, not an API request body; update the enabled policy IDs rather than creating duplicates. The HTTP expressions use threshold detection and a manual SQL time range because they already contain their rolling five-minute window. The saved one-minute evaluation window avoids averaging the boolean result over a longer period. Scheduled candidates have no policy or delivery configured. Missing completion logs can also reflect ingestion or sampling gaps; these queries are not independent synthetic uptime checks.
+
+After the production API promotion, signed-in SQL preview on 2026-10-09 exposed a
+broken draft: `message LIKE '%docs_analytics.aggregate_completed%'` returned zero
+despite known native completions. A source-log control returned data, and the exact
+JSON key `attributes['message.event'] = 'docs_analytics.aggregate_completed'`
+matched the live completions. Use this exact key; SQL JSON lookup treats the dotted
+name as one top-level attribute, not nested traversal.
+
+The corrected missing-aggregation expression returns numeric `1` when its
+20-minute count is zero and `0` otherwise. Its healthy preview returned `0`; a
+read-only nonexistent-event control returned `1`, including the empty aggregate
+case. Filter native scheduled custom logs with `invocationType = 'scheduled'`
+and `logType = 'cf-worker'`. Check every five minutes and repeat at most hourly
+after separate destination authorization. Preview controls do not prove delivery.
+
+Daily completion now checks `scheduled.completed` together with
+`invocationLabel = '0 2 * * *'` in a 26-hour window. The native five-minute
+control verified Cron-label correlation. The coordinator emits success only after
+every selected task succeeds, so this avoids combining unrelated daily task logs.
+The daily absence expression currently returns `1`: this version has not yet
+reached its first 02:00 UTC native daily run. Keep this candidate disabled until
+that invocation and the healthy SQL result are observed; do not activate it from
+the absence result or the earlier manual daily drill.
+
+The scheduled-failure candidate counts the six explicit `<task>_failed` events,
+including `stripe_inbox.health_failed`, in 15 minutes. All six names match the
+deployed scheduler source. The actual production expression previewed as `0`;
+the same OR predicate using known completion names had positive matches. This
+validates field/predicate matching, not an injected production failure or incident
+delivery. Its five-minute evaluation and hourly repeat require separate approval.
+
+Even with full ingestion, retained queries can adaptively sample rows. A refreshed
+production query represented the first analytics completion with sample interval
+10 and a later native run with interval 1. Represented counts are not actual run
+counts. Do not interpret an absent sampled log as conclusive proof that a job did
+not run, or require four individually sampled daily completions when one correlated
+successful coordinator signal expresses the required outcome.
 
 ## Saved queries and measured baseline
 
