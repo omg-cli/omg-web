@@ -29,19 +29,27 @@ Worker application logs use Effect's JSON logger. Each event contains a stable `
 - Email addresses, names, IP addresses, machine identifiers, or other customer data unless an approved incident procedure requires it.
 - D1 records or provider payloads.
 
-Browser failures are sent through Sentry only when the server-owned `SENTRY_DSN` configuration is present. Browser code must not receive Worker credentials. The production and staging Wrangler configurations redact query strings; this change takes effect when those configurations are deployed. Application error messages still need their own privacy review.
+Browser failures are sent through Sentry only when the server-owned `SENTRY_DSN` configuration is present. Browser code must not receive Worker credentials. Query-string redaction is verified enabled on both production and staging Workers. Application error messages still need their own privacy review.
 
 ## Alerting
 
-Saved queries do not send notifications. The following initial alert conditions are proposed and NOT yet provisioned. Validate them with the account's available datasets and destination before activation:
+Four native Issues automations are enabled as of 2026-10-09, using the authorized existing email destination on policy `919cda26f3474d09bf66616a2e4b54ab` (`OMG production runtime issues`). Each production Worker has a first-occurrence rule (`afterOccurrences: 1`) and a recurrence rule after one hour of inactivity (`afterInactivitySeconds: 3600`). Exact IDs and API bodies are in [omg-runtime-issue-automations.json](./omg-runtime-issue-automations.json). Update these IDs rather than creating duplicate rules.
 
-1. Runtime exceptions: any in five minutes. HTTP failures: at least five 5xx responses and at least 5% of requests in five minutes, scoped separately to each production Worker. Client cancellations are not automatically server errors.
+Issue detection requires `observability.issues.enabled = true` independently of logs and notification rules. Both production Workers were opted in through the script-settings API; readback confirmed the setting and unchanged deployments/bindings. Wrangler production configs and the Alchemy production definition retain the setting, and `check:staging` checks it. Detection processes new traffic only. The first-occurrence rule runs once when an issue crosses its threshold; it does not email on every error. These rules cover detected runtime issues, not every operational condition below.
+
+The synthetic drill found and corrected the missing detection opt-in. Its initial invocation was logged but produced no issue or notification. After enabling detection, one invocation created issue `5b348f48-f45d-4833-8870-6cfcf8a1bb5f`; automation run `531c93cd-1e96-4059-a569-1ad3ef9f8c41` succeeded. Cloudflare notification history records exactly one email sent at `2026-10-09T17:13:11.183702Z`, history ID `d44289b8-6f6b-4fb5-ad19-50cb6bbbe6b7`, with the label **OMG ALERT DELIVERY TEST**. This confirms Cloudflare's send record, not inbox receipt. The synthetic issue was resolved, and the temporary Worker and automation were deleted. No production failure was injected.
+
+Detection immediately reported two live site issues classified as low-risk vulnerability scans (secret-files and source-control), with successful notification runs at 17:15 UTC. These are separate from the single synthetic email and do not establish a breach or an application failure. Native issue rules can therefore include scanner noise; observe their volume before treating every first-occurrence email as a paging incident. Both production health endpoints remained HTTP 200.
+
+Saved queries do not send notifications. These additional alert conditions remain proposed and NOT yet provisioned:
+
+1. HTTP failure rates: at least five 5xx responses and at least 5% of requests in five minutes, scoped separately to each production Worker. Client cancellations are not automatically server errors. Native Issues detection also recognizes 5xx/error events, but its occurrence rules are not this rate calculation.
 2. Scheduled failures: any failed invocation. Missing aggregation: no successful five-minute aggregation in 20 minutes; missing daily retention: no successful daily invocation in 26 hours. Enable these conditions after the scheduled-error fix is deployed and verified.
 3. Billing inbox: any dead event, failed event older than 15 minutes, or received/processing event older than 15 minutes. A fresh in-flight event is not a failure. Inspect retries and claims before replaying anything.
 4. Latency: gather a representative baseline first. The 2026-10-09 observation had only five site requests and two API requests in 15 minutes, which is insufficient to choose a reliable p95 threshold.
 5. Credit spend: preserve the existing account budget policy while confirming grant eligibility, balance, and expiry. Do not treat a usage alert as proof that credits cover the charge.
 
-Configure notifications in Cloudflare Alerts. A synthetic failure and confirmed delivery are required before calling alerting complete. The available SQL dataset catalogue was readable on 2026-10-09, but a SQL log query using the local Wrangler OAuth credentials returned 403. Workers Observability queries through the connector succeeded. Catalogue discovery alone does not prove SQL-query permission.
+The available SQL dataset catalogue was readable on 2026-10-09, but a SQL log query using the local Wrangler OAuth credentials returned 403. Workers Observability queries through the connector succeeded. Catalogue discovery alone does not prove SQL-query permission. Native Issues automation does not depend on those SQL-query credentials.
 
 ## Saved queries and measured baseline
 
@@ -55,7 +63,7 @@ The following queries were validated against live data and saved on 2026-10-09 i
 
 The sampled 15-minute window had no matching 5xx rows and three five-minute scheduled invocations with runtime outcome `ok`. The 24-hour query reported 289 scheduled invocations with `ok`; before the scheduled-error fix is published, caught task failures can still appear successful. A read-only D1 aggregate found three processed Stripe events and no other statuses. These are point-in-time observations, not an uptime or delivery guarantee.
 
-Scheduled tasks now emit `<task>_completed` only after success and `<task>_failed` on failure. All independent tasks settle before the handler rejects with an aggregate error. `scheduled.completed` is emitted only when every selected task succeeds. Audit-log cleanup propagates its error to this coordinator. Tests remove individual D1 tables and verify that the invocation rejects while independent Stripe retention still runs.
+The pending production API release changes scheduled tasks to emit `<task>_completed` only after success and `<task>_failed` on failure. All independent tasks settle before the handler rejects with an aggregate error. `scheduled.completed` is emitted only when every selected task succeeds. Audit-log cleanup propagates its error to this coordinator. Tests remove individual D1 tables and verify that the invocation rejects while independent Stripe retention still runs. This code is in staging, whose cron triggers remain disabled; it is not yet deployed to the production API.
 
 ## Operational queries
 
@@ -68,7 +76,7 @@ Use Cloudflare Workers Logs to monitor:
 
 Correlate by Cloudflare invocation metadata and trace identifiers. Do not introduce customer identifiers solely for log correlation.
 
-Both `/health` responses expose `version` from `CF_VERSION_METADATA`: Cloudflare's version ID, deployment tag, and upload timestamp. Missing metadata is `null`; an empty tag does not establish a source revision. Releases must use the full Git SHA as `wrangler deploy --tag` and retain both Worker version IDs. Health probes do not verify OAuth, billing, or CLI activation.
+Both implementations expose `version` from `CF_VERSION_METADATA` in `/health`: Cloudflare's version ID, deployment tag, and upload timestamp. The production API still awaits this release; the staging API readiness guard returns 503 until Stripe test configuration exists. Live site health responses carry the verified version tags. Missing metadata is `null`; an empty tag does not establish a source revision. Releases must use the full Git SHA as `wrangler deploy --tag` and retain both Worker version IDs. Health probes do not verify OAuth, billing, or CLI activation.
 
 ## Release validation
 
@@ -85,6 +93,8 @@ Never mutate production bindings or sampling settings during an audit-only task.
 ## Primary references
 
 - [Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/)
+- [Enable Issues detection](https://developers.cloudflare.com/workers/observability/issues/)
+- [Issue automation semantics and notification runs](https://developers.cloudflare.com/workers/observability/issues/automations/)
 - [Workers traces](https://developers.cloudflare.com/workers/observability/traces/)
 - [Wrangler observability configuration](https://developers.cloudflare.com/workers/wrangler/configuration/#observability)
 - [Scheduled handler failure and lifetime semantics](https://developers.cloudflare.com/workers/runtime-apis/handlers/scheduled/)

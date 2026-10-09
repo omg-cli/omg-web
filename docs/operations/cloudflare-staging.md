@@ -1,7 +1,14 @@
 # Isolated Cloudflare staging
 
-Reviewed 2026-10-09. Configuration is implemented; the staged Workers have not
-been published. Production traffic and secrets have not been changed.
+Deployed 2026-10-09 from `2204a63c19c0f82a40485e3b10d3f6eccebef52c` after both
+GitHub CI jobs passed (run `37962598220`). The isolated staging site and API are
+live. The production site received the OAuth broker bootstrap and version
+metadata; its existing GitHub, session, and BFF secrets were preserved. A new
+dedicated proxy secret was added. The production API remains at its PR #131 release.
+
+Stripe test credentials remain pending at the user's request. The staging API
+therefore returns 503 before accessing application data. This is a provisioned,
+isolated environment, not an accepted checkout/activation release.
 
 Main's separately deployed PR #131 has since moved the public site to
 `getomg.dev` while retaining account OAuth on `getomg.xyz`. This branch incorporates
@@ -27,9 +34,39 @@ contains `026_stripe_subscription_reconciliations.sql`, which is absent from
 GitHub main at `c68f4c6`. It cannot be used to prove that main's migration chain
 recreates the schema. The new staging database uses only the canonical migrations.
 
-The existing shadow site currently points at production. Publish the API and
-provision separate credentials before publishing the site's staging configuration.
-Do not use the existing shadow URL for test purchases before that cutover.
+Remote settings confirm the former shadow site now binds staging D1 and
+`omg-saas-staging`. Its old GitHub secret was deleted, and its auth/BFF secrets
+were replaced with newly generated staging values. Both staging Workers have
+query redaction enabled. Post-deployment D1 counts remain zero for auth users,
+auth sessions, and licenses, with 17 applied migrations.
+
+## Deployment receipts
+
+| Worker                         | Version                                | Source tag                                 |
+| ------------------------------ | -------------------------------------- | ------------------------------------------ |
+| Production site / OAuth broker | `65974306-855b-4aa7-9c40-eadb911eeb00` | `2204a63c19c0f82a40485e3b10d3f6eccebef52c` |
+| Staging site                   | `402c52c1-4b9d-4e43-988b-dbc8fe48fece` | `2204a63c19c0f82a40485e3b10d3f6eccebef52c` |
+| Staging API                    | `4290ddd1-4e1e-4a04-975a-793bdcd20145` | `2204a63c19c0f82a40485e3b10d3f6eccebef52c` |
+
+Both sites' live `/health` responses match these IDs and source tags. The staging
+API's version/tag is verified through Cloudflare's version API because its
+readiness guard also rejects `/health` until Stripe test configuration exists.
+Secret updates create new versions with empty tags; the staging Workers were
+deployed again after secret provisioning to restore a verifiable source tag.
+
+Three deployed browser auth checks pass on each site: protected-route redirects,
+login rendering, and invalid-credential rejection. Both sites' OAuth initiation
+returns production client `Ov23lim96hwzllDXL6Dm` and the existing production
+callback. A staging browser reaches GitHub's **OMG getomg.xyz Production** app.
+GitHub sign-in is required to continue; no successful live provider callback,
+account creation, purchase, or CLI activation is claimed. Both production proxy
+completion routes return 404 in live HTTP checks. Staging traces are visible in
+Workers Observability.
+
+The production site's prior version is `7eba263d-bdf8-4d5c-a58e-020c90c3731b`;
+the unchanged production API version is `053e114a-a351-48e0-bb60-bc0fa2e55f37`.
+Never roll staging back to its pre-isolation shadow version: that version binds
+production D1 and the production API. Roll forward with isolated bindings instead.
 
 ## Credentials and behavior
 
@@ -42,12 +79,12 @@ No staging callback registration or second GitHub app is required by this flow.
 
 The existing shadow Worker's live client ID was rechecked on 2026-10-09:
 `Ov23liHbO8Uyd3LI0bU4`, which differs from production's `Ov23lim96hwzllDXL6Dm`.
-Its existing `GITHUB_CLIENT_SECRET` belongs to another client. Staging auth now
-ignores that binding entirely; delete the obsolete binding during cutover. Keep
+Its former `GITHUB_CLIENT_SECRET` belonged to another client. Staging auth now
+ignores that binding entirely; the obsolete binding was deleted during cutover. Keep
 the existing production secret on the production Worker.
 
-Generate a dedicated random `OAUTH_PROXY_SECRET` of at least 32 bytes and install
-the same new value on the two site Workers using Wrangler secret input. Never
+A dedicated random `OAUTH_PROXY_SECRET` of 32 bytes was generated and installed
+on the two site Workers using Wrangler secret input. Never
 print or commit it. Production enables the broker only when this secret exists;
 staging refuses to initialize authentication without it or on another hostname.
 Use Better Auth `1.7.7` on both Workers in the coordinated cutover. Restart any
@@ -69,7 +106,7 @@ the callback carries encrypted credentials. Local tests use the real Better Auth
 handlers and OMG configuration, separate memory databases, and synthetic GitHub
 responses; they do not establish live GitHub or D1 acceptance.
 
-Provision independent staging values for `BETTER_AUTH_SECRET`, `SVELTE_BFF_SECRET`,
+Independent staging values are provisioned for `BETTER_AUTH_SECRET`, `SVELTE_BFF_SECRET`,
 `JWT_SECRET`, `JWT_PRIVATE_KEY` (Ed25519 PKCS#8), and `ADMIN_API_SECRET`. Both staged
 Workers share their staging BFF secret. The site and production use separate,
 host-scoped sessions and separate D1 data. A shared OAuth app still shares GitHub
@@ -133,7 +170,10 @@ The subsequent observability slice passed 37 focused API tests (including actual
 scheduled-handler D1 faults), 28 site public-file tests, source and test typechecks,
 lint, source policy, unused exports, the site build budget, and all four Worker
 deployment dry-runs. Three validated production observability queries were saved;
-see [observability status](./observability.md). Runtime changes are not yet deployed.
+see [observability status](./observability.md). Site and staging runtime changes
+are deployed; the production API code remains unpublished. Production issue
+detection and four notification automations were enabled separately through the
+settings API without changing code deployments or bindings.
 
 After incorporating PR #131, GitHub CI passed both checks for `cf3f725`
 (run `37961070002`). Its full `npm run check` included all three audits,
@@ -148,7 +188,8 @@ source policy, lint/formatting, build budgets, and all four deployment dry-runs.
 The public browser suite again passes 22 tests with three deployed-auth skips.
 The eight focused auth tests additionally verify that the staging cookie works
 against staging and is rejected by production. These are local results; the
-coordinated production/staging deployment and live authenticated flow are pending.
+coordinated broker deployment is now complete, while the live authenticated flow
+remains pending as described in the receipts above.
 
 Before promotion, exercise GitHub sign-in, Stripe test checkout, signed webhook
 delivery, license issuance, session isolation, and API denial with production

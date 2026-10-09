@@ -54,6 +54,9 @@ simple = { limit = 3, period = 60 }
 enabled = true
 redact_query_string = true
 
+[observability.issues]
+enabled = true
+
 [observability.logs]
 enabled = true
 head_sampling_rate = 1

@@ -1,9 +1,11 @@
 # OMG Cloudflare delivery plan
 
-Status: implementation in progress, 2026-10-09. Production has not been changed.
-Staging isolation and test-mode guards are implemented locally; a fresh staging
-D1 database now has all 17 canonical migrations. A synthetic D1 Time Travel drill
-passed. See [staging and recovery evidence](./cloudflare-staging.md).
+Status: implementation in progress, 2026-10-09. Staging isolation and test-mode
+guards are deployed. The production site received the GitHub OAuth broker
+bootstrap; the production API remains unchanged from PR #131. The staging D1
+database has all 17 canonical migrations, and a synthetic D1 Time Travel drill
+passed. Stripe test configuration is deferred at the user's request, so staging
+API requests fail closed. See [deployment and recovery receipts](./cloudflare-staging.md).
 
 ## First milestone: isolated staging
 
@@ -27,8 +29,8 @@ passed. See [staging and recovery evidence](./cloudflare-staging.md).
 
 - Implemented Cloudflare's generated version metadata binding for both Workers and staging configurations. Health responses expose actual metadata, or `null` when unavailable; releases must use the full Git SHA as the version tag.
 - Scheduled tasks now settle independently, emit completion only after success, and reject the invocation after any failure. The inner audit-log cleanup no longer swallows its error.
-- Passed 37 focused Worker tests and 28 site tests, typechecks, source policy, lint, and four deployment dry-runs. Changes remain unpublished.
-- Saved three validated production observability queries. Notifications, synthetic delivery, and release acceptance remain pending; see [observability](./observability.md).
+- Passed 37 focused Worker tests and 28 site tests, typechecks, source policy, lint, and four deployment dry-runs. The site changes and staging API are deployed; the production API code remains unpublished.
+- Saved three validated production observability queries. Four production runtime issue automations and Worker detection are enabled. Cloudflare records one synthetic test email sent, and temporary test resources are removed. Other operational alert conditions and authenticated release acceptance remain pending; see [observability](./observability.md).
 - GitHub CI at `cf3f725` passed both the full check and anonymous browser jobs (run `37961070002`). The earlier dependency audit failure is resolved by the merged Alchemy update; the audit gate remains intact.
 
 ## Concurrent production update and credential constraint
@@ -55,7 +57,10 @@ from production while retaining the code-exchange hooks. Eight real-handler test
 cover separated accounts/sessions, production endpoint removal, normal production
 sign-in with and without the proxy, rejected provider codes, tampering, expiry,
 replay, and staging configuration failures. Better Auth is pinned to `1.7.7`.
-This application customization is not deployed; live OAuth and D1 acceptance remain
+This application customization is deployed from `2204a63`, whose exact CI run
+`37962598220` passed both jobs. Live OAuth initiation and production completion
+endpoint rejection pass, as do three deployed browser auth checks per site.
+Successful GitHub sign-in and the subsequent purchase/activation path remain
 required. See the [cutover and trust boundary](./cloudflare-staging.md).
 The broker revision passes the complete local gate with 364 site and 343 API
 tests, all four deployment dry-runs, and clean audits. Public browser verification
@@ -77,7 +82,7 @@ and [Better Auth's proxy trust model](https://better-auth.com/docs/plugins/oauth
 - Production site Worker: `omgsveltesite-website-prod-dlaqgfttmir2ky5x`; version `d3ce7f47-df97-474b-9fab-1e2a4735a823`.
 - Production API Worker: `omg-saas`; version `bfb4d141-00ec-48a4-9918-aae150b7d659`.
 - Both versions were uploaded on 2026-10-07 without a Git SHA in the deployment message. Their exact source revision is unverified.
-- Existing shadow site still binds production D1 and `omg-saas`; it is not an isolated test environment.
+- At this initial baseline, the shadow site bound production D1 and `omg-saas`; the subsequent staging deployment isolated those bindings.
 - Wrangler is authenticated. Worker secret values are write-only; listing secret names is not proof that their values are available to provision another Worker.
 
 ## References

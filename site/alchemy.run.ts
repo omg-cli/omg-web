@@ -73,6 +73,7 @@ export const Website = Cloudflare.Website.SvelteKit(
       },
       observability: {
         enabled: true,
+        issues: { enabled: stage === 'prod' },
         redactQueryString: true,
         logs: {
           enabled: true,

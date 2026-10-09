@@ -14,6 +14,13 @@ for (const worker of [site, api, productionSite, productionApi]) {
   assert.equal(worker.version_metadata.binding, 'CF_VERSION_METADATA');
   assert.equal(worker.observability.redact_query_string, true);
 }
+for (const worker of [productionSite, productionApi]) {
+  assert.equal(
+    worker.observability.issues?.enabled,
+    true,
+    'production issue automations require detection enabled on the Worker'
+  );
+}
 const databaseId = '0f059202-7042-4588-a89f-ce0ae3f6deba';
 const productionDatabaseIds = new Set(
   [...productionSite.d1_databases, ...productionApi.d1_databases].map(
