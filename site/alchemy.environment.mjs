@@ -20,18 +20,20 @@ if (
   process.stderr.write('[alchemy-env] non-interactive deploy requires --yes\n');
   process.exit(1);
 }
-const githubCredentialPrefix = stage === 'prod' ? 'PRODUCTION_' : '';
 const REQUIRED_ENVIRONMENT = [
   { binding: 'CLOUDFLARE_ACCOUNT_ID', source: 'CLOUDFLARE_ACCOUNT_ID' },
   {
     binding: 'GITHUB_CLIENT_ID',
-    source: `${githubCredentialPrefix}GITHUB_CLIENT_ID`,
+    source: 'PRODUCTION_GITHUB_CLIENT_ID',
   },
   {
     binding: 'GITHUB_CLIENT_SECRET',
-    source: `${githubCredentialPrefix}GITHUB_CLIENT_SECRET`,
+    source: 'PRODUCTION_GITHUB_CLIENT_SECRET',
   },
-  { binding: 'SVELTE_BFF_SECRET', source: 'SVELTE_BFF_SECRET' },
+  {
+    binding: 'SVELTE_BFF_SECRET',
+    source: stage === 'prod' ? 'SVELTE_BFF_SECRET' : 'STAGING_SVELTE_BFF_SECRET',
+  },
 ];
 const KEYRING_SERVICE = 'omg-web-alchemy';
 const ALCHEMY_BINARY = fileURLToPath(new URL('node_modules/.bin/alchemy', import.meta.url));

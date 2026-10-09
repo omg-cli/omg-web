@@ -224,6 +224,56 @@ async function readBillingProjection(customerId: string) {
 }
 
 describe('Stripe webhook inbox', () => {
+  it.each([true, undefined])(
+    'rejects staging webhook livemode=%s before claiming it',
+    async livemode => {
+      const eventId = `evt_staging_${String(livemode)}`;
+      const payload = JSON.stringify({
+        id: eventId,
+        type: 'test.event',
+        livemode,
+        data: { object: { id: 'object_1' } },
+      });
+      const response = await handleStripeWebhook(
+        new Request('https://staging-api.getomg.xyz/api/webhooks/stripe', {
+          method: 'POST',
+          headers: { 'stripe-signature': await stripeSignature(payload) },
+          body: payload,
+        }),
+        { ...env, DEPLOYMENT_STAGE: 'staging', STRIPE_WEBHOOK_SECRET: WEBHOOK_SECRET }
+      );
+      expect(response.status).toBe(400);
+      expect(
+        await env.DB.prepare('SELECT id FROM stripe_events WHERE stripe_event_id = ?')
+          .bind(eventId)
+          .first()
+      ).toBeNull();
+    }
+  );
+
+  it('accepts a signed test-mode event into the staging inbox', async () => {
+    const payload = JSON.stringify({
+      id: 'evt_staging_test',
+      type: 'test.event',
+      livemode: false,
+      data: { object: { id: 'object_1' } },
+    });
+    const response = await handleStripeWebhook(
+      new Request('https://staging-api.getomg.xyz/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': await stripeSignature(payload) },
+        body: payload,
+      }),
+      { ...env, DEPLOYMENT_STAGE: 'staging', STRIPE_WEBHOOK_SECRET: WEBHOOK_SECRET }
+    );
+    expect(response.status).toBe(200);
+    expect(
+      await env.DB.prepare('SELECT status FROM stripe_events WHERE stripe_event_id = ?')
+        .bind('evt_staging_test')
+        .first()
+    ).toMatchObject({ status: 'processed' });
+  });
+
   beforeEach(async () => {
     env.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET;
     env.STRIPE_SECRET_KEY = 'sk_test_reconciliation';

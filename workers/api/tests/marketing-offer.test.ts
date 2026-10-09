@@ -174,7 +174,10 @@ describe('marketing introductory offer', () => {
     expect(row?.id).not.toBe('expired-lead');
   });
 
-  it('binds an issued code to the same account before applying it at checkout', async () => {
+  it.each([
+    { stage: 'prod', origin: SITE_ORIGIN },
+    { stage: 'staging', origin: 'https://staging.getomg.xyz' },
+  ])('binds an issued code and returns checkout to $stage', async ({ stage, origin }) => {
     const customerId = 'offer-checkout-customer';
     const token = 'offer-checkout-session-token';
     await env.DB.prepare(`INSERT OR REPLACE INTO customers (id, email, tier) VALUES (?, ?, 'free')`)
@@ -195,15 +198,16 @@ describe('marketing introductory offer', () => {
       .run();
 
     const checkoutEnv = offerEnv();
+    checkoutEnv.DEPLOYMENT_STAGE = stage;
     checkoutEnv.STRIPE_PRO_PRICE_ID = 'price_pro_test';
     checkoutEnv.STRIPE_TEAM_PRICE_ID = 'price_team_test';
     const stripeFetch = vi.fn<typeof fetch>(async (_input, init) => {
       const body = new URLSearchParams(String(init?.body));
       expect(body.get('discounts[0][promotion_code]')).toBe('promo_bound_offer');
       expect(body.get('success_url')).toBe(
-        `${SITE_ORIGIN}/?success=true&session_id={CHECKOUT_SESSION_ID}`
+        `${origin}/?success=true&session_id={CHECKOUT_SESSION_ID}`
       );
-      expect(body.get('cancel_url')).toBe(`${SITE_ORIGIN}/#pricing`);
+      expect(body.get('cancel_url')).toBe(`${origin}/#pricing`);
       expect(body.has('allow_promotion_codes')).toBe(false);
       return Response.json({
         id: 'cs_offer_test',

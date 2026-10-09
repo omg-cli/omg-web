@@ -53,6 +53,26 @@ function validBody() {
 }
 
 describe('organization invitation email capability', () => {
+  it.each([
+    { origin: 'https://staging.getomg.xyz', status: 200 },
+    { origin: SITE_ORIGIN, status: 400 },
+    { origin: 'https://another.latham.workers.dev', status: 400 },
+  ])('limits staging invitation links to its own origin: $origin', async ({ origin, status }) => {
+    const sentMessages: OrganizationInvitationEmailMessage[] = [];
+    const response = await handleOrganizationInvitationEmail(
+      emailRequest({
+        ...validBody(),
+        invitationUrl: INVITATION_URL.replace(SITE_ORIGIN, origin),
+      }),
+      { ...emailEnv(), DEPLOYMENT_STAGE: 'staging' },
+      async message => {
+        sentMessages.push(message);
+      }
+    );
+    expect(response.status).toBe(status);
+    expect(sentMessages).toHaveLength(status === 200 ? 1 : 0);
+  });
+
   it('sends a bounded, escaped transactional email and returns no provider identifier', async () => {
     const sentMessages: OrganizationInvitationEmailMessage[] = [];
     const response = await handleOrganizationInvitationEmail(

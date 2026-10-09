@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/cloudflare';
+import { deploymentIsReady, deploymentSiteOrigin } from './deployment';
 import { forbiddenUnlessAdminSession } from './admin-auth';
 import {
   type Env,
@@ -252,6 +253,7 @@ function withApiSecurityHeaders(
     for (const [name, value] of Object.entries(apiSecurityHeaders)) {
       secured.headers.set(name, value);
     }
+    secured.headers.set('Access-Control-Allow-Origin', deploymentSiteOrigin(env));
     return secured;
   };
 }
@@ -260,10 +262,14 @@ export default Sentry.withSentry(
   (env: Env) => ({
     dsn: env.SENTRY_DSN,
     tracesSampleRate: 0.1,
-    environment: 'production',
+    environment: env.DEPLOYMENT_STAGE === 'staging' ? 'staging' : 'production',
   }),
   {
     fetch: withApiSecurityHeaders(async (request, env, ctx) => {
+      if (!deploymentIsReady(env)) {
+        reportError('deployment.invalid_configuration', 'Invalid stage or staging Stripe key');
+        return errorResponse('Service configuration unavailable', 503);
+      }
       if (request.method === 'OPTIONS') {
         return new Response(null, {
           headers: {

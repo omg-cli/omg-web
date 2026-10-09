@@ -4,7 +4,7 @@ import { STRIPE_EVENT_RETENTION_DAYS } from '../retention';
 import { Effect, Exit } from 'effect';
 import * as Schema from 'effect/Schema';
 import { decodeBoundedJsonResponse, decodeJsonBody, readBoundedBodyText } from '../body';
-import { SITE_ORIGIN } from '../../../../shared/public-site';
+import { deploymentSiteOrigin } from '../deployment';
 import { EmailAddress } from '../../../../shared/site-session';
 import {
   authenticateSession,
@@ -602,8 +602,8 @@ export async function handleCreateCheckout(
     // The landing page hosts the post-checkout modal; the template lets it
     // correlate the redirect with a real Checkout Session instead of trusting
     // a forgeable ?success=true flag.
-    success_url: `${SITE_ORIGIN}/?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${SITE_ORIGIN}/#pricing`,
+    success_url: `${deploymentSiteOrigin(env)}/?success=true&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${deploymentSiteOrigin(env)}/#pricing`,
   });
   if (stripePromotionCodeId !== null) {
     params.set('discounts[0][promotion_code]', stripePromotionCodeId);
@@ -783,7 +783,7 @@ export async function handleBillingPortal(request: Request, env: Env): Promise<R
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         customer: stripeCustomerId,
-        return_url: `${SITE_ORIGIN}/dashboard?portal=closed`,
+        return_url: `${deploymentSiteOrigin(env)}/dashboard?portal=closed`,
       }),
     }
   );
@@ -876,6 +876,10 @@ export async function handleStripeWebhook(
     return new Response('Invalid JSON', { status: 400 });
   }
   const event = decodedEvent.value;
+  if (env.DEPLOYMENT_STAGE === 'staging' && event.livemode !== false) {
+    reportWarning('stripe_webhook.non_test_event_rejected');
+    return new Response('Staging requires a test-mode event', { status: 400 });
+  }
   const claim = await claimStripeEvent(env.DB, event, body);
   const claimToken = claim.claimToken;
   if (claim.outcome === 'processed') {

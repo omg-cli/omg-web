@@ -6,6 +6,7 @@ import * as Effect from 'effect/Effect';
 export const ShadowAuthSecret = Alchemy.Random('ShadowAuthSecret');
 
 const PLATFORM_DATABASE_ID = 'fee8ddab-fb4a-4be4-b8d2-8abb7c2db188';
+const STAGING_DATABASE_ID = '0f059202-7042-4588-a89f-ce0ae3f6deba';
 const SITE_HOSTNAME = 'getomg.xyz';
 const WWW_SITE_HOSTNAME = 'www.getomg.xyz';
 
@@ -32,14 +33,14 @@ export const Website = Cloudflare.Website.SvelteKit(
               name: SITE_HOSTNAME,
               redirects: [WWW_SITE_HOSTNAME],
             }
-          : null,
+          : { name: 'staging.getomg.xyz' },
       env: {
         AUTH_RATE_LIMITER: Cloudflare.RateLimit('AUTH_RATE_LIMITER', {
-          namespaceId: 2001,
+          namespaceId: stage === 'prod' ? 2001 : 4001,
           simple: { limit: 10, period: 60 },
         }),
         ADMIN_LIVE_RATE_LIMITER: Cloudflare.RateLimit('ADMIN_LIVE_RATE_LIMITER', {
-          namespaceId: 2002,
+          namespaceId: stage === 'prod' ? 2002 : 4002,
           simple: { limit: 30, period: 60 },
         }),
         BETTER_AUTH_SECRET: authSecret.text,
@@ -74,7 +75,7 @@ export const Website = Cloudflare.Website.SvelteKit(
           persist: true,
         },
       },
-      workersDev: stage !== 'prod',
+      workersDev: false,
     };
   })
 );
@@ -95,13 +96,14 @@ export default Alchemy.Stack(
     state: Cloudflare.state(),
   },
   Effect.gen(function* () {
+    const stage = yield* Alchemy.Stage;
     const site = yield* Website;
     yield* site.bind('DB', {
       bindings: [
         {
           type: 'd1',
           name: 'DB',
-          databaseId: PLATFORM_DATABASE_ID,
+          databaseId: stage === 'prod' ? PLATFORM_DATABASE_ID : STAGING_DATABASE_ID,
         },
       ],
     });
@@ -110,7 +112,7 @@ export default Alchemy.Stack(
         {
           type: 'service',
           name: 'LICENSING_API',
-          service: 'omg-saas',
+          service: stage === 'prod' ? 'omg-saas' : 'omg-saas-staging',
         },
       ],
     });

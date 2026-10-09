@@ -1,0 +1,48 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "omgsveltesite-website-shadow-bfrqe2m2mfps2gu6",
+  "account_id": "f1e95b3e1b502cf366dfc81a863695fa",
+  "main": "worker.js",
+  "compatibility_date": "2026-03-17",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "keep_vars": false,
+  "routes": [{ "pattern": "staging.getomg.xyz", "custom_domain": true }],
+  "vars": {
+    "DEPLOYMENT_STAGE": "staging",
+    "GITHUB_CLIENT_ID": "Ov23lim96hwzllDXL6Dm",
+  },
+  "assets": {
+    "directory": ".svelte-kit/cloudflare",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "404-page",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_id": "0f059202-7042-4588-a89f-ce0ae3f6deba",
+      "database_name": "omg-platform-staging",
+    },
+  ],
+  "services": [{ "binding": "LICENSING_API", "service": "omg-saas-staging" }],
+  "ratelimits": [
+    {
+      "name": "AUTH_RATE_LIMITER",
+      "namespace_id": "4001",
+      "simple": { "limit": 10, "period": 60 },
+    },
+    {
+      "name": "ADMIN_LIVE_RATE_LIMITER",
+      "namespace_id": "4002",
+      "simple": { "limit": 30, "period": 60 },
+    },
+  ],
+  "observability": {
+    "enabled": true,
+    "redact_query_string": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
+    "traces": { "enabled": true, "head_sampling_rate": 1, "persist": true },
+  },
+}
