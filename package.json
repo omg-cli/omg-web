@@ -8,7 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "check": "npm run check:installer && npm run check:anti-slop && npm run check:audit-evidence && npm run check:migrations && npm run check:lockfiles && npm run check:source-policy && npm run check:unused-exports && npm run typecheck && npm run lint && npm run format:check && npm run audit && npm run check:deploy && npm test",
+    "check": "npm run check:installer && npm run check:anti-slop && npm run check:audit-evidence && npm run check:migrations && npm run check:lockfiles && npm run check:source-policy && npm run check:unused-exports && npm run test:release && npm run typecheck && npm run lint && npm run format:check && npm run audit && npm run check:deploy && npm test",
     "audit": "node tools/check-npm-audits.ts",
     "check:anti-slop": "node tools/oxlint/sync-anti-slop.mjs --check",
     "check:audit-evidence": "node tools/check-audit-evidence.mjs",
@@ -20,10 +20,10 @@
     "check:lockfiles": "node tools/check-lockfile-integrity.mjs",
     "check:source-policy": "node tools/check-source-policy.mjs",
     "check:unused-exports": "node tools/check-unused-exports.mjs",
-    "format": "prettier --write --ignore-unknown contracts docs/operations shared site/e2e site/tools site/playwright.config.ts site/src site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/package.json site/tsconfig.json workers/api/src workers/api/tests workers/api/tools .github/workflows/ci.yml tools/check-*.mjs tools/drill-*.mjs tools/check-npm-audits.ts tools/oxlint/sync-anti-slop.mjs oxlint.config.ts prettier.config.js package.json workers/api/package.json tsconfig.json workers/api/tsconfig.json workers/api/wrangler.toml workers/api/wrangler.test.toml",
-    "format:check": "prettier --check --ignore-unknown contracts docs/operations shared site/e2e site/tools site/playwright.config.ts site/src site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/package.json site/tsconfig.json workers/api/src workers/api/tests workers/api/tools .github/workflows/ci.yml tools/check-*.mjs tools/drill-*.mjs tools/check-npm-audits.ts tools/oxlint/sync-anti-slop.mjs oxlint.config.ts prettier.config.js package.json workers/api/package.json tsconfig.json workers/api/tsconfig.json workers/api/wrangler.toml workers/api/wrangler.test.toml",
+    "format": "prettier --write --ignore-unknown contracts docs/operations shared site/e2e site/tools site/playwright.config.ts site/src site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/package.json site/tsconfig.json workers/api/src workers/api/tests workers/api/tools .github/workflows/ci.yml tools/check-*.mjs tools/drill-*.mjs tools/release-staging.mjs tools/release tools/check-npm-audits.ts tools/oxlint/sync-anti-slop.mjs oxlint.config.ts prettier.config.js package.json workers/api/package.json tsconfig.json workers/api/tsconfig.json workers/api/wrangler.toml workers/api/wrangler.test.toml",
+    "format:check": "prettier --check --ignore-unknown contracts docs/operations shared site/e2e site/tools site/playwright.config.ts site/src site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/package.json site/tsconfig.json workers/api/src workers/api/tests workers/api/tools .github/workflows/ci.yml tools/check-*.mjs tools/drill-*.mjs tools/release-staging.mjs tools/release tools/check-npm-audits.ts tools/oxlint/sync-anti-slop.mjs oxlint.config.ts prettier.config.js package.json workers/api/package.json tsconfig.json workers/api/tsconfig.json workers/api/wrangler.toml workers/api/wrangler.test.toml",
     "lint": "npm run lint:oxlint",
-    "lint:oxlint": "oxlint --config oxlint.config.ts shared site/e2e site/tools site/playwright.config.ts site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/src workers/api/src workers/api/tests tools/check-*.mjs tools/drill-*.mjs tools/check-npm-audits.ts",
+    "lint:oxlint": "oxlint --config oxlint.config.ts shared site/e2e site/tools site/playwright.config.ts site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/src workers/api/src workers/api/tests tools/check-*.mjs tools/drill-*.mjs tools/release-staging.mjs tools/release tools/check-npm-audits.ts",
     "lint:workers": "oxlint --config oxlint.config.ts workers/api/src workers/api/tests",
     "lint:workers:fix": "oxlint --fix --config oxlint.config.ts workers/api/src workers/api/tests",
     "sync:anti-slop": "node tools/oxlint/sync-anti-slop.mjs",
@@ -34,7 +34,9 @@
     "typecheck:site": "npm run check --prefix site",
     "typecheck:tools": "tsc --project tsconfig.json --noEmit && tsc --project tools/oxlint/anti-slop/tsconfig.json --noEmit",
     "typecheck:workers": "npm run typecheck --prefix workers/api",
-    "check:installer": "node tools/check-installer-sync.mjs && bash tools/installer-security.sh"
+    "check:installer": "node tools/check-installer-sync.mjs && bash tools/installer-security.sh",
+    "release:staging": "node tools/release-staging.mjs",
+    "test:release": "node --test tools/release/*.test.mjs"
   },
   "devDependencies": {
     "@oxlint/plugins": "1.82.0",

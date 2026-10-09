@@ -35,6 +35,16 @@ API requests fail closed. See [deployment and recovery receipts](./cloudflare-st
 
 ## Recovery and webhook retry follow-up
 
+The [staging release command](./staging-release.md) now ties publication to a clean
+source commit, successful CI with explicit checkout verification, current-main
+ancestry, fixed isolated bindings, required secret names, and the migration ledger.
+It installs locked dependencies, captures rollback IDs, tags both Worker uploads,
+and checks live version metadata. Readiness checks are read-only by default;
+`--deploy` is explicit. This path deliberately refuses the current incomplete
+Stripe configuration. The original bootstrap deployments do not count as full
+release acceptance, and production promotion still requires the authenticated
+purchase and CLI flow.
+
 The repeatable remote D1 drill now creates and deletes its own disposable database,
 rejects existing database selectors, and retains source/migration hashes plus
 restore receipts. From clean source `e8a7970`, all 17 migrations and eight checks
