@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { SITE_ORIGIN } from '../../../shared/public-site';
+import { ACCOUNT_ORIGIN } from '../../../shared/public-site';
 import type { Env } from '../src/api';
 import { handleCreateCheckout } from '../src/handlers/billing';
 import { handleMarketingOffer } from '../src/handlers/marketing-offer';
@@ -201,9 +201,9 @@ describe('marketing introductory offer', () => {
       const body = new URLSearchParams(String(init?.body));
       expect(body.get('discounts[0][promotion_code]')).toBe('promo_bound_offer');
       expect(body.get('success_url')).toBe(
-        `${SITE_ORIGIN}/?success=true&session_id={CHECKOUT_SESSION_ID}`
+        `${ACCOUNT_ORIGIN}/?success=true&session_id={CHECKOUT_SESSION_ID}`
       );
-      expect(body.get('cancel_url')).toBe(`${SITE_ORIGIN}/#pricing`);
+      expect(body.get('cancel_url')).toBe(`${ACCOUNT_ORIGIN}/#pricing`);
       expect(body.has('allow_promotion_codes')).toBe(false);
       return Response.json({
         id: 'cs_offer_test',

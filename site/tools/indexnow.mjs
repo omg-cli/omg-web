@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url';
 
-const origin = 'https://getomg.xyz';
+const origin = 'https://getomg.dev';
 const publicPath =
   /^\/(?:$|(?:docs|updates|security|privacy|terms|runtimes|guides|compare)\/(?:[a-z0-9-]+\/)?)$/u;
 
@@ -28,7 +28,7 @@ export async function notifyIndexNow({ urls, key, submit }, fetcher = fetch) {
       !publicPath.test(url.pathname)
     ) {
       throw new Error(
-        'Only canonical getomg.xyz public page URLs without queries or fragments are allowed.'
+        'Only canonical getomg.dev public page URLs without queries or fragments are allowed.'
       );
     }
   }
@@ -71,7 +71,7 @@ export async function notifyIndexNow({ urls, key, submit }, fetcher = fetch) {
     redirect: 'error',
     signal: AbortSignal.timeout(15000),
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
-    body: JSON.stringify({ host: 'getomg.xyz', key, keyLocation, urlList: unique }),
+    body: JSON.stringify({ host: 'getomg.dev', key, keyLocation, urlList: unique }),
   });
   if (response.status !== 200 && response.status !== 202)
     throw new Error(`IndexNow returned HTTP ${response.status}. No automatic retry was made.`);

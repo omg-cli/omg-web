@@ -6,10 +6,10 @@ describe('legacy public-page redirect scope', () => {
     expect(ruleset.phase).toBe('http_request_dynamic_redirect');
     expect(ruleset.rules).toHaveLength(4);
     expect(ruleset.rules.map(rule => rule.action_parameters.from_value.target_url.value)).toEqual([
-      'https://getomg.xyz/',
-      'https://getomg.xyz/docs/',
-      'https://getomg.xyz/privacy/',
-      'https://getomg.xyz/terms/',
+      'https://getomg.dev/',
+      'https://getomg.dev/docs/',
+      'https://getomg.dev/privacy/',
+      'https://getomg.dev/terms/',
     ]);
     for (const rule of ruleset.rules) {
       expect(rule.expression).toContain('http.host eq "omg.latham.cloud"');

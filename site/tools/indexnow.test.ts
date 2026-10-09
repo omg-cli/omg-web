@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { notifyIndexNow } from './indexnow.mjs';
 
 const key = 'test-key-for-indexnow';
-const url = 'https://getomg.xyz/runtimes/node/';
+const url = 'https://getomg.dev/runtimes/node/';
 
 function successfulFetch() {
   return vi.fn(async (input: string, options?: RequestInit) => {
@@ -26,11 +26,11 @@ describe('changed-page IndexNow notification', () => {
 
   it.each([
     'https://example.com/',
-    'https://getomg.xyz/dashboard/',
+    'https://getomg.dev/dashboard/',
     `${url}?token=secret`,
     `${url}#install`,
-    'https://getomg.xyz/runtimes/node',
-    'https://getomg.xyz/guides/../dashboard/',
+    'https://getomg.dev/runtimes/node',
+    'https://getomg.dev/guides/../dashboard/',
   ])('rejects a noncanonical or private URL: %s', async unsafe => {
     const fetcher = successfulFetch();
     await expect(notifyIndexNow({ urls: [unsafe], key, submit: true }, fetcher)).rejects.toThrow();
@@ -44,9 +44,9 @@ describe('changed-page IndexNow notification', () => {
     const call = fetcher.mock.calls.find(([, options]) => options?.method === 'POST');
     expect(call?.[0]).toBe('https://api.indexnow.org/indexnow');
     expect(JSON.parse(String(call?.[1]?.body))).toEqual({
-      host: 'getomg.xyz',
+      host: 'getomg.dev',
       key,
-      keyLocation: `https://getomg.xyz/${key}.txt`,
+      keyLocation: `https://getomg.dev/${key}.txt`,
       urlList: [url],
     });
   });
@@ -55,7 +55,7 @@ describe('changed-page IndexNow notification', () => {
     const fetcher = successfulFetch();
     await expect(
       notifyIndexNow(
-        { urls: ['https://getomg.xyz/runtimes/not-published/'], key, submit: true },
+        { urls: ['https://getomg.dev/runtimes/not-published/'], key, submit: true },
         fetcher
       )
     ).rejects.toThrow('live sitemap');

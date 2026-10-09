@@ -2,7 +2,7 @@ import '../src/cloudflare-test.d.ts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
 import type { Env } from '../src/api';
-import { SITE_ORIGIN } from '../../../shared/public-site';
+import { ACCOUNT_ORIGIN } from '../../../shared/public-site';
 import { fetchWorker } from './test-utils';
 
 const STATS_URL = 'https://omg-api.latham.cloud/api/github-stats';
@@ -18,7 +18,7 @@ function expectBaseline(response: Response): void {
   );
   expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
   expect(response.headers.get('Cross-Origin-Resource-Policy')).toBe('same-site');
-  expect(response.headers.get('Access-Control-Allow-Origin')).toBe(SITE_ORIGIN);
+  expect(response.headers.get('Access-Control-Allow-Origin')).toBe(ACCOUNT_ORIGIN);
 }
 
 function firehoseRequest(secret: string | null, ip: string | null = null): Request {
