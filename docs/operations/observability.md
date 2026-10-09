@@ -8,9 +8,11 @@ Version `9153c55b-0bdb-4bd0-9781-345e50504975` reports actual deployment metadat
 HTTP200 health. Prior production bindings, variables, secret names and Cron
 expressions remain intact. Persistent logs/traces and Issues detection are retained.
 The site was not republished. Native staging Cron acceptance passed for the identical
-runtime, including all completion logs, outcome `ok` and cleanup. Retained structured
-logs expose `message.event` for exact task matching; this does not validate the separate
-SQL Notifications query field. Native daily retention and missing-job delivery still
+runtime, including all completion logs and outcome `ok`. Configuration cleanup is
+verified; runtime cessation remains open as described below. Retained structured
+logs and signed-in SQL preview verify exact `attributes['message.event']` matching.
+The two newly authorized scheduled policies are enabled; actual incident delivery
+and native daily retention still
 require separate evidence. The implementation checkpoints below retain their original
 scope; statements about the pending production API release are historical.
 
@@ -23,9 +25,12 @@ version and scheduledTime but does not prove all three persisted completions.
 The owned tail was deleted and its absence verified.
 
 A later runtime check found that staging native five-minute runs continued through
-`2026-10-09T21:25:51Z` despite the Cron API returning an empty list after the
+`2026-10-09T21:30:51Z` despite the Cron API returning an empty list after the
 21:02 UTC cleanup. The empty staging list was reapplied at 21:28 UTC; readback
 still shows no configured triggers, with production schedules unchanged.
+The retained 21:30 native invocation completed successfully at 21:31:41 UTC,
+after that refresh. This is continuing runtime evidence, not just delayed API
+readback; allow the documented propagation window before a further diagnosis.
 Configuration restoration is verified, but runtime cessation is not yet verified.
 Treat this as open cleanup work rather than assuming API readback stops dispatch
 immediately. No additional provider work or production failure was injected.
@@ -72,7 +77,7 @@ Detection immediately reported two live site issues classified as low-risk vulne
 Saved queries do not send notifications. The following operational conditions have separate acceptance states:
 
 1. HTTP failure rates: two custom SQL policies enabled on 2026-10-09 after explicit authorization, separately for the production API (`9fdb3dbf577c4a65b0ad1052b140dff4`) and site (`ff4eac3a988545e4b5cbc0ad531e5b68`). They trigger on at least five 5xx responses and at least 5% of requests in five minutes, evaluate every five minutes, and repeat at most hourly to the authorized existing email destination. Readback verifies both SQL expressions, thresholds, intervals, enabled state, and sole destination. No additional synthetic email was sent; real incident delivery has not yet been observed. Client cancellations are not automatically server errors. Native Issues occurrence rules are distinct from this rate calculation.
-2. Scheduled failures: any failed invocation. Missing aggregation: no successful five-minute aggregation in 20 minutes; missing daily retention: no successful daily invocation in 26 hours. Enable these conditions after the scheduled-error fix is deployed and verified.
+2. Scheduled failures: any of the six explicit failed-task events in 15 minutes. Missing aggregation: no successful five-minute aggregation in 20 minutes. Both policies were enabled after explicit authorization on 2026-10-09: `99d5c43a4f9b41bda659420135d86630` and `5ff482687d4f4415aac1bed9ec84c705`. Exact queries, threshold >=1, one-minute evaluation windows, five-minute checks, hourly repeats, enabled state and sole existing email destination passed API readback. Incident delivery is unverified, and no additional test email was sent. Missing daily retention remains disabled until its native daily completion and healthy SQL signal are accepted.
 3. Billing inbox: the deployed scheduled health check detects any unprocessed dead event, received/failed event older than 15 minutes, or processing lease older than 15 minutes. A processing row without a lease uses its creation time; a missing/invalid age is unhealthy. Fresh processing leases are protected even for an older event. The check is read-only and does not replay events. Native healthy completion is verified in production; notification delivery for this condition remains pending.
 4. Latency: gather a representative baseline first. The 2026-10-09 observation had only five site requests and two API requests in 15 minutes, which is insufficient to choose a reliable p95 threshold.
 5. Credit spend: existing policy `dba385c80560401793bffee7b8c119f6` is enabled with a $10 usage-spend threshold, verified on 2026-10-09. The signed-in Credits dashboard confirms an active $10,000 grant, estimated remaining balance $10,000 as of October 9, programme start October 6, 2026, and expiry October 6, 2027. Monthly invoices confirm the final balance. The dashboard excludes Registrar purchases and AI Gateway and lists product credit caps of $10,000 for R2 and $50,000 for Workers AI; these caps do not increase the account's $10,000 grant. Preserve the alert: it monitors account-wide usage spend, not remaining grant credit. Budget alerts do not cap spend or include recurring subscription fees.
@@ -81,7 +86,7 @@ The available SQL dataset catalogue was readable on 2026-10-09, but a SQL log qu
 
 After dashboard sign-in on 2026-10-09, Alerts → Create an alert → Custom alert → Custom SQL successfully previewed `logs.workersLogs` without changing credentials. One preview initially returned a permission-service 503; retry succeeded. The proposed `logType = 'invocation'` filter returned no site requests. The documented invocation value `cf-worker-event` returned live site fetches with HTTP status values. Both corrected HTTP failure expressions previewed as 0, and a read-only positive control using known successful responses returned 1. These are query-validation results, not notification delivery tests.
 
-The [metric alert record](./omg-metric-alert-candidates.json) contains the two enabled HTTP policies and three disabled scheduled-job candidates. It is an operational record, not an API request body; update the enabled policy IDs rather than creating duplicates. The HTTP expressions use threshold detection and a manual SQL time range because they already contain their rolling five-minute window. The saved one-minute evaluation window avoids averaging the boolean result over a longer period. Scheduled candidates have no policy or delivery configured. Missing completion logs can also reflect ingestion or sampling gaps; these queries are not independent synthetic uptime checks.
+The [metric alert record](./omg-metric-alert-candidates.json) contains two enabled HTTP policies, two enabled scheduled-job policies and one disabled daily candidate. It is an operational record, not an API request body; update the enabled policy IDs rather than creating duplicates. The expressions use threshold detection and a manual SQL time range because they contain rolling windows. The saved one-minute evaluation window avoids averaging the result over a longer period. The daily candidate has no policy or delivery configured. Missing completion logs can also reflect ingestion or sampling gaps; these queries are not independent synthetic uptime checks.
 
 After the production API promotion, signed-in SQL preview on 2026-10-09 exposed a
 broken draft: `message LIKE '%docs_analytics.aggregate_completed%'` returned zero
@@ -95,7 +100,7 @@ The corrected missing-aggregation expression returns numeric `1` when its
 read-only nonexistent-event control returned `1`, including the empty aggregate
 case. Filter native scheduled custom logs with `invocationType = 'scheduled'`
 and `logType = 'cf-worker'`. Check every five minutes and repeat at most hourly
-after separate destination authorization. Preview controls do not prove delivery.
+to the separately authorized existing destination. Preview controls do not prove delivery.
 
 Daily completion now checks `scheduled.completed` together with
 `invocationLabel = '0 2 * * *'` in a 26-hour window. The native five-minute
@@ -111,7 +116,8 @@ including `stripe_inbox.health_failed`, in 15 minutes. All six names match the
 deployed scheduler source. The actual production expression previewed as `0`;
 the same OR predicate using known completion names had positive matches. This
 validates field/predicate matching, not an injected production failure or incident
-delivery. Its five-minute evaluation and hourly repeat require separate approval.
+delivery. Its five-minute evaluation and hourly repeat were enabled after the
+separate human approval; exact API readback matched the prepared request.
 
 Even with full ingestion, retained queries can adaptively sample rows. A refreshed
 production query represented the first analytics completion with sample interval
@@ -119,6 +125,13 @@ production query represented the first analytics completion with sample interval
 counts. Do not interpret an absent sampled log as conclusive proof that a job did
 not run, or require four individually sampled daily completions when one correlated
 successful coordinator signal expresses the required outcome.
+
+The live Traces dashboard also verifies an actual staging native scheduled trace
+on version `38887e7f-e0c5-4f12-b9c6-a8c2082b51d1`: one scheduled root and three D1
+spans, 292 ms root duration, with no errors. The D1 spans show the read-only inbox
+health query and analytics batches. Recent production-version trace queries
+returned no rows under 1% trace sampling; this does not establish a tracing failure
+or prove production trace acceptance.
 
 ## Saved queries and measured baseline
 
