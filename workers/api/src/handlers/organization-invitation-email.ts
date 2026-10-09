@@ -1,8 +1,8 @@
 import { Cause, Effect, Exit, Option } from 'effect';
 import * as Schema from 'effect/Schema';
 import type { OrganizationInvitationEmailResponse } from '../../../../shared/organization-invitation-email';
-import { SITE_HOSTNAME } from '../../../../shared/public-site';
-import { deploymentSiteOrigin } from '../deployment';
+import { ACCOUNT_ORIGIN } from '../../../../shared/public-site';
+import { deploymentAccountOrigin } from '../deployment';
 import { EMAIL_PATTERN } from '../../../../shared/email';
 import { AdminUnauthorizedError, requireInternalSecret } from '../admin-secret';
 import { decodeJsonBody, InvalidJsonBodyError } from '../body';
@@ -107,8 +107,8 @@ function invitationUrl(value: string, env: Env): Effect.Effect<URL, InvitationEm
     parsed.protocol !== 'https:' ||
     parsed.port !== '' ||
     (env.DEPLOYMENT_STAGE === 'staging'
-      ? parsed.origin !== deploymentSiteOrigin(env)
-      : parsed.hostname !== SITE_HOSTNAME && !parsed.hostname.endsWith('.latham.workers.dev'))
+      ? parsed.origin !== deploymentAccountOrigin(env)
+      : parsed.origin !== ACCOUNT_ORIGIN && !parsed.hostname.endsWith('.latham.workers.dev'))
   ) {
     return Effect.fail(new InvitationEmailPayloadInvalid());
   }

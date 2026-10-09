@@ -15,12 +15,12 @@ describe('learning content boundaries', () => {
     if (!page) throw new Error('Missing guide');
     const markdown = learningMarkdown(page.meta, page.content);
     expect(markdown).toContain('# Use Node.js, npm, and pnpm with OMG');
-    expect(markdown).toContain('https://getomg.xyz/guides/node-npm-pnpm/');
+    expect(markdown).toContain('https://getomg.dev/guides/node-npm-pnpm/');
     expect(markdown).toContain('```sh\nomg which node\nnode --version');
     expect(markdown).toContain('| Layer | Responsibility |');
     expect(markdown).toContain('pnpm install --frozen-lockfile');
     expect(markdown).toContain('[pnpm installation](https://pnpm.io/installation)');
-    expect(markdown).toContain('https://getomg.xyz/docs/runtimes/');
+    expect(markdown).toContain('https://getomg.dev/docs/runtimes/');
   });
 
   it('loads every published page and emits each authored section', async () => {

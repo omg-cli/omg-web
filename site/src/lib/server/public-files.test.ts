@@ -21,7 +21,7 @@ const EDGE_CACHE_POLICY =
 describe('public file endpoints', () => {
   it.each([
     ['install.sh', '6943fd1930367af2045bcb4636f9b26da1c5840a038c34944e8df3d63c7d5649'],
-    ['install.ps1', '842141cc4cc23318b24437d363bb696e69194c1fbf719f677c007f616b3b13e7'],
+    ['install.ps1', 'cbfcf09f5e91d7842e8983ab39ead811a4f069470af5afbbf1bab22a0173a462'],
     [
       '.well-known/omg-license-ed25519-v1.pem',
       '8bf0749afe4761500cb47a370cef66f1ab4c88415a1298c4481ead53ac4bc13c',
@@ -50,7 +50,7 @@ describe('public file endpoints', () => {
     expect(response.headers.get('content-type')).toBe('text/plain; charset=utf-8');
     expect(response.headers.get('cache-control')).toBe('public, max-age=86400, s-maxage=604800');
     await expect(response.text()).resolves.toBe(`# OMG Package Manager - robots.txt
-# https://getomg.xyz
+# https://getomg.dev
 # Content signals follow the Cloudflare robots.txt convention: search access is
 # allowed while model training on this documentation is not.
 
@@ -60,7 +60,7 @@ Disallow: /api/
 Disallow: /dashboard/
 Disallow: /admin/
 
-Sitemap: https://getomg.xyz/sitemap.xml
+Sitemap: https://getomg.dev/sitemap.xml
 `);
   });
 
@@ -73,13 +73,13 @@ Sitemap: https://getomg.xyz/sitemap.xml
     // A sitemap is a discovery file; a noindex header on it must not come back.
     expect(response.headers.has('x-robots-tag')).toBe(false);
     expect(body.match(/<url>/g)).toHaveLength(9 + DOCS_TOPICS.length + LEARNING_PAGES.length);
-    expect(body).toContain('<loc>https://getomg.xyz/security/</loc>');
-    expect(body).toContain('<loc>https://getomg.xyz/</loc>');
-    expect(body).toContain('<loc>https://getomg.xyz/docs/</loc>');
-    expect(body).toContain('<loc>https://getomg.xyz/privacy/</loc>');
-    expect(body).toContain('<loc>https://getomg.xyz/terms/</loc>');
+    expect(body).toContain('<loc>https://getomg.dev/security/</loc>');
+    expect(body).toContain('<loc>https://getomg.dev/</loc>');
+    expect(body).toContain('<loc>https://getomg.dev/docs/</loc>');
+    expect(body).toContain('<loc>https://getomg.dev/privacy/</loc>');
+    expect(body).toContain('<loc>https://getomg.dev/terms/</loc>');
     for (const topic of DOCS_TOPICS) {
-      expect(body).toContain(`<loc>https://getomg.xyz/docs/${topic.slug}/</loc>`);
+      expect(body).toContain(`<loc>https://getomg.dev/docs/${topic.slug}/</loc>`);
     }
     expect(body.match(/<lastmod>/g)).toHaveLength(LEARNING_PAGES.length + DOCS_TOPICS.length + 2);
     expect(body).toContain('<lastmod>2026-09-21</lastmod>');

@@ -4,12 +4,12 @@ All dependency versions and overrides are exact. Renovate must not automerge cha
 
 ## Root `package.json`
 
-- `effect` `3.22.1` owns schema and runtime imports used by top-level `shared/` contracts. Remove it only after every retained shared module stops importing Effect.
+- `effect` `3.22.2` owns schema and runtime imports used by top-level `shared/` contracts. Remove it only after every retained shared module stops importing Effect.
 - `oxlint` and the checked-in anti-slop plugin enforce the repository TypeScript policy across shared, website, Worker, test, and tool sources.
 
 ## `site/package.json`
 
-- `effect` `4.0.0-rc.112` is the application boundary and expected-failure runtime. Changes require strict Svelte diagnostics, TypeScript checks, focused boundary tests, browser verification, and a successful shadow deployment.
+- `effect` `4.0.2` is the application boundary and expected-failure runtime. Changes require strict Svelte diagnostics, TypeScript checks, focused boundary tests, browser verification, and a successful shadow deployment.
 - `@sveltejs/kit` under `better-auth` is a package-scoped peer override for the exact-tested SvelteKit 3 prerelease. Remove it when Better Auth declares compatibility with the installed SvelteKit release.
 - `@hono/node-server`, `hono`, `lodash`, and `valibot` are security floors for Alchemy's non-optional Prisma development dependency chain. Remove them when Alchemy makes that chain optional or resolves audited versions itself.
 
@@ -36,10 +36,8 @@ script versions move with it to `workerd@1.20261006.1` and `esbuild@0.28.2`.
 The lockfiles also resolve patched `devalue@5.9.4` and `source-map-js@1.2.2` where
 present. Root and API npm audits report zero vulnerabilities after these updates.
 
-The site audit still fails on `braces@3.0.3`, reached through Alchemy's `fast-glob`
-dependency. [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
-has no published patch as of this review. Do not suppress the audit or apply npm's
-suggested downgrade to Alchemy 0.x: that is incompatible with this application's
-Alchemy 2 setup. Resolving this requires a reviewed replacement or upstream fix
-for the build dependency path. This finding does not by itself demonstrate an
-exploitable production request path.
+The earlier site audit failed on `braces@3.0.3` through Alchemy's build dependency
+path. Main's PR #131 updates Alchemy and its frontend package to `2.0.0-beta.78`,
+removing that vulnerable path while retaining Alchemy 2. This branch incorporates
+that update and its Effect `4.0.2` dependencies. All three npm audits now report
+zero vulnerabilities. The audit gate remains enforced.

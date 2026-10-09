@@ -1,5 +1,8 @@
-export const SITE_HOSTNAME = 'getomg.xyz';
+export const SITE_HOSTNAME = 'getomg.dev';
 export const SITE_ORIGIN = `https://${SITE_HOSTNAME}`;
+
+// Account sessions and the registered GitHub OAuth callback remain on .xyz.
+export const ACCOUNT_ORIGIN = 'https://getomg.xyz';
 
 type JsonLdValue =
   | string

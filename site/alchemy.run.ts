@@ -7,8 +7,8 @@ export const ShadowAuthSecret = Alchemy.Random('ShadowAuthSecret');
 
 const PLATFORM_DATABASE_ID = 'fee8ddab-fb4a-4be4-b8d2-8abb7c2db188';
 const STAGING_DATABASE_ID = '0f059202-7042-4588-a89f-ce0ae3f6deba';
-const SITE_HOSTNAME = 'getomg.xyz';
-const WWW_SITE_HOSTNAME = 'www.getomg.xyz';
+const SITE_HOSTNAME = 'getomg.dev';
+const WWW_SITE_HOSTNAME = 'www.getomg.dev';
 
 export const Website = Cloudflare.Website.SvelteKit(
   'Website',
@@ -31,6 +31,8 @@ export const Website = Cloudflare.Website.SvelteKit(
         stage === 'prod'
           ? {
               name: SITE_HOSTNAME,
+              // Preserve account sessions and the existing OAuth callback during migration.
+              aliases: ['getomg.xyz', 'www.getomg.xyz'],
               redirects: [WWW_SITE_HOSTNAME],
             }
           : { name: 'staging.getomg.xyz' },
@@ -46,9 +48,9 @@ export const Website = Cloudflare.Website.SvelteKit(
         }),
         BETTER_AUTH_SECRET: authSecret.text,
         DEPLOYMENT_STAGE: stage,
-        GITHUB_CLIENT_ID: Config.string('GITHUB_CLIENT_ID'),
-        GITHUB_CLIENT_SECRET: Config.redacted('GITHUB_CLIENT_SECRET'),
-        SVELTE_BFF_SECRET: Config.redacted('SVELTE_BFF_SECRET'),
+        GITHUB_CLIENT_ID: Config.String('GITHUB_CLIENT_ID'),
+        GITHUB_CLIENT_SECRET: Config.Redacted('GITHUB_CLIENT_SECRET'),
+        SVELTE_BFF_SECRET: Config.Redacted('SVELTE_BFF_SECRET'),
       },
       memo: {
         include: [
@@ -64,6 +66,7 @@ export const Website = Cloudflare.Website.SvelteKit(
       },
       observability: {
         enabled: true,
+        redactQueryString: true,
         logs: {
           enabled: true,
           headSamplingRate: 1,

@@ -58,6 +58,7 @@ describe('canonical D1 migrations', () => {
       '023_session_token_hashes.sql',
       '024_better_auth_organizations.sql',
       '025_organization_owner_integrity.sql',
+      '026_stripe_subscription_reconciliations.sql',
     ]);
   });
 

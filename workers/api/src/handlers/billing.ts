@@ -4,7 +4,7 @@ import { STRIPE_EVENT_RETENTION_DAYS } from '../retention';
 import { Effect, Exit } from 'effect';
 import * as Schema from 'effect/Schema';
 import { decodeBoundedJsonResponse, decodeJsonBody, readBoundedBodyText } from '../body';
-import { deploymentSiteOrigin } from '../deployment';
+import { deploymentAccountOrigin } from '../deployment';
 import { EmailAddress } from '../../../../shared/site-session';
 import {
   authenticateSession,
@@ -37,11 +37,7 @@ import {
   StripeSubscriptionListSchema,
   type StripeWebhookEvent,
 } from '../contracts/stripe';
-import {
-  applyStripeSubscriptionProjection,
-  reconcileStripeSubscriptionSignal,
-  type StripeFetch,
-} from '../stripe-reconciliation';
+import { reconcileStripeSubscriptionSignal, type StripeFetch } from '../stripe-reconciliation';
 
 const PortalBodySchema = Schema.Struct({
   email: Schema.optional(EmailAddress),
@@ -602,8 +598,8 @@ export async function handleCreateCheckout(
     // The landing page hosts the post-checkout modal; the template lets it
     // correlate the redirect with a real Checkout Session instead of trusting
     // a forgeable ?success=true flag.
-    success_url: `${deploymentSiteOrigin(env)}/?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${deploymentSiteOrigin(env)}/#pricing`,
+    success_url: `${deploymentAccountOrigin(env)}/?success=true&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${deploymentAccountOrigin(env)}/#pricing`,
   });
   if (stripePromotionCodeId !== null) {
     params.set('discounts[0][promotion_code]', stripePromotionCodeId);
@@ -783,7 +779,7 @@ export async function handleBillingPortal(request: Request, env: Env): Promise<R
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         customer: stripeCustomerId,
-        return_url: `${deploymentSiteOrigin(env)}/dashboard?portal=closed`,
+        return_url: `${deploymentAccountOrigin(env)}/dashboard?portal=closed`,
       }),
     }
   );
@@ -1148,11 +1144,14 @@ export async function handleAdminStripeSync(request: Request, env: Env): Promise
           }
           return false;
         }
-        await applyStripeSubscriptionProjection(
+        // List results can already be stale. Use the same fenced current-object
+        // read as webhooks so admin recovery cannot overwrite a newer signal.
+        await reconcileStripeSubscriptionSignal(
           env.DB,
-          resolved.customerId,
-          sub,
-          billingCatalog(env)
+          sub.id,
+          env.STRIPE_SECRET_KEY,
+          billingCatalog(env),
+          fetch
         );
         return true;
       },

@@ -51,8 +51,8 @@
     },
   ],
   "observability": {
-    "redact_query_string": true,
     "enabled": true,
+    "redact_query_string": true,
     "head_sampling_rate": 1,
     "logs": {
       "enabled": true,

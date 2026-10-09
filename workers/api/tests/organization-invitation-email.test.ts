@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
-import { SITE_ORIGIN } from '../../../shared/public-site';
+import { ACCOUNT_ORIGIN } from '../../../shared/public-site';
 import type { Env } from '../src/api';
 import { handleOrganizationInvitationEmail } from '../src/handlers/organization-invitation-email';
 
@@ -10,7 +10,7 @@ type OrganizationInvitationEmailSender = NonNullable<
 type OrganizationInvitationEmailMessage = Parameters<OrganizationInvitationEmailSender>[0];
 
 const SVELTE_BFF_SECRET = 'test-svelte-bff-secret';
-const INVITATION_URL = `${SITE_ORIGIN}/dashboard/organization/invitations/accept/?token=v1.${'a'.repeat(16)}.${'b'.repeat(48)}`;
+const INVITATION_URL = `${ACCOUNT_ORIGIN}/dashboard/organization/invitations/accept/?token=v1.${'a'.repeat(16)}.${'b'.repeat(48)}`;
 
 function emailEnv(rateLimitSuccess = true): Env {
   return {
@@ -55,14 +55,14 @@ function validBody() {
 describe('organization invitation email capability', () => {
   it.each([
     { origin: 'https://staging.getomg.xyz', status: 200 },
-    { origin: SITE_ORIGIN, status: 400 },
+    { origin: ACCOUNT_ORIGIN, status: 400 },
     { origin: 'https://another.latham.workers.dev', status: 400 },
   ])('limits staging invitation links to its own origin: $origin', async ({ origin, status }) => {
     const sentMessages: OrganizationInvitationEmailMessage[] = [];
     const response = await handleOrganizationInvitationEmail(
       emailRequest({
         ...validBody(),
-        invitationUrl: INVITATION_URL.replace(SITE_ORIGIN, origin),
+        invitationUrl: INVITATION_URL.replace(ACCOUNT_ORIGIN, origin),
       }),
       { ...emailEnv(), DEPLOYMENT_STAGE: 'staging' },
       async message => {
@@ -94,7 +94,7 @@ describe('organization invitation email capability', () => {
     expect(firstMessage.subject).not.toContain('Acme Engineering');
     expect(firstMessage.html).toContain('Acme Engineering');
     expect(firstMessage.html).toContain(
-      `href="${SITE_ORIGIN}/dashboard/organization/invitations/accept/?token=`
+      `href="${ACCOUNT_ORIGIN}/dashboard/organization/invitations/accept/?token=`
     );
     expect(firstMessage.text).toContain(INVITATION_URL);
 

@@ -3,6 +3,12 @@
 Reviewed 2026-10-09. Configuration is implemented; the staged Workers have not
 been published. Production traffic and secrets have not been changed.
 
+Main's separately deployed PR #131 has since moved the public site to
+`getomg.dev` while retaining account OAuth on `getomg.xyz`. This branch incorporates
+that change. Staging remains on `staging.getomg.xyz`, and billing returns use the
+account origin rather than the public marketing origin. The new staging D1 now
+also includes migration 026, bringing its canonical migration count to 17.
+
 ## Resources
 
 | Component            | Staging                                         | Production                                    |
@@ -44,9 +50,9 @@ Workers share only their staging BFF secret. The site and production use separat
 host-scoped sessions and separate D1 data. A shared OAuth app still shares GitHub
 client credential trust; it is not a separate GitHub authorization boundary.
 
-For the API, supply a Stripe test key, a test endpoint's `STRIPE_WEBHOOK_SECRET`,
+For the API, a Stripe test key, a test endpoint's `STRIPE_WEBHOOK_SECRET`,
 and a verified test catalog (`STRIPE_PRO_PRICE_ID`, `STRIPE_TEAM_PRICE_ID`, and an
-optional `STRIPE_INTRO_COUPON_ID`). Store the catalog as Worker secret bindings so
+optional `STRIPE_INTRO_COUPON_ID`) are required. Store the catalog as Worker secret bindings so
 subsequent deploys preserve it without inheriting arbitrary old plaintext vars.
 The API returns 503 for missing/live Stripe keys in staging and rejects signed
 webhook events unless `livemode` is explicitly false. Checkout and portal returns
@@ -115,6 +121,13 @@ Validation of the implementation and patched dependency graph on 2026-10-09:
 - The aggregate release gate remains failing: the site has one unpatched `braces`
   advisory through Alchemy, reported against five packages in the dependency
   chain. Root and API npm audits are clean. See [dependency pins](./dependency-pins.md).
+
+That audit result describes the earlier `72afa59` baseline. After incorporating
+PR #131's Alchemy beta.78 update, the full `npm run check` passed, including all
+three audits, 356 site tests, and 343 API tests. The public browser suite passed
+22 tests and skipped three deployed-auth tests. All four production/staging
+configurations passed deployment dry-runs. The earlier D1 recovery drill still
+covers the 16-migration schema that existed at drill time.
 
 Before promotion, exercise GitHub sign-in, Stripe test checkout, signed webhook
 delivery, license issuance, session isolation, and API denial with production

@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/cloudflare';
 import { runScheduledJobs } from './scheduled';
-import { deploymentIsReady, deploymentSiteOrigin } from './deployment';
+import { deploymentIsReady, deploymentAccountOrigin } from './deployment';
 import { forbiddenUnlessAdminSession } from './admin-auth';
 import {
   type Env,
@@ -247,7 +247,7 @@ function withApiSecurityHeaders(
     for (const [name, value] of Object.entries(apiSecurityHeaders)) {
       secured.headers.set(name, value);
     }
-    secured.headers.set('Access-Control-Allow-Origin', deploymentSiteOrigin(env));
+    secured.headers.set('Access-Control-Allow-Origin', deploymentAccountOrigin(env));
     return secured;
   };
 }

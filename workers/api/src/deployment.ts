@@ -1,9 +1,11 @@
-import { SITE_HOSTNAME, SITE_ORIGIN } from '../../../shared/public-site';
+import { ACCOUNT_ORIGIN } from '../../../shared/public-site';
 import type { Env } from './api';
 
 /** Return a configured origin, never a caller-controlled Host or Origin header. */
-export function deploymentSiteOrigin(env: Pick<Env, 'DEPLOYMENT_STAGE'>): string {
-  return env.DEPLOYMENT_STAGE === 'staging' ? `https://staging.${SITE_HOSTNAME}` : SITE_ORIGIN;
+export function deploymentAccountOrigin(env: Pick<Env, 'DEPLOYMENT_STAGE'>): string {
+  return env.DEPLOYMENT_STAGE === 'staging'
+    ? `https://staging.${new URL(ACCOUNT_ORIGIN).hostname}`
+    : ACCOUNT_ORIGIN;
 }
 
 /** A staging Worker must never make requests with a live Stripe credential. */

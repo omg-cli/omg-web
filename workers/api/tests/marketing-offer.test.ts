@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { SITE_ORIGIN } from '../../../shared/public-site';
+import { ACCOUNT_ORIGIN } from '../../../shared/public-site';
 import type { Env } from '../src/api';
 import { handleCreateCheckout } from '../src/handlers/billing';
 import { handleMarketingOffer } from '../src/handlers/marketing-offer';
@@ -175,7 +175,7 @@ describe('marketing introductory offer', () => {
   });
 
   it.each([
-    { stage: 'prod', origin: SITE_ORIGIN },
+    { stage: 'prod', origin: ACCOUNT_ORIGIN },
     { stage: 'staging', origin: 'https://staging.getomg.xyz' },
   ])('binds an issued code and returns checkout to $stage', async ({ stage, origin }) => {
     const customerId = 'offer-checkout-customer';
