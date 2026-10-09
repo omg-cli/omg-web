@@ -7,9 +7,41 @@ and site version `16b9177c-f2a9-4129-9827-f7a04436a852` both return HTTP200 heal
 with that source tag. Billing is explicitly disabled and all seven Stripe-consuming
 routes return404. Database-backed install totals and the authenticated account
 details/usage panel work. All three deployed authorization browser checks pass.
-The existing staging session does not authenticate production; production auth
-counts and application deployment IDs are unchanged. The earlier bootstrap
+The existing staging session does not authenticate production. The earlier bootstrap
 receipts below describe historical deployments, not the current healthy release.
+
+After explicit API-only approval, production `omg-saas` was published on 2026-10-09
+at 21:06 UTC from `b2ef8e92d8b2bc85a47327ff4b7e33447f095b9f`, whose exact-source
+CI `37988739309` passed. Its runtime matches the accepted staging source; intervening
+changes were documentation only. API version `9153c55b-0bdb-4bd0-9781-345e50504975`
+and deployment `a6925a57-6654-4eb4-902d-b3544febb602` return HTTP200 with that source
+tag. All prior bindings, variables and secret names were preserved, with the generated
+version metadata binding added. Production site version
+`65974306-855b-4aa7-9c40-eadb911eeb00`, domains, OAuth settings, billing settings,
+and both 17-migration ledgers are unchanged. Real production GitHub sign-in now loads
+the existing account and usage while staging retains its separate account/session.
+Production sessions increased from 152 to 153 for this login; other auth/customer/license
+counts and the three processed inbox events are unchanged. Three post-release
+authorization checks pass. Rollback version is
+`053e114a-a351-48e0-bb60-bc0fa2e55f37`; Worker rollback does not restore database writes.
+
+The first observed native production five-minute invocation for this version had
+scheduledTime `2026-10-09T21:10:51Z` and completed at `21:11:18.317Z`. The untruncated
+live tail records outcome `ok`, no exceptions, and all three task completions;
+CPU time was 75ms and wall time 480ms. An independent retained-log query confirms
+analytics completion for the same version and scheduledTime. That query returned
+one completion row, so the full tail is the evidence for all three completions.
+The owned tail was deleted and readback confirmed no remaining tails.
+
+A temporary staging five-minute Cron drill captured a native scheduled invocation
+for the accepted API version at scheduledTime `2026-10-09T21:00:51Z`. Runtime outcome
+was `ok`, with no exceptions and completion of inbox health, analytics aggregation
+and the overall coordinator. Persistent logs independently retain the same invocation
+and structured `message.event` completions. The schedule and tail were removed with
+readback; staging's configured Cron list remains empty. Native daily retention and
+notification delivery remain separate acceptance work. The deployment paragraphs
+below retain their historical scope; the production API publication above supersedes
+their earlier unpublished status.
 
 Deployed 2026-10-09 from `2204a63c19c0f82a40485e3b10d3f6eccebef52c` after both
 GitHub CI jobs passed (run `37962598220`). The isolated staging site and API are

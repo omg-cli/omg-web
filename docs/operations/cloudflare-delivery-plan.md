@@ -2,7 +2,12 @@
 
 Status: implementation in progress, 2026-10-09. Staging isolation and test-mode
 guards are deployed. The production site received the GitHub OAuth broker
-bootstrap; the production API remains unchanged from PR #131. The staging D1
+bootstrap. After explicit API-only approval, production API version
+`9153c55b-0bdb-4bd0-9781-345e50504975` was published from `b2ef8e9`, with exact-source
+CI `37988739309`, HTTP200/version acceptance and preserved production bindings.
+The production site, domains, OAuth/billing settings and schema were unchanged.
+Real production GitHub sign-in and three post-release authorization checks pass;
+staging retains its separate account/session. The staging D1
 database has all 17 canonical migrations, and a synthetic D1 Time Travel drill
 passed against the current schema with eight checks. Real GitHub sign-in through
 the existing production app passed on 2026-10-09 at 19:20 UTC, including staging
@@ -14,6 +19,17 @@ CI and published both staging Workers with HTTP200 health and verified source/ve
 identity. The authenticated dashboard now loads account details and usage, all seven
 billing routes reject requests, and three deployed authorization checks pass.
 See [deployment and recovery receipts](./cloudflare-staging.md).
+
+Native staging five-minute Cron acceptance also passed for the deployed candidate,
+with all task completion logs, outcome `ok`, independent retained-log verification,
+and cleanup of the temporary schedule/tail. Native daily retention and additional
+missing-job notification delivery remain pending. Earlier pending/unpublished
+statements below are historical implementation checkpoints.
+
+Production's new API version also completed its native five-minute invocation
+scheduled for `2026-10-09T21:10:51Z`, with outcome `ok`, no exceptions and all three
+task completions in the untruncated live tail. Retained analytics completion matches
+that version and scheduledTime. The temporary tail was removed with readback.
 
 ## First milestone: isolated staging
 

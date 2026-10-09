@@ -2,6 +2,26 @@
 
 This repository treats version-controlled Alchemy and Wrangler configuration as the source of truth for Cloudflare Workers observability. Deployments must not rely on dashboard-only logging settings.
 
+Current runtime, 2026-10-09: the production API was promoted after explicit approval
+from `b2ef8e92d8b2bc85a47327ff4b7e33447f095b9f` / exact-source CI `37988739309`.
+Version `9153c55b-0bdb-4bd0-9781-345e50504975` reports actual deployment metadata and
+HTTP200 health. Prior production bindings, variables, secret names and Cron
+expressions remain intact. Persistent logs/traces and Issues detection are retained.
+The site was not republished. Native staging Cron acceptance passed for the identical
+runtime, including all completion logs, outcome `ok` and cleanup. Retained structured
+logs expose `message.event` for exact task matching; this does not validate the separate
+SQL Notifications query field. Native daily retention and missing-job delivery still
+require separate evidence. The implementation checkpoints below retain their original
+scope; statements about the pending production API release are historical.
+
+Native production five-minute acceptance passed for the new API version: scheduled
+at `2026-10-09T21:10:51Z`, completed at `21:11:18.317Z`, outcome `ok`, no exceptions.
+The untruncated live tail records `stripe_inbox.health_completed`,
+`docs_analytics.aggregate_completed` and `scheduled.completed`. The retained query
+returned one matching analytics completion row; it independently confirms the
+version and scheduledTime but does not prove all three persisted completions.
+The owned tail was deleted and its absence verified.
+
 ## Coverage
 
 The following deployed applications enable persistent Workers Logs and traces:
@@ -45,7 +65,7 @@ Saved queries do not send notifications. The following operational conditions ha
 
 1. HTTP failure rates: two custom SQL policies enabled on 2026-10-09 after explicit authorization, separately for the production API (`9fdb3dbf577c4a65b0ad1052b140dff4`) and site (`ff4eac3a988545e4b5cbc0ad531e5b68`). They trigger on at least five 5xx responses and at least 5% of requests in five minutes, evaluate every five minutes, and repeat at most hourly to the authorized existing email destination. Readback verifies both SQL expressions, thresholds, intervals, enabled state, and sole destination. No additional synthetic email was sent; real incident delivery has not yet been observed. Client cancellations are not automatically server errors. Native Issues occurrence rules are distinct from this rate calculation.
 2. Scheduled failures: any failed invocation. Missing aggregation: no successful five-minute aggregation in 20 minutes; missing daily retention: no successful daily invocation in 26 hours. Enable these conditions after the scheduled-error fix is deployed and verified.
-3. Billing inbox: the pending scheduled health check detects any unprocessed dead event, received/failed event older than 15 minutes, or processing lease older than 15 minutes. A processing row without a lease uses its creation time; a missing/invalid age is unhealthy. Fresh processing leases are protected even for an older event. The check is read-only and does not replay events. Publication and live notification acceptance are still pending.
+3. Billing inbox: the deployed scheduled health check detects any unprocessed dead event, received/failed event older than 15 minutes, or processing lease older than 15 minutes. A processing row without a lease uses its creation time; a missing/invalid age is unhealthy. Fresh processing leases are protected even for an older event. The check is read-only and does not replay events. Native healthy completion is verified in production; notification delivery for this condition remains pending.
 4. Latency: gather a representative baseline first. The 2026-10-09 observation had only five site requests and two API requests in 15 minutes, which is insufficient to choose a reliable p95 threshold.
 5. Credit spend: existing policy `dba385c80560401793bffee7b8c119f6` is enabled with a $10 usage-spend threshold, verified on 2026-10-09. The signed-in Credits dashboard confirms an active $10,000 grant, estimated remaining balance $10,000 as of October 9, programme start October 6, 2026, and expiry October 6, 2027. Monthly invoices confirm the final balance. The dashboard excludes Registrar purchases and AI Gateway and lists product credit caps of $10,000 for R2 and $50,000 for Workers AI; these caps do not increase the account's $10,000 grant. Preserve the alert: it monitors account-wide usage spend, not remaining grant credit. Budget alerts do not cap spend or include recurring subscription fees.
 
