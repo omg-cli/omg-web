@@ -6,6 +6,10 @@ live. The production site received the OAuth broker bootstrap and version
 metadata; its existing GitHub, session, and BFF secrets were preserved. A new
 dedicated proxy secret was added. The production API remains at its PR #131 release.
 
+Staging was subsequently updated to `5925bce7461f133bf317ac12d6a79eaa410510b9`
+after both CI jobs passed (run `37966895191`). This includes the exhausted-webhook
+claim fix. The production application versions were unchanged by this follow-up.
+
 Stripe test credentials remain pending at the user's request. The staging API
 therefore returns 503 before accessing application data. This is a provisioned,
 isolated environment, not an accepted checkout/activation release.
@@ -45,8 +49,8 @@ auth sessions, and licenses, with 17 applied migrations.
 | Worker                         | Version                                | Source tag                                 |
 | ------------------------------ | -------------------------------------- | ------------------------------------------ |
 | Production site / OAuth broker | `65974306-855b-4aa7-9c40-eadb911eeb00` | `2204a63c19c0f82a40485e3b10d3f6eccebef52c` |
-| Staging site                   | `402c52c1-4b9d-4e43-988b-dbc8fe48fece` | `2204a63c19c0f82a40485e3b10d3f6eccebef52c` |
-| Staging API                    | `4290ddd1-4e1e-4a04-975a-793bdcd20145` | `2204a63c19c0f82a40485e3b10d3f6eccebef52c` |
+| Staging site                   | `c5b0c90b-b1cd-42be-8240-fb1323362681` | `5925bce7461f133bf317ac12d6a79eaa410510b9` |
+| Staging API                    | `5848e9b5-f5d3-43a9-a7c0-d106f149cf32` | `5925bce7461f133bf317ac12d6a79eaa410510b9` |
 
 Both sites' live `/health` responses match these IDs and source tags. The staging
 API's version/tag is verified through Cloudflare's version API because its
@@ -67,6 +71,13 @@ The production site's prior version is `7eba263d-bdf8-4d5c-a58e-020c90c3731b`;
 the unchanged production API version is `053e114a-a351-48e0-bb60-bc0fa2e55f37`.
 Never roll staging back to its pre-isolation shadow version: that version binds
 production D1 and the production API. Roll forward with isolated bindings instead.
+
+The immediate preceding isolated staging versions are site
+`402c52c1-4b9d-4e43-988b-dbc8fe48fece` and API
+`4290ddd1-4e1e-4a04-975a-793bdcd20145`, both tagged `2204a63`. These precede only
+the retry follow-up, unlike the unsafe pre-isolation shadow version. The new
+staging deployments serve 100% of traffic. Three deployed authorization checks
+pass after the update; the API still returns its expected readiness 503.
 
 ## Credentials and behavior
 

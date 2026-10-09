@@ -49,9 +49,14 @@ atomically moves exhausted inactive rows to `dead`, clears their payload and cla
 retains an existing error, and acknowledges subsequent delivery. Active final
 attempts remain protected, and an expired nineteenth attempt can still finish.
 The real webhook/reconciliation suites pass 27 checks, including both reproduced
-failures. This follow-up has not been deployed. It preserves the existing Stripe
+failures. This follow-up is deployed to staging at `5925bce` after both CI jobs
+passed, including 364 site tests, 347 API tests, and 22 public browser tests.
+Three deployed staging authorization checks also pass. Production application
+versions are unchanged. It preserves the existing Stripe
 redelivery contract; it does not add a background replay queue or reconcile Stripe
-state after a database restore.
+state after a database restore. A fresh production inbox aggregate still shows
+three processed events, a maximum of one attempt, and no pending/failed/dead rows
+or expired processing leases.
 
 ## Concurrent production update and credential constraint
 

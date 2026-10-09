@@ -70,7 +70,7 @@ delivery finds an exhausted failed row or an exhausted processing row whose leas
 has expired. The atomic transition clears the raw payload and claim and records a
 dead event without starting a twenty-first attempt. Subsequent deliveries are
 acknowledged. An active final lease is still busy and can complete. This code is
-not deployed yet; it does not detect an abandoned event without another delivery,
+deployed to staging at `5925bce` but not production; it does not detect an abandoned event without another delivery,
 so the proposed backlog alert remains necessary.
 
 ## Operational queries
