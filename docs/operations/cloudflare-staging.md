@@ -1,5 +1,16 @@
 # Isolated Cloudflare staging
 
+Current rollout: source `ddee760bc3052d887ba8f11c8609c846ace24bde` passed CI
+`37987057342` and the gated release command published both staging Workers on
+2026-10-09 at 20:36 UTC. API version `38887e7f-e0c5-4f12-b9c6-a8c2082b51d1`
+and site version `16b9177c-f2a9-4129-9827-f7a04436a852` both return HTTP200 health
+with that source tag. Billing is explicitly disabled and all seven Stripe-consuming
+routes return404. Database-backed install totals and the authenticated account
+details/usage panel work. All three deployed authorization browser checks pass.
+The existing staging session does not authenticate production; production auth
+counts and application deployment IDs are unchanged. The earlier bootstrap
+receipts below describe historical deployments, not the current healthy release.
+
 Deployed 2026-10-09 from `2204a63c19c0f82a40485e3b10d3f6eccebef52c` after both
 GitHub CI jobs passed (run `37962598220`). The isolated staging site and API are
 live. The production site received the OAuth broker bootstrap and version
@@ -14,8 +25,8 @@ The user clarified that paid licenses are for future higher tiers. Current sourc
 sets `BILLING_ENABLED=false` for staging and no longer requires Stripe to publish
 the current application. Disabled billing rejects checkout, portal, webhook, Stripe
 admin and marketing-offer routes before provider/database work. The paid-tier code
-and tests remain intact. Until this candidate is deployed, the existing staging
-API still returns its historical readiness 503. Paid purchase and CLI license
+and tests remain intact. This candidate replaced the earlier staging readiness
+503 with healthy account/analytics service. Paid purchase and CLI license
 activation are deferred, not claimed as tested.
 
 Main's separately deployed PR #131 has since moved the public site to

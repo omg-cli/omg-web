@@ -9,8 +9,11 @@ the existing production app passed on 2026-10-09 at 19:20 UTC, including staging
 account creation and browser session separation. The user clarified that paid
 licenses belong to future higher tiers. Current source explicitly disables staging
 billing and removes Stripe from current release prerequisites while retaining the
-payment implementation and tests. The prior deployed API still returns its historical
-503 until the new candidate is published. See [deployment and recovery receipts](./cloudflare-staging.md).
+payment implementation and tests. The gated release of `ddee760` passed exact-source
+CI and published both staging Workers with HTTP200 health and verified source/version
+identity. The authenticated dashboard now loads account details and usage, all seven
+billing routes reject requests, and three deployed authorization checks pass.
+See [deployment and recovery receipts](./cloudflare-staging.md).
 
 ## First milestone: isolated staging
 

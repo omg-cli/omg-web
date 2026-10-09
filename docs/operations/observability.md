@@ -105,7 +105,7 @@ Use Cloudflare Workers Logs to monitor:
 
 Correlate by Cloudflare invocation metadata and trace identifiers. Do not introduce customer identifiers solely for log correlation.
 
-Both implementations expose `version` from `CF_VERSION_METADATA` in `/health`: Cloudflare's version ID, deployment tag, and upload timestamp. The production API still awaits this release; the staging API readiness guard returns 503 until Stripe test configuration exists. Live site health responses carry the verified version tags. Missing metadata is `null`; an empty tag does not establish a source revision. Releases must use the full Git SHA as `wrangler deploy --tag` and retain both Worker version IDs. Health probes do not verify OAuth, billing, or CLI activation.
+Both implementations expose `version` from `CF_VERSION_METADATA` in `/health`: Cloudflare's version ID, deployment tag, and upload timestamp. The production API still awaits this release. Current staging source `ddee760` runs with `BILLING_ENABLED=false`; both health endpoints return200 with verified source/version identities, and API health reports `features.billing=disabled`. Stripe test configuration is only required when staging billing is enabled. Live site health responses carry the verified version tags. Missing metadata is `null`; an empty tag does not establish a source revision. Releases must use the full Git SHA as `wrangler deploy --tag` and retain both Worker version IDs. Health probes do not verify OAuth, paid billing, or CLI activation; paid-tier acceptance is deferred.
 
 ## Release validation
 
