@@ -85,6 +85,15 @@ state after a database restore. A fresh production inbox aggregate still shows
 three processed events, a maximum of one attempt, and no pending/failed/dead rows
 or expired processing leases.
 
+The pending scheduler now checks the Stripe inbox on every scheduled invocation.
+It detects unprocessed dead events and stale received/failed/processing work
+without another webhook delivery, protects fresh leases, and never changes the
+inbox. All 40 scheduler/webhook/reconciliation tests pass, including independent
+retention after a health-check failure. Publication and live alert acceptance
+remain pending. SQL-backed HTTP/missing-job alert candidates are recorded but
+unprovisioned because SQL query access is still denied. The existing $10 account
+budget alert is verified enabled; it does not establish remaining startup credit.
+
 ## Concurrent production update and credential constraint
 
 Main advanced to `dcf0895` (PR #131) during this work and was deployed separately.

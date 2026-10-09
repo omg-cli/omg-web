@@ -7,6 +7,7 @@ import {
 import { cleanupMarketingOfferLeads } from './handlers/marketing-offer';
 import { cleanupExpiredAuditLogs } from './handlers/privacy';
 import { reportError, reportInfo } from './observability';
+import { checkStripeInboxHealth } from './stripe-inbox-health';
 
 interface ScheduledTask {
   readonly name: string;
@@ -18,6 +19,7 @@ export async function runScheduledJobs(
   controller: ScheduledController
 ): Promise<void> {
   const tasks: ScheduledTask[] = [
+    { name: 'stripe_inbox.health', run: () => checkStripeInboxHealth(db) },
     {
       name: 'docs_analytics.aggregate',
       run: () => refreshDocsAnalyticsAggregates(db, controller.scheduledTime),

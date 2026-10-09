@@ -45,11 +45,13 @@ Saved queries do not send notifications. These additional alert conditions remai
 
 1. HTTP failure rates: at least five 5xx responses and at least 5% of requests in five minutes, scoped separately to each production Worker. Client cancellations are not automatically server errors. Native Issues detection also recognizes 5xx/error events, but its occurrence rules are not this rate calculation.
 2. Scheduled failures: any failed invocation. Missing aggregation: no successful five-minute aggregation in 20 minutes; missing daily retention: no successful daily invocation in 26 hours. Enable these conditions after the scheduled-error fix is deployed and verified.
-3. Billing inbox: any dead event, failed event older than 15 minutes, or received/processing event older than 15 minutes. A fresh in-flight event is not a failure. Inspect retries and claims before replaying anything.
+3. Billing inbox: the pending scheduled health check detects any unprocessed dead event, received/failed event older than 15 minutes, or processing lease older than 15 minutes. A processing row without a lease uses its creation time; a missing/invalid age is unhealthy. Fresh processing leases are protected even for an older event. The check is read-only and does not replay events. Publication and live notification acceptance are still pending.
 4. Latency: gather a representative baseline first. The 2026-10-09 observation had only five site requests and two API requests in 15 minutes, which is insufficient to choose a reliable p95 threshold.
-5. Credit spend: preserve the existing account budget policy while confirming grant eligibility, balance, and expiry. Do not treat a usage alert as proof that credits cover the charge.
+5. Credit spend: existing policy `dba385c80560401793bffee7b8c119f6` is enabled with a $10 usage-spend threshold, verified on 2026-10-09. Preserve it while confirming grant eligibility, balance, and expiry. It monitors account-wide usage spend, not remaining grant credit. Budget alerts do not cap spend or include recurring subscription fees.
 
-The available SQL dataset catalogue was readable on 2026-10-09, but a SQL log query using the local Wrangler OAuth credentials returned 403. Workers Observability queries through the connector succeeded. Catalogue discovery alone does not prove SQL-query permission. Native Issues automation does not depend on those SQL-query credentials.
+The available SQL dataset catalogue was readable on 2026-10-09, but a SQL log query using the local Wrangler OAuth credentials returned 403. A fresh scoped `logs.workersLogs` count query confirmed the same authorization failure. The connector also treats the SQL API's nonstandard success envelope as an error, so that path did not provide a usable query result. Workers Observability queries through the connector succeeded. Catalogue discovery alone does not prove SQL-query permission. Native Issues automation does not depend on those SQL-query credentials.
+
+Four [metric alert candidates](./omg-metric-alert-candidates.json) record the proposed HTTP rate and missing-job queries. They are review artifacts, not provisioned policies or API request bodies. All remain disabled, without delivery mechanisms. Verify SQL permission, log-type values, and structured-event fields before saving them. Missing completion logs can also reflect ingestion or sampling gaps; these candidates are not independent synthetic uptime checks.
 
 ## Saved queries and measured baseline
 
@@ -65,13 +67,30 @@ The sampled 15-minute window had no matching 5xx rows and three five-minute sche
 
 The pending production API release changes scheduled tasks to emit `<task>_completed` only after success and `<task>_failed` on failure. All independent tasks settle before the handler rejects with an aggregate error. `scheduled.completed` is emitted only when every selected task succeeds. Audit-log cleanup propagates its error to this coordinator. Tests remove individual D1 tables and verify that the invocation rejects while independent Stripe retention still runs. This code is in staging, whose cron triggers remain disabled; it is not yet deployed to the production API.
 
+The pending scheduler additionally runs `stripe_inbox.health` independently of
+aggregation and retention. It emits `stripe_inbox.health_completed` on success
+or `stripe_inbox.health_failed` and rejects the invocation when the inbox needs
+review. Its error text contains no event IDs, customer data, payload, or claim.
+Real Worker/D1 tests verify dead/stale detection, fresh lease protection, missing
+timestamps, inbox preservation, and independent daily retention. The scheduler,
+webhook, and reconciliation suites pass 40 tests. This code is not deployed;
+staging cron triggers remain disabled, and live notification acceptance remains
+required after production promotion.
+
 The webhook follow-up emits `stripe_webhook.retry_limit_exhausted` when an incoming
 delivery finds an exhausted failed row or an exhausted processing row whose lease
 has expired. The atomic transition clears the raw payload and claim and records a
 dead event without starting a twenty-first attempt. Subsequent deliveries are
 acknowledged. An active final lease is still busy and can complete. This code is
 deployed to staging at `5925bce` but not production; it does not detect an abandoned event without another delivery,
-so the proposed backlog alert remains necessary.
+so the pending scheduled health check remains necessary.
+
+A refreshed 24-hour query ending at `2026-10-09T18:04:37Z` reported 2,678 site
+requests with p95 wall time of 138 ms and 38 API requests with p95 of 885 ms.
+The site aggregate has an effective sample interval of approximately 1.0384;
+the API interval is 1. These include all fetch traffic, including scans and
+health probes. They are not a representative authenticated-checkout baseline,
+so latency alert thresholds remain unset.
 
 ## Operational queries
 
@@ -108,3 +127,5 @@ Never mutate production bindings or sampling settings during an audit-only task.
 - [Scheduled handler failure and lifetime semantics](https://developers.cloudflare.com/workers/runtime-apis/handlers/scheduled/)
 - [Worker version metadata](https://developers.cloudflare.com/workers/runtime-apis/bindings/version-metadata/)
 - [Cloudflare alert conditions](https://developers.cloudflare.com/notifications/notification-available/)
+- [Budget alert scope and behavior](https://developers.cloudflare.com/billing/manage/budget-alerts/)
+- [SQL API function and sampling semantics](https://developers.cloudflare.com/analytics/sql-api/sql-reference/functions/)

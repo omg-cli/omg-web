@@ -1,0 +1,56 @@
+{
+  "status": "candidates-only-not-provisioned",
+  "dataset": "logs.workersLogs",
+  "datasetSampling": "adaptive",
+  "note": "This is a review artifact, not a Notifications API request. No delivery mechanisms are configured. Validate all SQL queries and field values before saving any policy. Rate calculations use represented events under adaptive sampling; they are not exact raw counts. Missing-run checks depend on retained completion logs and can be affected by sampling or ingestion failures.",
+  "candidates": [
+    {
+      "name": "OMG API HTTP failure rate",
+      "enabled": false,
+      "validation": "pending SQL query permission and verification of logType value",
+      "executionInterval": "5m",
+      "repeatNotificationInterval": "1h",
+      "comparison": {
+        "operator": ">=",
+        "value": 1
+      },
+      "query": "SELECT if(countIf(httpStatus >= 500) >= 5 AND countIf(httpStatus >= 500) >= COUNT(*) * 0.05, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND invocationType = 'fetch' AND logType = 'invocation' AND timestamp >= NOW() - INTERVAL '5' MINUTE"
+    },
+    {
+      "name": "OMG site HTTP failure rate",
+      "enabled": false,
+      "validation": "pending SQL query permission and verification of logType value",
+      "executionInterval": "5m",
+      "repeatNotificationInterval": "1h",
+      "comparison": {
+        "operator": ">=",
+        "value": 1
+      },
+      "query": "SELECT if(countIf(httpStatus >= 500) >= 5 AND countIf(httpStatus >= 500) >= COUNT(*) * 0.05, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omgsveltesite-website-prod-dlaqgfttmir2ky5x' AND invocationType = 'fetch' AND logType = 'invocation' AND timestamp >= NOW() - INTERVAL '5' MINUTE"
+    },
+    {
+      "name": "OMG missing successful aggregation",
+      "enabled": false,
+      "validation": "pending production scheduled release, SQL query permission, and structured-event field verification",
+      "executionInterval": "5m",
+      "repeatNotificationInterval": "1h",
+      "comparison": {
+        "operator": "==",
+        "value": 0
+      },
+      "query": "SELECT COUNT(*) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND message LIKE '%docs_analytics.aggregate_completed%' AND timestamp >= NOW() - INTERVAL '20' MINUTE"
+    },
+    {
+      "name": "OMG missing successful daily retention",
+      "enabled": false,
+      "validation": "pending production scheduled release, SQL query permission, and structured-event field verification",
+      "executionInterval": "15m",
+      "repeatNotificationInterval": "1h",
+      "comparison": {
+        "operator": ">=",
+        "value": 1
+      },
+      "query": "SELECT if(countIf(message LIKE '%analytics_retention.cleanup_completed%') = 0 OR countIf(message LIKE '%stripe_events.cleanup_completed%') = 0 OR countIf(message LIKE '%marketing_offer.cleanup_completed%') = 0 OR countIf(message LIKE '%audit_log.cleanup_completed%') = 0, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND timestamp >= NOW() - INTERVAL '26' HOUR"
+    }
+  ]
+}
