@@ -41,8 +41,9 @@ recreates the schema. The new staging database uses only the canonical migration
 Remote settings confirm the former shadow site now binds staging D1 and
 `omg-saas-staging`. Its old GitHub secret was deleted, and its auth/BFF secrets
 were replaced with newly generated staging values. Both staging Workers have
-query redaction enabled. Post-deployment D1 counts remain zero for auth users,
-auth sessions, and licenses, with 17 applied migrations.
+query redaction enabled. The bootstrap D1 checks found no auth users, sessions,
+or licenses, with 17 applied migrations. The later real OAuth acceptance created
+one staging user, one GitHub account, and one session, as recorded below.
 
 ## Deployment receipts
 
@@ -62,10 +63,15 @@ Three deployed browser auth checks pass on each site: protected-route redirects,
 login rendering, and invalid-credential rejection. Both sites' OAuth initiation
 returns production client `Ov23lim96hwzllDXL6Dm` and the existing production
 callback. A staging browser reaches GitHub's **OMG getomg.xyz Production** app.
-GitHub sign-in is required to continue; no successful live provider callback,
-account creation, purchase, or CLI activation is claimed. Both production proxy
-completion routes return 404 in live HTTP checks. Staging traces are visible in
-Workers Observability.
+Real GitHub sign-in through that app passed on 2026-10-09 at 19:20 UTC: the browser
+reached the authenticated staging dashboard with verified email. Read-only D1
+counts changed from 0/0/0 to 1/1/1 for staging users/accounts/sessions; production
+remained 3/3/152. The production browser showed the login page before the test and
+remained signed out afterward. This verifies actual provider completion, staging
+account creation, and session separation. The staging account-details panel is
+unavailable while its API lacks Stripe test configuration; purchase, token issuance,
+and successful CLI linking remain pending. Both production proxy completion routes
+return 404 in live HTTP checks. Staging traces are visible in Workers Observability.
 
 The production site's prior version is `7eba263d-bdf8-4d5c-a58e-020c90c3731b`;
 the unchanged production API version is `053e114a-a351-48e0-bb60-bc0fa2e55f37`.
@@ -155,16 +161,20 @@ names, D1, service bindings, routes, rate namespaces, query redaction, OAuth cli
 and absent email/cron bindings. `check:deploy` builds the site and bundles both
 staging Workers. These checks do not verify remote secret values or OAuth settings.
 
-Once new credentials and the production broker release have been verified, use the explicit
-config paths. Capture the source commit and Worker version IDs with the release:
+Use the [staging release command](./staging-release.md) for subsequent publication.
+It verifies the exact-source CI run, bindings, required secret names, and migration
+ledger before any upload. Readiness-only mode is the default; publication requires
+`--deploy` and a second new receipt directory outside the repository:
 
 ```bash
-npx wrangler d1 migrations apply DB --remote --config workers/api/wrangler.staging.jsonc
-npx wrangler deploy --config workers/api/wrangler.staging.jsonc --tag "$(git rev-parse HEAD)"
-npx wrangler deploy --config site/wrangler.staging.jsonc --tag "$(git rev-parse HEAD)"
+npm run release:staging -- --ci-run RUN_ID --output /absolute/path/to/new-readiness
+npm run release:staging -- --ci-run RUN_ID --output /absolute/path/to/new-release --deploy
 ```
 
-The API must be deployed first. The old Alchemy `shadow` stage also targets the
+The command deploys the API first using the explicit staging Wrangler configs,
+then deploys the site and records both source tags and Worker version IDs. It does
+not apply migrations; missing migrations require a separately reviewed migration
+step before readiness can pass. The old Alchemy `shadow` stage also targets the
 isolated database, service, and staging hostname, and resolves the production GitHub
 client ID, `OAUTH_PROXY_SECRET`, and `STAGING_SVELTE_BFF_SECRET` without requiring
 the production GitHub secret. Wrangler is the release path; avoid
@@ -199,14 +209,22 @@ source policy, lint/formatting, build budgets, and all four deployment dry-runs.
 The public browser suite again passes 22 tests with three deployed-auth skips.
 The eight focused auth tests additionally verify that the staging cookie works
 against staging and is rejected by production. These are local results; the
-coordinated broker deployment is now complete, while the live authenticated flow
-remains pending as described in the receipts above.
+coordinated broker deployment and real GitHub sign-in are now complete. Stripe
+test purchase, token issuance, and successful CLI linking remain pending as
+described in the receipts above.
 
 Before promotion, exercise GitHub sign-in, Stripe test checkout, signed webhook
 delivery, license issuance, session isolation, and API denial with production
 credentials. The production CLI pins its API origin and verification key, so full
 activation needs a separately reviewed test build with the staging endpoint/key.
 Never weaken the production client's signature or issuer checks for this test.
+The dedicated development build is prepared from OMG source `205b1493` plus an
+uncommitted staging-only origin/key/contract patch, which is absent from OMG PR 891. Its 17 license tests, endpoint contract test, and two account tests pass.
+The binary SHA-256 is
+`1195084d4806546ba0d58c513323881d649875c7fd73bef8e157f18da45ac9f1`.
+A synthetic stdin token correctly reaches staging's readiness 503, exits 1 with
+valid account-link guidance, and persists no license. This is failure-path
+verification, not a successful account link or production release.
 
 ## D1 recovery drill
 

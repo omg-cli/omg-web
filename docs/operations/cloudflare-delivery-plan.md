@@ -4,7 +4,9 @@ Status: implementation in progress, 2026-10-09. Staging isolation and test-mode
 guards are deployed. The production site received the GitHub OAuth broker
 bootstrap; the production API remains unchanged from PR #131. The staging D1
 database has all 17 canonical migrations, and a synthetic D1 Time Travel drill
-passed against the current schema with eight checks. Stripe test configuration is deferred at the user's request, so staging
+passed against the current schema with eight checks. Real GitHub sign-in through
+the existing production app passed on 2026-10-09 at 19:20 UTC, including staging
+account creation and browser session separation. Stripe test configuration is deferred at the user's request, so staging
 API requests fail closed. See [deployment and recovery receipts](./cloudflare-staging.md).
 
 ## First milestone: isolated staging
@@ -58,9 +60,13 @@ This change is not deployed. Both CI jobs passed for runtime revision `c7f7509`
 (run `37969502436`): 364 site tests, 348 API tests, and 22 public browser tests,
 with three deployed-auth skips. The current OMG CLI uses
 `omg account link --token-stdin` (or `OMG_DASHBOARD_TOKEN`) for optional dashboard
-identity, with no feature gating. Its staging acceptance
-build still needs the separate staging API origin and public verification key;
-keep its signature, audience, expiry, and issuer validation intact.
+identity, with no feature gating. Its dedicated staging development build now
+uses the separate staging API origin and public verification key through a local
+patch absent from OMG PR 891. All 20 focused license/endpoint/account tests pass,
+and a synthetic stdin token reaches the expected staging 503 without persisting
+a license. Signature, audience, expiry, and issuer validation remain intact.
+Successful token issuance and account linking remain pending. See the build hash
+and limits in [staging validation](./cloudflare-staging.md).
 
 The repeatable remote D1 drill now creates and deletes its own disposable database,
 rejects existing database selectors, and retains source/migration hashes plus
@@ -89,8 +95,15 @@ The pending scheduler now checks the Stripe inbox on every scheduled invocation.
 It detects unprocessed dead events and stale received/failed/processing work
 without another webhook delivery, protects fresh leases, and never changes the
 inbox. All 40 scheduler/webhook/reconciliation tests pass, including independent
-retention after a health-check failure. Publication and live alert acceptance
-remain pending. SQL-backed HTTP/missing-job alert candidates are recorded but
+retention after a health-check failure. Both full CI jobs passed at `bf20d36`
+(run `37971084337`). A remote-development drill of the actual scheduled handler
+against a separate fresh D1 database passed five checks: healthy invocation,
+five-minute retention exclusion, dead-backlog rejection, independent daily
+retention without changing the dead row, and recovery after fixture resolution.
+Preview teardown, database deletion, and empty inventory were verified. This
+manual dispatch does not establish native Cron Trigger or notification delivery
+acceptance. Publication and live alert acceptance remain pending. SQL-backed
+HTTP/missing-job alert candidates are recorded but
 unprovisioned because SQL query access is still denied. The existing $10 account
 budget alert is verified enabled; it does not establish remaining startup credit.
 
@@ -121,8 +134,10 @@ replay, and staging configuration failures. Better Auth is pinned to `1.7.7`.
 This application customization is deployed from `2204a63`, whose exact CI run
 `37962598220` passed both jobs. Live OAuth initiation and production completion
 endpoint rejection pass, as do three deployed browser auth checks per site.
-Successful GitHub sign-in and the subsequent purchase/activation path remain
-required. See the [cutover and trust boundary](./cloudflare-staging.md).
+Real GitHub sign-in subsequently passed: staging D1 users/accounts/sessions
+changed from 0/0/0 to 1/1/1, while production stayed 3/3/152 and its browser stayed
+signed out. The purchase/token/CLI flow remains required. See the
+[cutover and trust boundary](./cloudflare-staging.md).
 The broker revision passes the complete local gate with 364 site and 343 API
 tests, all four deployment dry-runs, and clean audits. Public browser verification
 passes 22 tests with three deployed-auth skips. Staging cookie isolation is also
