@@ -58,7 +58,7 @@ async function sql(label, text) {
   await writeFile(path, text);
   const results = await run(
     label,
-    ['d1', 'execute', 'DB', '--remote', '--file', path, '--json'],
+    ['d1', 'execute', 'DB', '--remote', '--command', text, '--json'],
     true
   );
   assert.ok(Array.isArray(results) && results.length > 0, `${label}: no SQL results`);
