@@ -1,16 +1,17 @@
 {
-  "status": "candidates-only-not-provisioned",
+  "status": "http-enabled-missing-jobs-not-provisioned",
   "dataset": "logs.workersLogs",
   "datasetSampling": "adaptive",
   "detectionMethod": "threshold",
   "timeRangeMode": "manual",
   "evaluationWindow": "1m",
-  "note": "This is a review artifact, not a Notifications API request. No delivery mechanisms are configured. Validate all SQL queries and field values before saving any policy. Rate calculations use represented events under adaptive sampling; they are not exact raw counts. Missing-run checks depend on retained completion logs and can be affected by sampling or ingestion failures.",
+  "note": "This is an operational record, not a Notifications API request. Two HTTP policies are enabled with the explicitly authorized existing email destination; update their recorded IDs rather than creating duplicates. Missing-job candidates remain disabled and have no delivery configured. Rate calculations use represented events under adaptive sampling; they are not exact raw counts. Missing-run checks depend on retained completion logs and can be affected by sampling or ingestion failures.",
   "candidates": [
     {
       "name": "OMG API HTTP failure rate",
-      "enabled": false,
-      "validation": "dashboard SQL preview accepted on 2026-10-09 with value 0; site invocation and positive threshold controls passed; delivery not provisioned",
+      "policyId": "9fdb3dbf577c4a65b0ad1052b140dff4",
+      "enabled": true,
+      "validation": "dashboard SQL preview accepted on 2026-10-09 with value 0; site invocation and positive threshold controls passed; enabled after explicit authorization and full policy readback verified; incident delivery not yet observed",
       "executionInterval": "5m",
       "repeatNotificationInterval": "1h",
       "comparison": {
@@ -21,8 +22,9 @@
     },
     {
       "name": "OMG site HTTP failure rate",
-      "enabled": false,
-      "validation": "dashboard SQL preview accepted on 2026-10-09 with value 0; invocation filter returned live requests and positive threshold control returned 1; delivery not provisioned",
+      "policyId": "ff4eac3a988545e4b5cbc0ad531e5b68",
+      "enabled": true,
+      "validation": "dashboard SQL preview accepted on 2026-10-09 with value 0; invocation filter returned live requests and positive threshold control returned 1; enabled after explicit authorization and full policy readback verified; incident delivery not yet observed",
       "executionInterval": "5m",
       "repeatNotificationInterval": "1h",
       "comparison": {

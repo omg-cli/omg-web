@@ -103,11 +103,14 @@ retention without changing the dead row, and recovery after fixture resolution.
 Preview teardown, database deletion, and empty inventory were verified. This
 manual dispatch does not establish native Cron Trigger or notification delivery
 acceptance. Publication and live alert acceptance remain pending. SQL-backed
-HTTP/missing-job alert candidates remain unprovisioned. Signed-in dashboard SQL
+Two HTTP error-rate policies are enabled after explicit email authorization;
+their SQL, thresholds, five-minute execution, hourly repeat, and sole destination
+were verified by policy readback. No additional synthetic notification was sent.
+Missing-job alert candidates remain unprovisioned. Signed-in dashboard SQL
 previews now work; the HTTP queries were corrected to the verified
 `cf-worker-event` invocation value and passed both healthy and positive-control
 previews. Missing-job completion availability still requires the pending runtime
-release, and additional delivery remains unconfigured. The existing $10 account
+release. The existing $10 account
 budget alert is verified enabled; it does not measure remaining startup credit.
 The signed-in Credits dashboard separately confirms an active $10,000 grant with
 an estimated $10,000 remaining on October 9, 2026, expiring October 6, 2027.
