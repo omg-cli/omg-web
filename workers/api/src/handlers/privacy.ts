@@ -603,6 +603,7 @@ export async function cleanupExpiredAuditLogs(db: D1Database): Promise<void> {
     reportInfo('Cleaned up expired audit log entries');
   } catch (error: unknown) {
     reportError('Audit log cleanup error:', error);
+    throw error;
   }
 }
 

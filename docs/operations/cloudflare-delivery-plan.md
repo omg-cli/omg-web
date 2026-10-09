@@ -23,6 +23,14 @@ passed. See [staging and recovery evidence](./cloudflare-staging.md).
 4. Measure current webhook retry behavior and implement a durable retry path only where the current delivery contract needs it. Exercise duplicate delivery, transient failure, retry exhaustion, and reconciliation.
 5. Consider documentation search only after delivery, recovery, and monitoring have evidence.
 
+## Deployment identity and scheduled-task implementation
+
+- Implemented Cloudflare's generated version metadata binding for both Workers and staging configurations. Health responses expose actual metadata, or `null` when unavailable; releases must use the full Git SHA as the version tag.
+- Scheduled tasks now settle independently, emit completion only after success, and reject the invocation after any failure. The inner audit-log cleanup no longer swallows its error.
+- Passed 37 focused Worker tests and 28 site tests, typechecks, source policy, lint, and four deployment dry-runs. Changes remain unpublished.
+- Saved three validated production observability queries. Notifications, synthetic delivery, and release acceptance remain pending; see [observability](./observability.md).
+- GitHub CI at `72afa59` passed anonymous browser tests and failed the dependency audit on the unpatched `braces` advisory. Keep that release gate intact.
+
 ## Current baseline
 
 - Source: `omg-cli/omg-web` main at `c68f4c6bfb1c0a753e19fc2b01c5c3207ea2ccf4`.

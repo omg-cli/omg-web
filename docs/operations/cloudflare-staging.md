@@ -74,8 +74,8 @@ config paths. Capture the source commit and Worker version IDs with the release:
 
 ```bash
 npx wrangler d1 migrations apply DB --remote --config workers/api/wrangler.staging.jsonc
-npx wrangler deploy --config workers/api/wrangler.staging.jsonc
-npx wrangler deploy --config site/wrangler.staging.jsonc
+npx wrangler deploy --config workers/api/wrangler.staging.jsonc --tag "$(git rev-parse HEAD)"
+npx wrangler deploy --config site/wrangler.staging.jsonc --tag "$(git rev-parse HEAD)"
 ```
 
 The API must be deployed first. The old Alchemy `shadow` stage also targets the
@@ -83,6 +83,18 @@ isolated database, service, and staging hostname, and resolves production GitHub
 credentials plus `STAGING_SVELTE_BFF_SECRET`. Wrangler is the release path; avoid
 alternating deployment tools because older Alchemy cannot represent every current
 Wrangler observability option.
+
+Deploy only from a clean committed checkout that passed the release gates. After
+upload, read both `/health` responses and record `version.id`, `version.tag`, and
+`version.timestamp`; both tags must equal the reviewed full commit SHA. Preserve
+the previous version IDs for rollback. These metadata checks supplement the
+authenticated acceptance flow; they do not replace it.
+
+The subsequent observability slice passed 37 focused API tests (including actual
+scheduled-handler D1 faults), 28 site public-file tests, source and test typechecks,
+lint, source policy, unused exports, the site build budget, and all four Worker
+deployment dry-runs. Three validated production observability queries were saved;
+see [observability status](./observability.md). Runtime changes are not yet deployed.
 
 Validation of the implementation and patched dependency graph on 2026-10-09:
 

@@ -10,6 +10,10 @@ const site = config('site/wrangler.staging.jsonc');
 const api = config('workers/api/wrangler.staging.jsonc');
 const productionSite = config('site/wrangler.production.jsonc');
 const productionApi = config('workers/api/wrangler.toml');
+for (const worker of [site, api, productionSite, productionApi]) {
+  assert.equal(worker.version_metadata.binding, 'CF_VERSION_METADATA');
+  assert.equal(worker.observability.redact_query_string, true);
+}
 const databaseId = '0f059202-7042-4588-a89f-ce0ae3f6deba';
 const productionDatabaseIds = new Set(
   [...productionSite.d1_databases, ...productionApi.d1_databases].map(

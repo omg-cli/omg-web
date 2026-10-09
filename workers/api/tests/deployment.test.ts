@@ -4,6 +4,20 @@ import { describe, expect, it } from 'vitest';
 import { fetchWorker } from './test-utils';
 
 describe('staging deployment boundary', () => {
+  it('reports the real deployment identity in uncached health responses', async () => {
+    const version = {
+      id: 'worker-version-id',
+      tag: '72afa59d5b329c58802bedd0ee369a4b026cdf23',
+      timestamp: '2026-10-09T16:00:00Z',
+    };
+    const response = await fetchWorker(new Request('https://example.test/health'), {
+      ...env,
+      CF_VERSION_METADATA: version,
+    });
+    expect(await response.text()).toContain(JSON.stringify(version));
+    expect(response.headers.get('Cache-Control')).toContain('no-store');
+  });
+
   it.each(['sk_live_example', 'rk_live_example', '', 'sk_test_'])(
     'rejects unsafe Stripe configuration before database work: %s',
     async key => {
@@ -58,5 +72,6 @@ describe('staging deployment boundary', () => {
     const response = await fetchWorker(new Request('https://omg-api.latham.cloud/health'), env);
     expect(response.status).toBe(200);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://getomg.xyz');
+    expect(await response.text()).toContain('"version":null');
   });
 });

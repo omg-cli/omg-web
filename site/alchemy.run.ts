@@ -35,6 +35,7 @@ export const Website = Cloudflare.Website.SvelteKit(
             }
           : { name: 'staging.getomg.xyz' },
       env: {
+        CF_VERSION_METADATA: Cloudflare.Workers.VersionMetadata(),
         AUTH_RATE_LIMITER: Cloudflare.RateLimit('AUTH_RATE_LIMITER', {
           namespaceId: stage === 'prod' ? 2001 : 4001,
           simple: { limit: 10, period: 60 },

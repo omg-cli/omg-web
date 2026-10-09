@@ -3,6 +3,7 @@ import { applySecurityHeaders } from '../../../../shared/security-headers';
 import { DOCS_TOPICS, docsTopicHref } from '../docs/topics';
 import { LEARNING_PAGES, learningHref } from '../learn/catalog';
 import { RELEASE_NOTES } from '../release-notes';
+import type { WebsiteEnv } from '../../../alchemy.run';
 
 const SHADOW_ROBOTS_POLICY = 'noindex, nofollow';
 /**
@@ -156,11 +157,12 @@ ${entries}
   });
 }
 
-export function healthResponse(): Response {
+export function healthResponse(version?: WebsiteEnv['CF_VERSION_METADATA']): Response {
   return Response.json(
     {
       runtime: 'sveltekit-alchemy',
       status: 'ok',
+      version: version ?? null,
     },
     {
       headers: {
