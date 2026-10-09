@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/cloudflare';
 import { runScheduledJobs } from './scheduled';
-import { deploymentIsReady, deploymentAccountOrigin } from './deployment';
+import { billingIsEnabled, deploymentIsReady, deploymentAccountOrigin } from './deployment';
 import { forbiddenUnlessAdminSession } from './admin-auth';
 import {
   type Env,
@@ -261,7 +261,10 @@ export default Sentry.withSentry(
   {
     fetch: withApiSecurityHeaders(async (request, env, ctx) => {
       if (!deploymentIsReady(env)) {
-        reportError('deployment.invalid_configuration', 'Invalid stage or staging Stripe key');
+        reportError(
+          'deployment.invalid_configuration',
+          'Invalid stage, billing mode or staging Stripe key'
+        );
         return errorResponse('Service configuration unavailable', 503);
       }
       if (request.method === 'OPTIONS') {
@@ -280,6 +283,15 @@ export default Sentry.withSentry(
         const route = resolveLicensingRoute(request.method, path);
         if (route === undefined) {
           return errorResponse('Not found', 404);
+        }
+        if (
+          !billingIsEnabled(env) &&
+          (route.path.startsWith('/api/billing/') ||
+            route.path.startsWith('/api/admin/stripe/') ||
+            route.path === '/api/stripe/webhook' ||
+            route.path === '/api/internal/marketing-offer')
+        ) {
+          return errorResponse('Billing is not enabled', 404);
         }
         if (route.authentication === 'admin-session' || route.path.startsWith('/api/admin/')) {
           const limited = await enforceRateLimit(
@@ -303,6 +315,7 @@ export default Sentry.withSentry(
               status: 'ok',
               timestamp: new Date().toISOString(),
               version: env.CF_VERSION_METADATA ?? null,
+              features: { billing: billingIsEnabled(env) ? 'enabled' : 'disabled' },
             });
           case '/api/auth/send-code':
             return handleSendCode(request, env);

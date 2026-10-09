@@ -8,16 +8,7 @@ export const targets = [
     name: 'omg-saas-staging',
     config: 'workers/api/wrangler.staging.jsonc',
     origin: 'https://staging-api.getomg.xyz',
-    secrets: [
-      'JWT_SECRET',
-      'JWT_PRIVATE_KEY',
-      'ADMIN_API_SECRET',
-      'SVELTE_BFF_SECRET',
-      'STRIPE_SECRET_KEY',
-      'STRIPE_WEBHOOK_SECRET',
-      'STRIPE_PRO_PRICE_ID',
-      'STRIPE_TEAM_PRICE_ID',
-    ],
+    secrets: ['JWT_SECRET', 'JWT_PRIVATE_KEY', 'ADMIN_API_SECRET', 'SVELTE_BFF_SECRET'],
     rates: {
       ADMIN_RATE_LIMITER: '3001',
       AUTH_RATE_LIMITER: '3002',
@@ -73,7 +64,7 @@ export function activeVersion(deployments) {
   return { deploymentId: ordered[0].id, versionId: ordered[0].versions[0].version_id };
 }
 
-export function assertBindings(bindings, target) {
+export function assertBindings(bindings, target, requireBillingDisabled = false) {
   const db = bindings.filter(b => b.type === 'd1');
   assert.equal(db.length, 1, 'Expected one staging D1 binding');
   assert.equal(db[0].name, 'DB');
@@ -119,10 +110,20 @@ export function assertBindings(bindings, target) {
   const secretNames = new Set(bindings.filter(b => b.type === 'secret_text').map(b => b.name));
   const missing = target.secrets.filter(name => !secretNames.has(name));
   assert.equal(missing.length, 0, `Missing ${target.name} secrets: ${missing.join(', ')}`);
+  if (requireBillingDisabled && target.name === 'omg-saas-staging') {
+    assert.ok(
+      bindings.some(
+        b => b.name === 'BILLING_ENABLED' && b.type === 'plain_text' && b.text === 'false'
+      ),
+      'Current staging release must disable billing'
+    );
+  }
 }
 
-export function assertHealth(status, body, revision, versionId) {
+export function assertHealth(status, body, revision, versionId, requireBillingDisabled = false) {
   assert.equal(status, 200, 'Health did not return 200; bootstrap 503 is not release readiness');
   assert.equal(body.version?.tag, revision, 'Health source tag differs');
   assert.equal(body.version?.id, versionId, 'Health Worker version differs');
+  if (requireBillingDisabled)
+    assert.equal(body.features?.billing, 'disabled', 'Billing must remain disabled');
 }

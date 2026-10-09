@@ -85,11 +85,11 @@ function source() {
   );
   return command('git', ['rev-parse', 'HEAD']).trim();
 }
-function snapshot(target) {
+function snapshot(target, requireBillingDisabled = false) {
   const active = activeVersion(wranglerJson(target, ['deployments', 'list']));
   const version = wranglerJson(target, ['versions', 'view', active.versionId]);
   assert.equal(version.id, active.versionId);
-  assertBindings(version.resources.bindings, target);
+  assertBindings(version.resources.bindings, target, requireBillingDisabled);
   return { ...active, tag: version.annotations?.['workers/tag'] ?? null };
 }
 
@@ -195,7 +195,7 @@ try {
           300_000
         )
       );
-      const after = snapshot(target);
+      const after = snapshot(target, true);
       receipt.workers[index].after = after;
       await writeFile(join(output, 'receipt.json'), JSON.stringify(receipt, null, 2));
       assert.equal(after.tag, revision, 'Uploaded source tag differs');
@@ -204,13 +204,23 @@ try {
         signal: AbortSignal.timeout(30_000),
       });
       const body = await response.json();
-      receipt.workers[index].health = { status: response.status, version: body.version };
-      assertHealth(response.status, body, revision, after.versionId);
+      receipt.workers[index].health = {
+        status: response.status,
+        version: body.version,
+        features: body.features,
+      };
+      assertHealth(
+        response.status,
+        body,
+        revision,
+        after.versionId,
+        target.name === 'omg-saas-staging'
+      );
     }
     receipt.status = 'deployed';
   }
   process.stdout.write(
-    `[release] ${receipt.status}; authenticated purchase and CLI acceptance remain separate\n`
+    `[release] ${receipt.status}; verify authenticated account acceptance; paid-tier purchase and CLI activation are deferred\n`
   );
 } catch (error) {
   receipt.failedDuring = receipt.status;

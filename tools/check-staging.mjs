@@ -60,6 +60,7 @@ for (const [staging, production, hostname] of [
 assert.deepEqual(site.services, [{ binding: 'LICENSING_API', service: api.name }]);
 assert.equal(site.vars.GITHUB_CLIENT_ID, 'Ov23lim96hwzllDXL6Dm', 'reuse the existing OAuth app');
 assert.deepEqual(api.triggers.crons, [], 'enable staging schedules only after verification');
+assert.equal(api.vars.BILLING_ENABLED, 'false', 'current staging must leave paid billing disabled');
 assert.equal(
   api.vars.STRIPE_PRO_PRICE_ID,
   undefined,

@@ -17,6 +17,7 @@ import { hashSessionToken } from './session-token';
 export interface Env
   extends Pick<Cloudflare.Env, 'DB'>, Partial<Pick<Cloudflare.Env, 'CF_VERSION_METADATA'>> {
   DEPLOYMENT_STAGE?: string;
+  BILLING_ENABLED?: string;
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
   JWT_SECRET: string;

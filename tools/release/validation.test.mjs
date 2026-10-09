@@ -107,10 +107,10 @@ test('requires the real staging credential names without accessing their values'
   assert.throws(
     () =>
       assertBindings(
-        bindings(target).filter(b => b.name !== 'STRIPE_SECRET_KEY'),
+        bindings(target).filter(b => b.name !== 'JWT_SECRET'),
         target
       ),
-    /STRIPE_SECRET_KEY/
+    /JWT_SECRET/
   );
   assert.throws(
     () =>
@@ -119,6 +119,36 @@ test('requires the real staging credential names without accessing their values'
         target
       ),
     /OAuth broker/
+  );
+});
+
+test('current release requires disabled billing on the published API, without requiring Stripe secrets', () => {
+  const target = targets[0];
+  const disabled = [
+    ...bindings(target),
+    { name: 'BILLING_ENABLED', type: 'plain_text', text: 'false' },
+  ];
+  assert.ok(!target.secrets.some(name => name.startsWith('STRIPE_')));
+  assert.doesNotThrow(() => assertBindings(disabled, target, true));
+  assert.throws(() => assertBindings(bindings(target), target, true), /disable billing/);
+  assert.throws(
+    () =>
+      assertBindings(
+        disabled.map(b => (b.name === 'BILLING_ENABLED' ? { ...b, text: 'true' } : b)),
+        target,
+        true
+      ),
+    /disable billing/
+  );
+  const body = { version: { tag: sha, id: 'v2' }, features: { billing: 'disabled' } };
+  assert.doesNotThrow(() => assertHealth(200, body, sha, 'v2', true));
+  assert.throws(
+    () => assertHealth(200, { ...body, features: { billing: 'enabled' } }, sha, 'v2', true),
+    /remain disabled/
+  );
+  assert.throws(
+    () => assertHealth(200, { version: body.version }, sha, 'v2', true),
+    /remain disabled/
   );
 });
 

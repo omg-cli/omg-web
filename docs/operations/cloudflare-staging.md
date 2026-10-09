@@ -10,9 +10,13 @@ Staging was subsequently updated to `5925bce7461f133bf317ac12d6a79eaa410510b9`
 after both CI jobs passed (run `37966895191`). This includes the exhausted-webhook
 claim fix. The production application versions were unchanged by this follow-up.
 
-Stripe test credentials remain pending at the user's request. The staging API
-therefore returns 503 before accessing application data. This is a provisioned,
-isolated environment, not an accepted checkout/activation release.
+The user clarified that paid licenses are for future higher tiers. Current source
+sets `BILLING_ENABLED=false` for staging and no longer requires Stripe to publish
+the current application. Disabled billing rejects checkout, portal, webhook, Stripe
+admin and marketing-offer routes before provider/database work. The paid-tier code
+and tests remain intact. Until this candidate is deployed, the existing staging
+API still returns its historical readiness 503. Paid purchase and CLI license
+activation are deferred, not claimed as tested.
 
 Main's separately deployed PR #131 has since moved the public site to
 `getomg.dev` while retaining account OAuth on `getomg.xyz`. This branch incorporates
@@ -129,11 +133,11 @@ Workers share their staging BFF secret. The site and production use separate,
 host-scoped sessions and separate D1 data. A shared OAuth app still shares GitHub
 client credential trust; it is not a separate GitHub authorization boundary.
 
-For the API, a Stripe test key, a test endpoint's `STRIPE_WEBHOOK_SECRET`,
+For a future billing-enabled API, a Stripe test key, a test endpoint's `STRIPE_WEBHOOK_SECRET`,
 and a verified test catalog (`STRIPE_PRO_PRICE_ID`, `STRIPE_TEAM_PRICE_ID`, and an
 optional `STRIPE_INTRO_COUPON_ID`) are required. Store the catalog as Worker secret bindings so
 subsequent deploys preserve it without inheriting arbitrary old plaintext vars.
-The API returns 503 for missing/live Stripe keys in staging and rejects signed
+The billing-enabled API returns 503 for missing/live Stripe keys in staging and rejects signed
 webhook events unless `livemode` is explicitly false. Checkout and portal returns
 use the staging site origin. Sentry uses the staging environment.
 
@@ -213,8 +217,10 @@ coordinated broker deployment and real GitHub sign-in are now complete. Stripe
 test purchase, token issuance, and successful CLI linking remain pending as
 described in the receipts above.
 
-Before promotion, exercise GitHub sign-in, Stripe test checkout, signed webhook
-delivery, license issuance, session isolation, and API denial with production
+For the current rollout, verify GitHub sign-in, authenticated account data, session
+isolation, disabled billing, health/version identity and operational behavior.
+Before a future paid-tier promotion, additionally exercise Stripe test checkout,
+signed webhook delivery, license issuance and API denial with production
 credentials. The production CLI pins its API origin and verification key, so full
 activation needs a separately reviewed test build with the staging endpoint/key.
 Never weaken the production client's signature or issuer checks for this test.

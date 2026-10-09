@@ -6,18 +6,21 @@ bootstrap; the production API remains unchanged from PR #131. The staging D1
 database has all 17 canonical migrations, and a synthetic D1 Time Travel drill
 passed against the current schema with eight checks. Real GitHub sign-in through
 the existing production app passed on 2026-10-09 at 19:20 UTC, including staging
-account creation and browser session separation. Stripe test configuration is deferred at the user's request, so staging
-API requests fail closed. See [deployment and recovery receipts](./cloudflare-staging.md).
+account creation and browser session separation. The user clarified that paid
+licenses belong to future higher tiers. Current source explicitly disables staging
+billing and removes Stripe from current release prerequisites while retaining the
+payment implementation and tests. The prior deployed API still returns its historical
+503 until the new candidate is published. See [deployment and recovery receipts](./cloudflare-staging.md).
 
 ## First milestone: isolated staging
 
 - Use the existing GitHub OAuth application and production callback through the tested OAuth broker configuration. Do not introduce a second OAuth application or share session cookies.
 - Give staging its own site Worker, API Worker, D1 binding, rate-limit namespaces, session secrets, BFF secret, and license signing key.
 - The old `omg-platform-shadow` database initially had a migration absent from GitHub main; PR #131 subsequently added it. Retain the fresh `omg-platform-staging` database with the current canonical chain. Never copy production users, OAuth tokens, licenses, or Stripe data into staging.
-- Keep Stripe in test mode, reject live keys in staging, and return checkout and portal traffic to staging.
+- Leave billing disabled for the current release. For a future paid-tier launch, keep Stripe in test mode, reject live keys in staging, and return checkout and portal traffic to staging.
 - Keep production's canonical public URLs and existing sessions stable. Tag staging telemetry separately.
 - Validate bindings and run the real Worker tests and deployment dry-runs before provisioning or publishing.
-- Verify GitHub sign-in, Stripe test checkout and webhook delivery, then CLI activation against the staging API with a staging-only verification key. A health response alone does not satisfy this milestone.
+- Verify GitHub sign-in, authenticated account behavior, session isolation, disabled billing, and operational checks. Stripe purchase/webhook and CLI license activation are future paid-tier acceptance work. A health response alone does not satisfy this milestone.
 
 ## Subsequent milestones
 
@@ -42,15 +45,18 @@ source commit, successful CI with explicit checkout verification, current-main
 ancestry, fixed isolated bindings, required secret names, and the migration ledger.
 It installs locked dependencies, captures rollback IDs, tags both Worker uploads,
 and checks live version metadata. Readiness checks are read-only by default;
-`--deploy` is explicit. This path deliberately refuses the current incomplete
-Stripe configuration. The original bootstrap deployments do not count as full
-release acceptance, and production promotion still requires the authenticated
-purchase and CLI flow.
+`--deploy` is explicit. Current publication requires explicitly disabled billing
+instead of Stripe configuration. The original bootstrap deployments do not count
+as full release acceptance. Production promotion requires current authenticated
+account and operational acceptance; purchase and CLI license activation are
+deferred to the future paid-tier launch.
 
 The release gate passed CI at `c4360bb` (run `37968540400`). Live refusal checks
 reject a dirty checkout, an older CI/source pair, and the four missing Stripe
 settings before upload. Both staging deployment IDs remain unchanged. Successful
-publication through the command is still unverified while Stripe is deferred.
+publication through that earlier command was unverified while Stripe was deferred.
+These historical refusal receipts remain valid; the current disabled-billing
+release policy supersedes the Stripe prerequisite.
 
 CLI preparation found that staging tokens still declared the production issuer.
 A real Worker regression reproduced the mismatch. The pending correction chooses
@@ -146,7 +152,7 @@ This application customization is deployed from `2204a63`, whose exact CI run
 endpoint rejection pass, as do three deployed browser auth checks per site.
 Real GitHub sign-in subsequently passed: staging D1 users/accounts/sessions
 changed from 0/0/0 to 1/1/1, while production stayed 3/3/152 and its browser stayed
-signed out. The purchase/token/CLI flow remains required. See the
+signed out. The purchase/token/CLI flow is deferred to future paid tiers. See the
 [cutover and trust boundary](./cloudflare-staging.md).
 The broker revision passes the complete local gate with 364 site and 343 API
 tests, all four deployment dry-runs, and clean audits. Public browser verification

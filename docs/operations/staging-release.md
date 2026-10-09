@@ -24,8 +24,12 @@ their remote D1/service/rate bindings, the production GitHub OAuth client ID, th
 absence of a staging GitHub secret and email binding, required secret names, and
 the complete migration ledger. Secret presence does not prove credential validity;
 post-deploy health and the separate authenticated acceptance flow cover different
-parts of readiness. Missing Stripe test configuration is a release failure. There
-is no flag that treats the bootstrap 503 as acceptance.
+parts of readiness. Paid tiers are deferred for the current rollout. The candidate
+config explicitly sets `BILLING_ENABLED=false`, so Stripe secrets are not required
+and Stripe-consuming routes return 404 before touching providers or data. After
+publication, the command requires both the disabled binding and API health's
+`features.billing=disabled`. A 503 still fails release readiness. Existing remote
+legacy configuration is only accepted as the recorded before state.
 
 With `--deploy`, it installs all three dependency trees from their lockfiles using
 the pinned npm version, rebuilds the site, runs all four deployment dry-runs, and
@@ -44,9 +48,13 @@ observed drift but are not a distributed deployment lock. Keep one operator
 responsible for the release window.
 
 This command only publishes staging. Production promotion still requires the
-actual GitHub sign-in, Stripe test purchase/webhook, and CLI account-link acceptance
-for the candidate, followed by a reviewed production deployment. It does not apply
-database migrations or bypass those acceptance steps. See the
+actual GitHub sign-in, authenticated account behavior, session isolation and
+operational acceptance for the candidate, followed by a reviewed production
+deployment. Paid purchase/webhook and CLI license activation are deferred to the
+future paid-tier launch; their code and tests remain intact. That launch requires
+explicitly enabling billing, verified Stripe test configuration, and separate
+purchase/webhook/license acceptance before promotion. This command does not apply
+database migrations or publish production. See the
 [current staging state](./cloudflare-staging.md) and
 [D1 recovery drill](./d1-recovery-drill.md).
 

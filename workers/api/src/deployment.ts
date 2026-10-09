@@ -15,12 +15,23 @@ export function deploymentAccountOrigin(env: Pick<Env, 'DEPLOYMENT_STAGE'>): str
     : ACCOUNT_ORIGIN;
 }
 
-/** A staging Worker must never make requests with a live Stripe credential. */
+export function billingIsEnabled(env: Pick<Env, 'BILLING_ENABLED'>): boolean {
+  return env.BILLING_ENABLED !== 'false';
+}
+
+/** Disabled billing never reaches Stripe; enabled staging only accepts test credentials. */
 export function deploymentIsReady(
-  env: Pick<Env, 'DEPLOYMENT_STAGE' | 'STRIPE_SECRET_KEY'>
+  env: Pick<Env, 'DEPLOYMENT_STAGE' | 'STRIPE_SECRET_KEY' | 'BILLING_ENABLED'>
 ): boolean {
+  if (
+    env.BILLING_ENABLED !== undefined &&
+    env.BILLING_ENABLED !== 'true' &&
+    env.BILLING_ENABLED !== 'false'
+  )
+    return false;
   if (env.DEPLOYMENT_STAGE === undefined || env.DEPLOYMENT_STAGE === 'prod') return true;
   return (
-    env.DEPLOYMENT_STAGE === 'staging' && /^(?:sk|rk)_test_\S+$/u.test(env.STRIPE_SECRET_KEY ?? '')
+    env.DEPLOYMENT_STAGE === 'staging' &&
+    (!billingIsEnabled(env) || /^(?:sk|rk)_test_\S+$/u.test(env.STRIPE_SECRET_KEY ?? ''))
   );
 }
