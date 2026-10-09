@@ -84,6 +84,21 @@ credentials plus `STAGING_SVELTE_BFF_SECRET`. Wrangler is the release path; avoi
 alternating deployment tools because older Alchemy cannot represent every current
 Wrangler observability option.
 
+Validation of the implementation and patched dependency graph on 2026-10-09:
+
+- Site suite: 61 files, 355 tests passed.
+- API suite: 33 files, 328 tests passed, including live-key rejection, signed
+  webhook mode isolation, checkout return URLs, and staging invitation origins.
+- Local public browser suite: 22 passed; three deployed-auth tests skipped because
+  the suite targets a local unbound server.
+- Source and test typechecks, lint, formatting, source policy, unused exports,
+  immutable migration checks, and lockfile integrity checks passed.
+- Site build and bundle budgets, production API dry-run, both staging dry-runs,
+  and binding isolation checks passed.
+- The aggregate release gate remains failing: the site has one unpatched `braces`
+  advisory through Alchemy, reported against five packages in the dependency
+  chain. Root and API npm audits are clean. See [dependency pins](./dependency-pins.md).
+
 Before promotion, exercise GitHub sign-in, Stripe test checkout, signed webhook
 delivery, license issuance, session isolation, and API denial with production
 credentials. The production CLI pins its API origin and verification key, so full

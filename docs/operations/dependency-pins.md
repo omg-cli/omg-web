@@ -26,3 +26,20 @@ Worker dependency changes require the exact generated binding declarations, stri
 Every package with an allowed lifecycle script is version-qualified in each workspace's `allowScripts` block. Version upgrades must update both the lockfile and the corresponding trust entry in the same reviewed change.
 
 `tools/check-lockfile-integrity.mjs` rejects registry packages without a locked tarball URL and integrity digest. Dependencies bundled inside an integrity-pinned parent tarball are the only exception.
+
+## Cloudflare staging validation, 2026-10-09
+
+Wrangler is pinned to `4.149.0` in the root and API workspaces, with the API test
+plugin at `1.4.0`. This moves their shared Miniflare dependency to the vendor's
+`5.20261006.1-alpha` build and resolves `sharp` to `0.35.5`. The trusted lifecycle
+script versions move with it to `workerd@1.20261006.1` and `esbuild@0.28.2`.
+The lockfiles also resolve patched `devalue@5.9.4` and `source-map-js@1.2.2` where
+present. Root and API npm audits report zero vulnerabilities after these updates.
+
+The site audit still fails on `braces@3.0.3`, reached through Alchemy's `fast-glob`
+dependency. [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+has no published patch as of this review. Do not suppress the audit or apply npm's
+suggested downgrade to Alchemy 0.x: that is incompatible with this application's
+Alchemy 2 setup. Resolving this requires a reviewed replacement or upstream fix
+for the build dependency path. This finding does not by itself demonstrate an
+exploitable production request path.
