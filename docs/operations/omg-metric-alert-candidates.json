@@ -2,31 +2,34 @@
   "status": "candidates-only-not-provisioned",
   "dataset": "logs.workersLogs",
   "datasetSampling": "adaptive",
+  "detectionMethod": "threshold",
+  "timeRangeMode": "manual",
+  "evaluationWindow": "1m",
   "note": "This is a review artifact, not a Notifications API request. No delivery mechanisms are configured. Validate all SQL queries and field values before saving any policy. Rate calculations use represented events under adaptive sampling; they are not exact raw counts. Missing-run checks depend on retained completion logs and can be affected by sampling or ingestion failures.",
   "candidates": [
     {
       "name": "OMG API HTTP failure rate",
       "enabled": false,
-      "validation": "pending SQL query permission and verification of logType value",
+      "validation": "dashboard SQL preview accepted on 2026-10-09 with value 0; site invocation and positive threshold controls passed; delivery not provisioned",
       "executionInterval": "5m",
       "repeatNotificationInterval": "1h",
       "comparison": {
         "operator": ">=",
         "value": 1
       },
-      "query": "SELECT if(countIf(httpStatus >= 500) >= 5 AND countIf(httpStatus >= 500) >= COUNT(*) * 0.05, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND invocationType = 'fetch' AND logType = 'invocation' AND timestamp >= NOW() - INTERVAL '5' MINUTE"
+      "query": "SELECT if(countIf(httpStatus >= 500) >= 5 AND countIf(httpStatus >= 500) >= COUNT(*) * 0.05, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND invocationType = 'fetch' AND logType = 'cf-worker-event' AND timestamp >= NOW() - INTERVAL '5' MINUTE"
     },
     {
       "name": "OMG site HTTP failure rate",
       "enabled": false,
-      "validation": "pending SQL query permission and verification of logType value",
+      "validation": "dashboard SQL preview accepted on 2026-10-09 with value 0; invocation filter returned live requests and positive threshold control returned 1; delivery not provisioned",
       "executionInterval": "5m",
       "repeatNotificationInterval": "1h",
       "comparison": {
         "operator": ">=",
         "value": 1
       },
-      "query": "SELECT if(countIf(httpStatus >= 500) >= 5 AND countIf(httpStatus >= 500) >= COUNT(*) * 0.05, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omgsveltesite-website-prod-dlaqgfttmir2ky5x' AND invocationType = 'fetch' AND logType = 'invocation' AND timestamp >= NOW() - INTERVAL '5' MINUTE"
+      "query": "SELECT if(countIf(httpStatus >= 500) >= 5 AND countIf(httpStatus >= 500) >= COUNT(*) * 0.05, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omgsveltesite-website-prod-dlaqgfttmir2ky5x' AND invocationType = 'fetch' AND logType = 'cf-worker-event' AND timestamp >= NOW() - INTERVAL '5' MINUTE"
     },
     {
       "name": "OMG missing successful aggregation",

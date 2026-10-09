@@ -103,9 +103,16 @@ retention without changing the dead row, and recovery after fixture resolution.
 Preview teardown, database deletion, and empty inventory were verified. This
 manual dispatch does not establish native Cron Trigger or notification delivery
 acceptance. Publication and live alert acceptance remain pending. SQL-backed
-HTTP/missing-job alert candidates are recorded but
-unprovisioned because SQL query access is still denied. The existing $10 account
-budget alert is verified enabled; it does not establish remaining startup credit.
+HTTP/missing-job alert candidates remain unprovisioned. Signed-in dashboard SQL
+previews now work; the HTTP queries were corrected to the verified
+`cf-worker-event` invocation value and passed both healthy and positive-control
+previews. Missing-job completion availability still requires the pending runtime
+release, and additional delivery remains unconfigured. The existing $10 account
+budget alert is verified enabled; it does not measure remaining startup credit.
+The signed-in Credits dashboard separately confirms an active $10,000 grant with
+an estimated $10,000 remaining on October 9, 2026, expiring October 6, 2027.
+Invoices confirm the final balance. Registrar purchases and AI Gateway are
+excluded; listed R2/Workers AI product caps do not increase the grant total.
 
 ## Concurrent production update and credential constraint
 
