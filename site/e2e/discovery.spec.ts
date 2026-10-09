@@ -94,7 +94,7 @@ test.describe('without JavaScript', () => {
 test('public sitemap, raw HTML and Markdown agree on published guides', async ({ request }) => {
   const sitemap = await request.get('/sitemap.xml');
   const xml = await sitemap.text();
-  const urls = [...xml.matchAll(/<loc>https:\/\/getomg\.xyz([^<]*)<\/loc>/g)].map(
+  const urls = [...xml.matchAll(/<loc>https:\/\/getomg\.dev([^<]*)<\/loc>/g)].map(
     match => match[1]!
   );
   expect(urls).toContain('/runtimes/node/');
