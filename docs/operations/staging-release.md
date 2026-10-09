@@ -44,7 +44,7 @@ observed drift but are not a distributed deployment lock. Keep one operator
 responsible for the release window.
 
 This command only publishes staging. Production promotion still requires the
-actual GitHub sign-in, Stripe test purchase/webhook, and CLI activation acceptance
+actual GitHub sign-in, Stripe test purchase/webhook, and CLI account-link acceptance
 for the candidate, followed by a reviewed production deployment. It does not apply
 database migrations or bypass those acceptance steps. See the
 [current staging state](./cloudflare-staging.md) and

@@ -45,6 +45,20 @@ Stripe configuration. The original bootstrap deployments do not count as full
 release acceptance, and production promotion still requires the authenticated
 purchase and CLI flow.
 
+The release gate passed CI at `c4360bb` (run `37968540400`). Live refusal checks
+reject a dirty checkout, an older CI/source pair, and the four missing Stripe
+settings before upload. Both staging deployment IDs remain unchanged. Successful
+publication through the command is still unverified while Stripe is deferred.
+
+CLI preparation found that staging tokens still declared the production issuer.
+A real Worker regression reproduced the mismatch. The pending correction chooses
+`https://staging-api.getomg.xyz` only for the configured staging environment and
+retains the production issuer otherwise; request hosts cannot choose the issuer.
+This change is not deployed. The current OMG CLI uses `omg account link <token>`
+for optional dashboard identity, with no feature gating. Its staging acceptance
+build still needs the separate staging API origin and public verification key;
+keep its signature, audience, expiry, and issuer validation intact.
+
 The repeatable remote D1 drill now creates and deletes its own disposable database,
 rejects existing database selectors, and retains source/migration hashes plus
 restore receipts. From clean source `e8a7970`, all 17 migrations and eight checks
