@@ -22,6 +22,14 @@ returned one matching analytics completion row; it independently confirms the
 version and scheduledTime but does not prove all three persisted completions.
 The owned tail was deleted and its absence verified.
 
+A later runtime check found that staging native five-minute runs continued through
+`2026-10-09T21:25:51Z` despite the Cron API returning an empty list after the
+21:02 UTC cleanup. The empty staging list was reapplied at 21:28 UTC; readback
+still shows no configured triggers, with production schedules unchanged.
+Configuration restoration is verified, but runtime cessation is not yet verified.
+Treat this as open cleanup work rather than assuming API readback stops dispatch
+immediately. No additional provider work or production failure was injected.
+
 ## Coverage
 
 The following deployed applications enable persistent Workers Logs and traces:
