@@ -199,6 +199,24 @@ Never weaken the production client's signature or issuer checks for this test.
 
 ## D1 recovery drill
 
+The repeatable [current-schema drill](./d1-recovery-drill.md) passed on 2026-10-09
+from clean source `e8a7970`, using disposable database
+`df06ec5d-5571-4746-b4c4-bb9f9c652295` (`omg-recovery-drill-20261009-d06b18de`).
+All 17 migrations applied. Eight checks covered the ledger, SQLite integrity,
+foreign keys, auth-session relationship, customer/license/machine entitlement,
+webhook processing lease, reconciliation fence, and removal of a post-bookmark
+row. Every deliberate mutation was observed before restore and all original
+checks passed afterward. The restore call took 2.41 seconds. Cleanup succeeded,
+and the Cloudflare inventory confirms no drill database remains.
+
+This extends the database-level evidence to migration 026. It does not establish
+browser sign-in, Stripe reconciliation, or CLI acceptance after recovery. Restored
+session revocations and external billing changes still need incident-specific
+handling before reopening writes. The tool records exact migration hashes,
+bookmarks, source state, and command receipts outside the checkout.
+
+### Earlier baseline drill
+
 On 2026-10-09, a dedicated `omg-recovery-drill-20261009` database was created with
 ID `c56f7807-e19a-4380-be21-3d67dafd6f77`. All 16 canonical migrations applied.
 Synthetic auth-user, customer, and license rows were added; no production data was

@@ -65,6 +65,14 @@ The sampled 15-minute window had no matching 5xx rows and three five-minute sche
 
 The pending production API release changes scheduled tasks to emit `<task>_completed` only after success and `<task>_failed` on failure. All independent tasks settle before the handler rejects with an aggregate error. `scheduled.completed` is emitted only when every selected task succeeds. Audit-log cleanup propagates its error to this coordinator. Tests remove individual D1 tables and verify that the invocation rejects while independent Stripe retention still runs. This code is in staging, whose cron triggers remain disabled; it is not yet deployed to the production API.
 
+The webhook follow-up emits `stripe_webhook.retry_limit_exhausted` when an incoming
+delivery finds an exhausted failed row or an exhausted processing row whose lease
+has expired. The atomic transition clears the raw payload and claim and records a
+dead event without starting a twenty-first attempt. Subsequent deliveries are
+acknowledged. An active final lease is still busy and can complete. This code is
+not deployed yet; it does not detect an abandoned event without another delivery,
+so the proposed backlog alert remains necessary.
+
 ## Operational queries
 
 Use Cloudflare Workers Logs to monitor:

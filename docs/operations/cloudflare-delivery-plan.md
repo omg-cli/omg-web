@@ -4,7 +4,7 @@ Status: implementation in progress, 2026-10-09. Staging isolation and test-mode
 guards are deployed. The production site received the GitHub OAuth broker
 bootstrap; the production API remains unchanged from PR #131. The staging D1
 database has all 17 canonical migrations, and a synthetic D1 Time Travel drill
-passed. Stripe test configuration is deferred at the user's request, so staging
+passed against the current schema with eight checks. Stripe test configuration is deferred at the user's request, so staging
 API requests fail closed. See [deployment and recovery receipts](./cloudflare-staging.md).
 
 ## First milestone: isolated staging
@@ -32,6 +32,26 @@ API requests fail closed. See [deployment and recovery receipts](./cloudflare-st
 - Passed 37 focused Worker tests and 28 site tests, typechecks, source policy, lint, and four deployment dry-runs. The site changes and staging API are deployed; the production API code remains unpublished.
 - Saved three validated production observability queries. Four production runtime issue automations and Worker detection are enabled. Cloudflare records one synthetic test email sent, and temporary test resources are removed. Other operational alert conditions and authenticated release acceptance remain pending; see [observability](./observability.md).
 - GitHub CI at `cf3f725` passed both the full check and anonymous browser jobs (run `37961070002`). The earlier dependency audit failure is resolved by the merged Alchemy update; the audit gate remains intact.
+
+## Recovery and webhook retry follow-up
+
+The repeatable remote D1 drill now creates and deletes its own disposable database,
+rejects existing database selectors, and retains source/migration hashes plus
+restore receipts. From clean source `e8a7970`, all 17 migrations and eight checks
+passed, including restored webhook leases and reconciliation fencing. The restore
+call took 2.41 seconds; this is not a production RTO or authenticated application
+recovery proof. See [the drill](./d1-recovery-drill.md).
+
+Recovery review reproduced a webhook retry defect: a Worker interrupted on its
+twentieth attempt left an expired processing row that every subsequent delivery
+treated as busy. An exhausted failed row had the same behavior. The correction
+atomically moves exhausted inactive rows to `dead`, clears their payload and claim,
+retains an existing error, and acknowledges subsequent delivery. Active final
+attempts remain protected, and an expired nineteenth attempt can still finish.
+The real webhook/reconciliation suites pass 27 checks, including both reproduced
+failures. This follow-up has not been deployed. It preserves the existing Stripe
+redelivery contract; it does not add a background replay queue or reconcile Stripe
+state after a database restore.
 
 ## Concurrent production update and credential constraint
 

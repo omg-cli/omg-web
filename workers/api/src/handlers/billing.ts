@@ -237,6 +237,28 @@ async function claimStripeEvent(
     .bind(crypto.randomUUID(), event.id, event.type, eventData)
     .run();
 
+  const exhausted = await db
+    .prepare(
+      `UPDATE stripe_events
+       SET status = 'dead', claim_token = NULL, processing_started_at = NULL,
+           event_data = '',
+           last_error = COALESCE(last_error, 'Retry limit reached without a completed processing attempt')
+       WHERE stripe_event_id = ? AND processed = 0 AND attempt_count >= ? AND (
+         status IN ('received', 'failed') OR
+         (status = 'processing' AND processing_started_at < datetime('now', '-5 minutes'))
+       )
+       RETURNING stripe_event_id`
+    )
+    .bind(event.id, MAX_STRIPE_EVENT_ATTEMPTS)
+    .first();
+  if (exhausted !== null) {
+    reportError(
+      'stripe_webhook.retry_limit_exhausted',
+      'Final processing attempt did not complete'
+    );
+    return { outcome: 'dead' };
+  }
+
   const claimToken = crypto.randomUUID();
   // RETURNING makes the claim decision authoritative without relying on
   // meta.changes, which is not populated by every D1 runtime. The 5-minute
