@@ -33,6 +33,11 @@ that the existing application accepts
 depends on the app's callback and wildcard settings; do not assume that a sibling
 hostname is accepted. No callback relay or second OAuth app is implemented.
 
+The existing shadow Worker's live client ID was rechecked on 2026-10-09:
+`Ov23liHbO8Uyd3LI0bU4`, which differs from production's `Ov23lim96hwzllDXL6Dm`.
+Its existing `GITHUB_CLIENT_SECRET` cannot be assumed to belong to the production
+app. Supply the production app's existing secret during the isolated cutover.
+
 Provision independent staging values for `BETTER_AUTH_SECRET`, `SVELTE_BFF_SECRET`,
 `JWT_SECRET`, `JWT_PRIVATE_KEY` (Ed25519 PKCS#8), and `ADMIN_API_SECRET`. Both staged
 Workers share only their staging BFF secret. The site and production use separate,
