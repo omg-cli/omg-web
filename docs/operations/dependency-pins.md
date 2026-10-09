@@ -9,6 +9,7 @@ All dependency versions and overrides are exact. Renovate must not automerge cha
 
 ## `site/package.json`
 
+- `better-auth` `1.7.7` supplies purpose-separated OAuth proxy keys and fixes state/profile confusion. Its [release notes](https://github.com/better-auth/better-auth/releases/tag/v1.7.7) require coordinated upgrades and restarting pending OAuth flows, with no database migration. Production and staging must use the same tested version during the broker cutover. Re-run `oauth-proxy.server.test.ts` and the complete site suite before upgrades; production must never register proxy profile completion endpoints.
 - `effect` `4.0.2` is the application boundary and expected-failure runtime. Changes require strict Svelte diagnostics, TypeScript checks, focused boundary tests, browser verification, and a successful shadow deployment.
 - `@sveltejs/kit` under `better-auth` is a package-scoped peer override for the exact-tested SvelteKit 3 prerelease. Remove it when Better Auth declares compatibility with the installed SvelteKit release.
 - `@hono/node-server`, `hono`, `lodash`, and `valibot` are security floors for Alchemy's non-optional Prisma development dependency chain. Remove them when Alchemy makes that chain optional or resolves audited versions itself.

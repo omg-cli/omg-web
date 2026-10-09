@@ -26,10 +26,9 @@ const REQUIRED_ENVIRONMENT = [
     binding: 'GITHUB_CLIENT_ID',
     source: 'PRODUCTION_GITHUB_CLIENT_ID',
   },
-  {
-    binding: 'GITHUB_CLIENT_SECRET',
-    source: 'PRODUCTION_GITHUB_CLIENT_SECRET',
-  },
+  ...(stage === 'prod'
+    ? [{ binding: 'GITHUB_CLIENT_SECRET', source: 'PRODUCTION_GITHUB_CLIENT_SECRET' }]
+    : [{ binding: 'OAUTH_PROXY_SECRET', source: 'OAUTH_PROXY_SECRET' }]),
   {
     binding: 'SVELTE_BFF_SECRET',
     source: stage === 'prod' ? 'SVELTE_BFF_SECRET' : 'STAGING_SVELTE_BFF_SECRET',

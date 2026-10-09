@@ -2,6 +2,7 @@ import * as Alchemy from 'alchemy';
 import * as Cloudflare from 'alchemy/Cloudflare';
 import * as Config from 'effect/Config';
 import * as Effect from 'effect/Effect';
+import * as Redacted from 'effect/Redacted';
 
 export const ShadowAuthSecret = Alchemy.Random('ShadowAuthSecret');
 
@@ -47,9 +48,15 @@ export const Website = Cloudflare.Website.SvelteKit(
           simple: { limit: 30, period: 60 },
         }),
         BETTER_AUTH_SECRET: authSecret.text,
-        DEPLOYMENT_STAGE: stage,
+        DEPLOYMENT_STAGE: stage === 'prod' ? 'production' : 'staging',
         GITHUB_CLIENT_ID: Config.String('GITHUB_CLIENT_ID'),
-        GITHUB_CLIENT_SECRET: Config.Redacted('GITHUB_CLIENT_SECRET'),
+        GITHUB_CLIENT_SECRET:
+          stage === 'prod'
+            ? Config.Redacted('GITHUB_CLIENT_SECRET')
+            : Config.succeed(Redacted.make('')),
+        OAUTH_PROXY_SECRET: Config.Redacted('OAUTH_PROXY_SECRET').pipe(
+          Config.withDefault(Redacted.make(''))
+        ),
         SVELTE_BFF_SECRET: Config.Redacted('SVELTE_BFF_SECRET'),
       },
       memo: {

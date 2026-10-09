@@ -33,20 +33,45 @@ Do not use the existing shadow URL for test purchases before that cutover.
 
 ## Credentials and behavior
 
-Reuse production's GitHub OAuth application, client ID, and client secret. Verify
-that the existing application accepts
-`https://staging.getomg.xyz/api/auth/callback/github`. GitHub's callback matching
-depends on the app's callback and wildcard settings; do not assume that a sibling
-hostname is accepted. No callback relay or second OAuth app is implemented.
+Reuse production's GitHub OAuth application through Better Auth's OAuth Proxy.
+Staging sends GitHub to the existing production callback at
+`https://getomg.xyz/api/auth/callback/github`. The production Worker exchanges the
+code with its existing deployed secret and redirects an encrypted profile to
+staging. Only staging creates the resulting account and session in its own D1.
+No staging callback registration or second GitHub app is required by this flow.
 
 The existing shadow Worker's live client ID was rechecked on 2026-10-09:
 `Ov23liHbO8Uyd3LI0bU4`, which differs from production's `Ov23lim96hwzllDXL6Dm`.
-Its existing `GITHUB_CLIENT_SECRET` cannot be assumed to belong to the production
-app. Supply the production app's existing secret during the isolated cutover.
+Its existing `GITHUB_CLIENT_SECRET` belongs to another client. Staging auth now
+ignores that binding entirely; delete the obsolete binding during cutover. Keep
+the existing production secret on the production Worker.
+
+Generate a dedicated random `OAUTH_PROXY_SECRET` of at least 32 bytes and install
+the same new value on the two site Workers using Wrangler secret input. Never
+print or commit it. Production enables the broker only when this secret exists;
+staging refuses to initialize authentication without it or on another hostname.
+Use Better Auth `1.7.7` on both Workers in the coordinated cutover. Restart any
+sign-in begun during the version transition.
+
+The standard proxy plugin grants participating deployments shared identity
+authority. OMG removes **all proxy completion endpoint registrations from
+production**, including the deprecated endpoint, while retaining the GitHub
+code-exchange hooks. Consequently production can return profiles to staging but
+cannot create a production session from a proxy profile. Completion endpoints
+exist only in the staging configuration. This is an application customization of
+the documented plugin interface, not an upstream broker-only option. Re-run the
+auth boundary tests on every Better Auth upgrade. Protect the proxy secret as an
+authentication credential for staging; it also decrypts proxied GitHub tokens.
+
+The profile lifetime is 30 seconds, OAuth state is consumed once, and cookies use
+separate host-scoped session secrets. Query redaction must remain enabled because
+the callback carries encrypted credentials. Local tests use the real Better Auth
+handlers and OMG configuration, separate memory databases, and synthetic GitHub
+responses; they do not establish live GitHub or D1 acceptance.
 
 Provision independent staging values for `BETTER_AUTH_SECRET`, `SVELTE_BFF_SECRET`,
 `JWT_SECRET`, `JWT_PRIVATE_KEY` (Ed25519 PKCS#8), and `ADMIN_API_SECRET`. Both staged
-Workers share only their staging BFF secret. The site and production use separate,
+Workers share their staging BFF secret. The site and production use separate,
 host-scoped sessions and separate D1 data. A shared OAuth app still shares GitHub
 client credential trust; it is not a separate GitHub authorization boundary.
 
@@ -58,9 +83,11 @@ The API returns 503 for missing/live Stripe keys in staging and rejects signed
 webhook events unless `livemode` is explicitly false. Checkout and portal returns
 use the staging site origin. Sentry uses the staging environment.
 
-Wrangler can list deployed secret names but cannot download their values. Use the
-original secret store or enter the existing values through `wrangler secret put`;
-never print or commit them. Do not retain the old shadow Worker's BFF or auth
+Wrangler can list deployed secret names but cannot download their values. The
+user has confirmed Wrangler is the only known credential location. Keep deployed
+production secrets in place and generate the new staging credentials; do not
+request another original-secret store. Stripe test access remains unverified and
+the connected Stripe app requires reauthentication. Do not retain the old shadow Worker's BFF or auth
 secrets during the cutover. No native email binding or cron triggers are configured
 for staging yet; email operations remain unavailable until a deliberate test
 delivery policy is added.
@@ -80,7 +107,7 @@ names, D1, service bindings, routes, rate namespaces, query redaction, OAuth cli
 and absent email/cron bindings. `check:deploy` builds the site and bundles both
 staging Workers. These checks do not verify remote secret values or OAuth settings.
 
-Once credentials and callback acceptance have been verified, use the explicit
+Once new credentials and the production broker release have been verified, use the explicit
 config paths. Capture the source commit and Worker version IDs with the release:
 
 ```bash
@@ -90,8 +117,9 @@ npx wrangler deploy --config site/wrangler.staging.jsonc --tag "$(git rev-parse 
 ```
 
 The API must be deployed first. The old Alchemy `shadow` stage also targets the
-isolated database, service, and staging hostname, and resolves production GitHub
-credentials plus `STAGING_SVELTE_BFF_SECRET`. Wrangler is the release path; avoid
+isolated database, service, and staging hostname, and resolves the production GitHub
+client ID, `OAUTH_PROXY_SECRET`, and `STAGING_SVELTE_BFF_SECRET` without requiring
+the production GitHub secret. Wrangler is the release path; avoid
 alternating deployment tools because older Alchemy cannot represent every current
 Wrangler observability option.
 
@@ -107,27 +135,20 @@ lint, source policy, unused exports, the site build budget, and all four Worker
 deployment dry-runs. Three validated production observability queries were saved;
 see [observability status](./observability.md). Runtime changes are not yet deployed.
 
-Validation of the implementation and patched dependency graph on 2026-10-09:
+After incorporating PR #131, GitHub CI passed both checks for `cf3f725`
+(run `37961070002`). Its full `npm run check` included all three audits,
+356 site tests, 343 API tests, and all four deployment dry-runs. The local public
+browser suite passed 22 tests and skipped three deployed-auth tests against the
+unbound local server. The earlier D1 recovery drill covers the 16-migration schema
+that existed at drill time. OAuth proxy validation is recorded separately below.
 
-- Site suite: 61 files, 355 tests passed.
-- API suite: 33 files, 328 tests passed, including live-key rejection, signed
-  webhook mode isolation, checkout return URLs, and staging invitation origins.
-- Local public browser suite: 22 passed; three deployed-auth tests skipped because
-  the suite targets a local unbound server.
-- Source and test typechecks, lint, formatting, source policy, unused exports,
-  immutable migration checks, and lockfile integrity checks passed.
-- Site build and bundle budgets, production API dry-run, both staging dry-runs,
-  and binding isolation checks passed.
-- The aggregate release gate remains failing: the site has one unpatched `braces`
-  advisory through Alchemy, reported against five packages in the dependency
-  chain. Root and API npm audits are clean. See [dependency pins](./dependency-pins.md).
-
-That audit result describes the earlier `72afa59` baseline. After incorporating
-PR #131's Alchemy beta.78 update, the full `npm run check` passed, including all
-three audits, 356 site tests, and 343 API tests. The public browser suite passed
-22 tests and skipped three deployed-auth tests. All four production/staging
-configurations passed deployment dry-runs. The earlier D1 recovery drill still
-covers the 16-migration schema that existed at drill time.
+With the OAuth broker implementation and Better Auth `1.7.7`, the complete local
+`npm run check` passes: 364 site tests, 343 API tests, all three audits, typechecks,
+source policy, lint/formatting, build budgets, and all four deployment dry-runs.
+The public browser suite again passes 22 tests with three deployed-auth skips.
+The eight focused auth tests additionally verify that the staging cookie works
+against staging and is rejected by production. These are local results; the
+coordinated production/staging deployment and live authenticated flow are pending.
 
 Before promotion, exercise GitHub sign-in, Stripe test checkout, signed webhook
 delivery, license issuance, session isolation, and API denial with production

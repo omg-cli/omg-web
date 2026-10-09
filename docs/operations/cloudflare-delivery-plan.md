@@ -7,7 +7,7 @@ passed. See [staging and recovery evidence](./cloudflare-staging.md).
 
 ## First milestone: isolated staging
 
-- Use the existing GitHub OAuth application. Verify its callback configuration before enabling staging sign-in. Do not introduce a second OAuth application or share session cookies.
+- Use the existing GitHub OAuth application and production callback through the tested OAuth broker configuration. Do not introduce a second OAuth application or share session cookies.
 - Give staging its own site Worker, API Worker, D1 binding, rate-limit namespaces, session secrets, BFF secret, and license signing key.
 - The old `omg-platform-shadow` database initially had a migration absent from GitHub main; PR #131 subsequently added it. Retain the fresh `omg-platform-staging` database with the current canonical chain. Never copy production users, OAuth tokens, licenses, or Stripe data into staging.
 - Keep Stripe in test mode, reject live keys in staging, and return checkout and portal traffic to staging.
@@ -29,7 +29,7 @@ passed. See [staging and recovery evidence](./cloudflare-staging.md).
 - Scheduled tasks now settle independently, emit completion only after success, and reject the invocation after any failure. The inner audit-log cleanup no longer swallows its error.
 - Passed 37 focused Worker tests and 28 site tests, typechecks, source policy, lint, and four deployment dry-runs. Changes remain unpublished.
 - Saved three validated production observability queries. Notifications, synthetic delivery, and release acceptance remain pending; see [observability](./observability.md).
-- GitHub CI at `72afa59` passed anonymous browser tests and failed the dependency audit on the unpatched `braces` advisory. Keep that release gate intact.
+- GitHub CI at `cf3f725` passed both the full check and anonymous browser jobs (run `37961070002`). The earlier dependency audit failure is resolved by the merged Alchemy update; the audit gate remains intact.
 
 ## Concurrent production update and credential constraint
 
@@ -50,8 +50,18 @@ do not keep requesting another store. Better Auth's supported OAuth Proxy can
 leave GitHub code exchange on production and create staging sessions in staging
 D1. It requires a new shared proxy credential and a coordinated auth deployment,
 and its documentation warns that holders can assert identities in participating
-deployments. Research and test the production authentication boundary before
-choosing this approach; it is not enabled by this PR. Stripe test access remains
+deployments. The local implementation now removes all proxy completion endpoints
+from production while retaining the code-exchange hooks. Eight real-handler tests
+cover separated accounts/sessions, production endpoint removal, normal production
+sign-in with and without the proxy, rejected provider codes, tampering, expiry,
+replay, and staging configuration failures. Better Auth is pinned to `1.7.7`.
+This application customization is not deployed; live OAuth and D1 acceptance remain
+required. See the [cutover and trust boundary](./cloudflare-staging.md).
+The broker revision passes the complete local gate with 364 site and 343 API
+tests, all four deployment dry-runs, and clean audits. Public browser verification
+passes 22 tests with three deployed-auth skips. Staging cookie isolation is also
+verified through the real auth handlers.
+Stripe test access remains
 unverified; the connected Stripe app requires reauthentication. Never substitute
 a production live key to satisfy staging readiness.
 
@@ -61,7 +71,7 @@ requires secrets to be re-entered. They do not copy the existing production GitH
 secret into an isolated preview automatically. See [preview configuration](https://developers.cloudflare.com/workers/previews/configuration/)
 and [Better Auth's proxy trust model](https://better-auth.com/docs/plugins/oauth-proxy).
 
-## Current baseline
+## Initial baseline before the separate PR #131 deployment
 
 - Source: `omg-cli/omg-web` main at `c68f4c6bfb1c0a753e19fc2b01c5c3207ea2ccf4`.
 - Production site Worker: `omgsveltesite-website-prod-dlaqgfttmir2ky5x`; version `d3ce7f47-df97-474b-9fab-1e2a4735a823`.

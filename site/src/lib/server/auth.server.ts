@@ -5,6 +5,7 @@ import { organization } from 'better-auth/plugins/organization';
 import type { WebsiteEnv } from '../../../alchemy.run';
 import { sendOrganizationInvitationEmail } from './organization-invitation-email.server';
 import { loadOrganizationMembershipLimit } from './organization-workspace.server';
+import { oauthProxyConfiguration } from './oauth-proxy.server';
 
 function dashboardDate(timestamp: Date | number | string): Date {
   const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
@@ -22,7 +23,8 @@ export type AuthEnvironment = Pick<
   | 'GITHUB_CLIENT_SECRET'
   | 'LICENSING_API'
   | 'SVELTE_BFF_SECRET'
->;
+> &
+  Partial<Pick<WebsiteEnv, 'DEPLOYMENT_STAGE' | 'OAUTH_PROXY_SECRET'>>;
 
 interface AuthRateLimiter {
   limit(options: { key: string }): Promise<{ success: boolean }>;
@@ -196,11 +198,12 @@ export async function enforceAuthMutationRateLimit(
 }
 
 export function createShadowAuth(env: AuthEnvironment, requestUrl: URL) {
+  const proxy = oauthProxyConfiguration(env, requestUrl);
   return betterAuth({
     database: env.DB,
     secret: env.BETTER_AUTH_SECRET,
     baseURL: requestUrl.origin,
-    trustedOrigins: [requestUrl.origin],
+    trustedOrigins: proxy.trustedOrigins,
     advanced: {
       defaultCookieAttributes: {
         httpOnly: true,
@@ -216,8 +219,8 @@ export function createShadowAuth(env: AuthEnvironment, requestUrl: URL) {
     socialProviders: {
       github: {
         clientId: env.GITHUB_CLIENT_ID,
-        clientSecret: env.GITHUB_CLIENT_SECRET,
-        redirectURI: `${requestUrl.origin}/api/auth/callback/github`,
+        clientSecret: env.DEPLOYMENT_STAGE === 'staging' ? '' : env.GITHUB_CLIENT_SECRET,
+        redirectURI: `${proxy.callbackOrigin}/api/auth/callback/github`,
       },
     },
     user: {
@@ -263,6 +266,7 @@ export function createShadowAuth(env: AuthEnvironment, requestUrl: URL) {
       },
     },
     plugins: [
+      ...proxy.plugins,
       organization({
         allowUserToCreateOrganization: false,
         organizationLimit: 1,
