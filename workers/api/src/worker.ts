@@ -1,4 +1,6 @@
 import * as Sentry from '@sentry/cloudflare';
+import { runScheduledJobs } from './scheduled';
+import { billingIsEnabled, deploymentIsReady, deploymentAccountOrigin } from './deployment';
 import { forbiddenUnlessAdminSession } from './admin-auth';
 import {
   type Env,
@@ -73,18 +75,12 @@ import {
   handleStripeWebhook,
   handleAdminStripeSync,
   handleAdminStripeMetrics,
-  cleanupStripeEvents,
 } from './handlers/billing';
-import {
-  handleDocsAnalytics,
-  handleDocsAnalyticsDashboard,
-  cleanupAnalyticsRetention,
-  refreshDocsAnalyticsAggregates,
-} from './handlers/docs-analytics';
+import { handleDocsAnalytics, handleDocsAnalyticsDashboard } from './handlers/docs-analytics';
 import { handleGitHubProxy } from './handlers/github-proxy';
 import { handleGetDashboard } from './handlers/account-dashboard';
 import { handleCreateSiteSession } from './handlers/site-session';
-import { cleanupMarketingOfferLeads, handleMarketingOffer } from './handlers/marketing-offer';
+import { handleMarketingOffer } from './handlers/marketing-offer';
 import { handleOrganizationInvitationEmail } from './handlers/organization-invitation-email';
 import { handleOrganizationAudit } from './handlers/organization-audit';
 import { handleOrganizationUsage } from './handlers/organization-usage';
@@ -102,7 +98,6 @@ import {
   handleExportMyData,
   handleOptOut,
   handlePrivacyStatus,
-  cleanupExpiredAuditLogs,
 } from './handlers/privacy';
 import { normalizeLicensingPath, resolveLicensingRoute } from '../../../shared/licensing-routes';
 
@@ -252,6 +247,7 @@ function withApiSecurityHeaders(
     for (const [name, value] of Object.entries(apiSecurityHeaders)) {
       secured.headers.set(name, value);
     }
+    secured.headers.set('Access-Control-Allow-Origin', deploymentAccountOrigin(env));
     return secured;
   };
 }
@@ -260,10 +256,17 @@ export default Sentry.withSentry(
   (env: Env) => ({
     dsn: env.SENTRY_DSN,
     tracesSampleRate: 0.1,
-    environment: 'production',
+    environment: env.DEPLOYMENT_STAGE === 'staging' ? 'staging' : 'production',
   }),
   {
     fetch: withApiSecurityHeaders(async (request, env, ctx) => {
+      if (!deploymentIsReady(env)) {
+        reportError(
+          'deployment.invalid_configuration',
+          'Invalid stage, billing mode or staging Stripe key'
+        );
+        return errorResponse('Service configuration unavailable', 503);
+      }
       if (request.method === 'OPTIONS') {
         return new Response(null, {
           headers: {
@@ -280,6 +283,15 @@ export default Sentry.withSentry(
         const route = resolveLicensingRoute(request.method, path);
         if (route === undefined) {
           return errorResponse('Not found', 404);
+        }
+        if (
+          !billingIsEnabled(env) &&
+          (route.path.startsWith('/api/billing/') ||
+            route.path.startsWith('/api/admin/stripe/') ||
+            route.path === '/api/stripe/webhook' ||
+            route.path === '/api/internal/marketing-offer')
+        ) {
+          return errorResponse('Billing is not enabled', 404);
         }
         if (route.authentication === 'admin-session' || route.path.startsWith('/api/admin/')) {
           const limited = await enforceRateLimit(
@@ -299,7 +311,12 @@ export default Sentry.withSentry(
 
         switch (route.path) {
           case '/health':
-            return jsonResponse({ status: 'ok', timestamp: new Date().toISOString() });
+            return jsonResponse({
+              status: 'ok',
+              timestamp: new Date().toISOString(),
+              version: env.CF_VERSION_METADATA ?? null,
+              features: { billing: billingIsEnabled(env) ? 'enabled' : 'disabled' },
+            });
           case '/api/auth/send-code':
             return handleSendCode(request, env);
           case '/api/auth/verify-code':
@@ -452,45 +469,9 @@ export default Sentry.withSentry(
     async scheduled(
       controller: ScheduledController,
       env: Env,
-      ctx: ExecutionContext
+      _ctx: ExecutionContext
     ): Promise<void> {
-      ctx.waitUntil(
-        refreshDocsAnalyticsAggregates(env.DB, controller.scheduledTime).catch(error => {
-          reportError('docs_analytics.aggregate_failed', error);
-          Sentry.captureException(error);
-        })
-      );
-      // Retention remains daily; the separate aggregate cron only refreshes
-      // bounded reporting dates and cannot be amplified by public requests.
-      if (controller.cron !== '0 2 * * *') {
-        return;
-      }
-      ctx.waitUntil(
-        cleanupAnalyticsRetention(env.DB).catch(error => {
-          // Structured log first: SENTRY_DSN is optional, and without it every
-          // Sentry call is a no-op sink that hides cron failures entirely.
-          reportError('analytics_retention.cleanup_failed', error);
-          Sentry.captureException(error);
-        })
-      );
-      ctx.waitUntil(
-        cleanupStripeEvents(env.DB).catch(error => {
-          reportError('stripe_events.cleanup_failed', error);
-          Sentry.captureException(error);
-        })
-      );
-      ctx.waitUntil(
-        cleanupMarketingOfferLeads(env.DB).catch(error => {
-          reportError('marketing_offer.cleanup_failed', error);
-          Sentry.captureException(error);
-        })
-      );
-      ctx.waitUntil(
-        cleanupExpiredAuditLogs(env.DB).catch(error => {
-          reportError('audit_log.cleanup_failed', error);
-          Sentry.captureException(error);
-        })
-      );
+      await runScheduledJobs(env.DB, controller);
     },
   }
 );

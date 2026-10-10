@@ -1,7 +1,8 @@
-import { Schema } from 'effect';
+import { Effect, Logger, Schema } from 'effect';
 import {
   isSecurityUpdate,
   securityCategory,
+  SecurityFeedSchema,
   type SecurityFeed,
   type SecurityUpdate,
 } from '../security-updates';
@@ -27,7 +28,7 @@ let cached: SecurityFeed = SECURITY_SNAPSHOT;
 let expiresAt = 0;
 let pending: Promise<SecurityFeed> | undefined;
 
-async function refresh(fetcher: typeof fetch): Promise<SecurityFeed> {
+async function refresh(fetcher: typeof fetch, previousFeed: SecurityFeed): Promise<SecurityFeed> {
   const results = await Promise.allSettled(
     SOURCES.map(async source => {
       const response = await fetcher(
@@ -46,7 +47,7 @@ async function refresh(fetcher: typeof fetch): Promise<SecurityFeed> {
         .filter(commit => isSecurityUpdate(commit.commit.message.split('\n')[0] ?? ''))
         .map(commit => {
           const [title = '', ...body] = commit.commit.message.split('\n');
-          const previous = cached.updates.find(
+          const previous = previousFeed.updates.find(
             update => update.sha === commit.sha && update.repository === source.repository
           );
           return {
@@ -70,26 +71,82 @@ async function refresh(fetcher: typeof fetch): Promise<SecurityFeed> {
       }
   }
   // Preserve previously published entries through API outages and history pagination.
-  for (const update of cached.updates) {
+  for (const update of previousFeed.updates) {
     const key = `${update.repository}:${update.sha}`;
     if (!updates.has(key) || update.branch === 'main') updates.set(key, update);
   }
   const stale = results.some(result => result.status === 'rejected');
-  cached = {
+  return {
     updates: [...updates.values()]
       .toSorted((a, b) => Date.parse(b.date) - Date.parse(a.date))
       .slice(0, 150),
-    syncedAt: stale ? cached.syncedAt : new Date().toISOString(),
+    syncedAt: stale ? previousFeed.syncedAt : new Date().toISOString(),
     stale,
   };
-  expiresAt = Date.now() + 300_000;
-  return cached;
 }
 
-export async function securityFeed(fetcher: typeof fetch): Promise<SecurityFeed> {
+interface FeedCacheRuntime {
+  readonly origin: string;
+  readonly cache: Pick<Cache, 'match' | 'put'> | Promise<Pick<Cache, 'match' | 'put'>>;
+  readonly ctx: { waitUntil(task: Promise<unknown>): void };
+}
+
+const decodeCachedFeed = Schema.decodeUnknownSync(
+  Schema.Struct({ feed: SecurityFeedSchema, refreshAfter: Schema.Number })
+);
+
+function reportCacheFailure(event: string): void {
+  Effect.runSync(
+    Effect.logWarning({ event }).pipe(Effect.provide(Logger.layer([Logger.consoleJson])))
+  );
+}
+
+async function edgeFeed(fetcher: typeof fetch, runtime: FeedCacheRuntime): Promise<SecurityFeed> {
+  const key = `${new URL(runtime.origin).origin}/__omg-cache/security-feed/v1`;
+  let previous: SecurityFeed = SECURITY_SNAPSHOT;
+  try {
+    const response = await (await runtime.cache).match(key);
+    if (response) {
+      const entry = decodeCachedFeed(await response.json());
+      previous = entry.feed;
+      if (Date.now() < entry.refreshAfter) return previous;
+    }
+  } catch {
+    reportCacheFailure('security_feed.cache_read_failed');
+  }
+  runtime.ctx.waitUntil(
+    (async () => {
+      try {
+        const feed = await refresh(fetcher, previous);
+        await (
+          await runtime.cache
+        ).put(
+          key,
+          Response.json(
+            { feed, refreshAfter: Date.now() + (feed.stale ? 60_000 : 300_000) },
+            { headers: { 'Cache-Control': 'public, max-age=86400' } }
+          )
+        );
+      } catch {
+        reportCacheFailure('security_feed.cache_refresh_failed');
+      }
+    })()
+  );
+  return { ...previous, stale: true };
+}
+
+export async function securityFeed(
+  fetcher: typeof fetch,
+  runtime?: FeedCacheRuntime
+): Promise<SecurityFeed> {
+  if (runtime) return edgeFeed(fetcher, runtime);
   if (Date.now() < expiresAt) return cached;
   if (pending) return pending;
-  pending = refresh(fetcher);
+  pending = refresh(fetcher, cached).then(feed => {
+    cached = feed;
+    expiresAt = Date.now() + 300_000;
+    return feed;
+  });
   try {
     return await pending;
   } finally {

@@ -1,5 +1,10 @@
 # Cloudflare environment readiness
 
+This is the historical launch inventory from September 4. For the current staging
+work, deployment prerequisites, and verified recovery drill, see
+[`cloudflare-staging.md`](./cloudflare-staging.md) and
+[`cloudflare-delivery-plan.md`](./cloudflare-delivery-plan.md).
+
 - **Reviewed:** 2026-09-04
 - **Account:** `PyRo1121` with ID `f1e95b3e1b502cf366dfc81a863695fa`
 - **Status:** `getomg.xyz` is active on Cloudflare. The SvelteKit production Worker has no public domain.

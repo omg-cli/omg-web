@@ -2,10 +2,12 @@ import * as Alchemy from 'alchemy';
 import * as Cloudflare from 'alchemy/Cloudflare';
 import * as Config from 'effect/Config';
 import * as Effect from 'effect/Effect';
+import * as Redacted from 'effect/Redacted';
 
 export const ShadowAuthSecret = Alchemy.Random('ShadowAuthSecret');
 
 const PLATFORM_DATABASE_ID = 'fee8ddab-fb4a-4be4-b8d2-8abb7c2db188';
+const STAGING_DATABASE_ID = '0f059202-7042-4588-a89f-ce0ae3f6deba';
 const SITE_HOSTNAME = 'getomg.dev';
 const WWW_SITE_HOSTNAME = 'www.getomg.dev';
 
@@ -34,20 +36,27 @@ export const Website = Cloudflare.Website.SvelteKit(
               aliases: ['getomg.xyz', 'www.getomg.xyz'],
               redirects: [WWW_SITE_HOSTNAME],
             }
-          : null,
+          : { name: 'staging.getomg.xyz' },
       env: {
+        CF_VERSION_METADATA: Cloudflare.Workers.VersionMetadata(),
         AUTH_RATE_LIMITER: Cloudflare.RateLimit('AUTH_RATE_LIMITER', {
-          namespaceId: 2001,
+          namespaceId: stage === 'prod' ? 2001 : 4001,
           simple: { limit: 10, period: 60 },
         }),
         ADMIN_LIVE_RATE_LIMITER: Cloudflare.RateLimit('ADMIN_LIVE_RATE_LIMITER', {
-          namespaceId: 2002,
+          namespaceId: stage === 'prod' ? 2002 : 4002,
           simple: { limit: 30, period: 60 },
         }),
         BETTER_AUTH_SECRET: authSecret.text,
-        DEPLOYMENT_STAGE: stage,
+        DEPLOYMENT_STAGE: stage === 'prod' ? 'production' : 'staging',
         GITHUB_CLIENT_ID: Config.String('GITHUB_CLIENT_ID'),
-        GITHUB_CLIENT_SECRET: Config.Redacted('GITHUB_CLIENT_SECRET'),
+        GITHUB_CLIENT_SECRET:
+          stage === 'prod'
+            ? Config.Redacted('GITHUB_CLIENT_SECRET')
+            : Config.succeed(Redacted.make('')),
+        OAUTH_PROXY_SECRET: Config.Redacted('OAUTH_PROXY_SECRET').pipe(
+          Config.withDefault(Redacted.make(''))
+        ),
         SVELTE_BFF_SECRET: Config.Redacted('SVELTE_BFF_SECRET'),
       },
       memo: {
@@ -64,6 +73,7 @@ export const Website = Cloudflare.Website.SvelteKit(
       },
       observability: {
         enabled: true,
+        issues: { enabled: stage === 'prod' },
         redactQueryString: true,
         logs: {
           enabled: true,
@@ -77,7 +87,7 @@ export const Website = Cloudflare.Website.SvelteKit(
           persist: true,
         },
       },
-      workersDev: stage !== 'prod',
+      workersDev: false,
     };
   })
 );
@@ -98,13 +108,14 @@ export default Alchemy.Stack(
     state: Cloudflare.state(),
   },
   Effect.gen(function* () {
+    const stage = yield* Alchemy.Stage;
     const site = yield* Website;
     yield* site.bind('DB', {
       bindings: [
         {
           type: 'd1',
           name: 'DB',
-          databaseId: PLATFORM_DATABASE_ID,
+          databaseId: stage === 'prod' ? PLATFORM_DATABASE_ID : STAGING_DATABASE_ID,
         },
       ],
     });
@@ -113,7 +124,7 @@ export default Alchemy.Stack(
         {
           type: 'service',
           name: 'LICENSING_API',
-          service: 'omg-saas',
+          service: stage === 'prod' ? 'omg-saas' : 'omg-saas-staging',
         },
       ],
     });
