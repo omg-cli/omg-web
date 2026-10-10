@@ -5,7 +5,7 @@
   "detectionMethod": "threshold",
   "timeRangeMode": "manual",
   "evaluationWindow": "1m",
-  "note": "Operational record, not a Notifications API request. Two HTTP policies remain enabled with their existing authorized destination and IDs unchanged. Two scheduled policies were enabled after explicit delivery authorization and exact API readback on 2026-10-09; the daily candidate has no policy/delivery configured. Exact structured attributes replace the broken message text search. Counts represent adaptively sampled events, not exact raw totals; missing-log signals can reflect ingestion or sampling gaps. Daily candidate stays disabled until actual native daily healthy completion is verified. No additional synthetic email was sent; incident delivery remains unverified.",
+  "note": "Operational record, not a Notifications API request. Two HTTP policies remain enabled with their existing authorized destination and IDs unchanged. Two scheduled policies were enabled after explicit delivery authorization and exact API readback on 2026-10-09; the daily candidate has no policy/delivery configured. Exact structured attributes replace the broken message text search. Counts represent adaptively sampled events, not exact raw totals; missing-log signals can reflect ingestion or sampling gaps. Native daily healthy completion is now verified; the daily candidate stays disabled pending its specific delivery authorization. No additional synthetic email was sent; incident delivery remains unverified.",
   "candidates": [
     {
       "name": "OMG API HTTP failure rate",
@@ -50,7 +50,7 @@
     {
       "name": "OMG missing successful daily retention",
       "enabled": false,
-      "validation": "SQL accepted; native five-minute coordinator control matches invocationLabel and exact structured event. Daily absence signal returns1 before the first native daily completion. Keep disabled until the actual02:00UTC daily run and its healthy signal are verified; no delivery test.",
+      "validation": "Actual production daily invocation scheduled 2026-10-10T02:00:51Z completed all six tasks and the coordinator on version 29cf10ed-5d71-496a-bd43-98a8b3388a4f. Untruncated live capture and retained logs agree; the SQL absence signal changed from 1 to 0. Owned tail cleanup verified. Native execution and query prerequisites passed; no delivery test or policy creation.",
       "executionInterval": "15m",
       "repeatNotificationInterval": "1h",
       "comparison": {
@@ -58,7 +58,7 @@
         "value": 1
       },
       "query": "SELECT if(COUNT(*) = 0, 1, 0) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND invocationType = 'scheduled' AND logType = 'cf-worker' AND invocationLabel = '0 2 * * *' AND attributes['message.event'] = 'scheduled.completed' AND timestamp >= NOW() - INTERVAL '26' HOUR",
-      "authorization": "not requested; native daily acceptance prerequisite pending"
+      "authorization": "Specific daily delivery authorization requested and pending; keep disabled until the human replies. Earlier scheduled-job approval excluded this daily rule."
     },
     {
       "name": "OMG scheduled task failures",

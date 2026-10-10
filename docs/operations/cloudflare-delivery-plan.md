@@ -1,5 +1,12 @@
 # OMG Cloudflare delivery plan
 
+Current acceptance is recorded in [Cloudflare acceptance status](./cloudflare-acceptance.md).
+Production deployment, native daily execution and the release-tooling CI follow-up
+are accepted. The deployment narrative below is a historical checkpoint; its
+pending-daily statements are superseded by that record.
+
+## Historical deployment checkpoint
+
 Status: implementation in progress, 2026-10-09. Staging isolation and test-mode
 guards are deployed. The production site received the GitHub OAuth broker
 bootstrap. After explicit API-only approval, production API version

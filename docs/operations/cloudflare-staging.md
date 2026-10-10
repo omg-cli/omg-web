@@ -1,5 +1,12 @@
 # Isolated Cloudflare staging
 
+See [Cloudflare acceptance status](./cloudflare-acceptance.md) for the accepted
+`e5bfbec` staging and production release, fresh OAuth/session-isolation checks,
+native daily execution and tooling CI. Older deployment identities below are
+historical checkpoints.
+
+## Historical staging checkpoint
+
 Current rollout: source `ddee760bc3052d887ba8f11c8609c846ace24bde` passed CI
 `37987057342` and the gated release command published both staging Workers on
 2026-10-09 at 20:36 UTC. API version `38887e7f-e0c5-4f12-b9c6-a8c2082b51d1`

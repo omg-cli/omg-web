@@ -2,6 +2,12 @@
 
 This repository treats version-controlled Alchemy and Wrangler configuration as the source of truth for Cloudflare Workers observability. Deployments must not rely on dashboard-only logging settings.
 
+See [Cloudflare acceptance status](./cloudflare-acceptance.md) for the current
+production version and verified daily completion. The daily email candidate
+remains disabled while its specific delivery authorization is pending.
+
+## Historical runtime checkpoint
+
 Current runtime, 2026-10-09: the production API was promoted after explicit approval
 from `b2ef8e92d8b2bc85a47327ff4b7e33447f095b9f` / exact-source CI `37988739309`.
 Version `9153c55b-0bdb-4bd0-9781-345e50504975` reports actual deployment metadata and
