@@ -37,7 +37,9 @@ export async function waitForHealth({
     }
     assert.match(previous?.tag ?? '', /^[a-f0-9]{40}$/, 'No recorded previous source to retry');
     assertHealth(response.status, body, previous.tag, previous.versionId);
-    await delay(Math.min(intervalMs, Math.max(0, deadline - performance.now())));
+    const remaining = deadline - performance.now();
+    await delay(Math.ceil(Math.min(intervalMs, Math.max(0, remaining))));
+    if (remaining <= intervalMs) break;
   }
   throw new Error(
     'Health propagation deadline exceeded; recorded previous version is still visible'
