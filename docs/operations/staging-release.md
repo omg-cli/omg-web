@@ -39,6 +39,15 @@ the newly active version. It records previous deployment/version IDs before any
 upload and writes new IDs as each Worker is published. A split-traffic deployment
 is rejected and requires separate review.
 
+Health verification allows up to 60 seconds for the newly published version to
+become visible, checking every five seconds while the endpoint still reports the
+recorded previous source and version with HTTP 200. Every response's status,
+version and billing feature are retained in `healthObservations`. An unexpected
+version, an unhealthy response, malformed JSON or a network error fails immediately;
+the new API version must still report disabled billing. A timeout fails the release
+without publishing again or rolling back automatically. This handles the observed
+case where a successful upload was briefly followed by the previous healthy version.
+
 `receipt.json` distinguishes `preflight-passed`, `publishing`, `deployed`, and
 `failed`. The readiness-only result never claims a deployment. A failure after
 publishing the API can leave a partial release; inspect `failedDuring` and the

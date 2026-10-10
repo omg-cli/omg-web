@@ -12,8 +12,8 @@ import {
   assertCi,
   activeVersion,
   assertBindings,
-  assertHealth,
 } from './release/validation.mjs';
+import { waitForHealth } from './release/health.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const wrangler = join(root, 'node_modules/wrangler/bin/wrangler.js');
@@ -199,23 +199,18 @@ try {
       receipt.workers[index].after = after;
       await writeFile(join(output, 'receipt.json'), JSON.stringify(receipt, null, 2));
       assert.equal(after.tag, revision, 'Uploaded source tag differs');
-      const response = await fetch(`${target.origin}/health`, {
-        redirect: 'error',
-        signal: AbortSignal.timeout(30_000),
-      });
-      const body = await response.json();
-      receipt.workers[index].health = {
-        status: response.status,
-        version: body.version,
-        features: body.features,
-      };
-      assertHealth(
-        response.status,
-        body,
+      receipt.workers[index].healthObservations = [];
+      receipt.workers[index].health = await waitForHealth({
+        origin: target.origin,
         revision,
-        after.versionId,
-        target.name === 'omg-saas-staging'
-      );
+        versionId: after.versionId,
+        previous: receipt.workers[index].before,
+        requireBillingDisabled: target.name === 'omg-saas-staging',
+        onObservation: async observation => {
+          receipt.workers[index].healthObservations.push(observation);
+          await writeFile(join(output, 'receipt.json'), JSON.stringify(receipt, null, 2));
+        },
+      });
     }
     receipt.status = 'deployed';
   }
