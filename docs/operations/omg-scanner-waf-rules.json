@@ -533,5 +533,5 @@
     "/yii/.env",
     "/zend/.env"
   ],
-  "rollback": "Delete only the two rules identified here; preserve the existing getomg.dev scanner rule and all other rulesets."
+  "rollback": "Delete only the eight rules identified here; preserve the existing getomg.dev scanner rule and all other rulesets."
 }
