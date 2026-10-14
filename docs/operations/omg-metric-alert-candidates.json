@@ -5,7 +5,7 @@
   "detectionMethod": "threshold",
   "timeRangeMode": "manual",
   "evaluationWindow": "1m",
-  "note": "The 2026-10-14 repair replaces the sampled-log missing-aggregation policy with an independent native Health Check reading durable task state. Native failure and recovery notifications and real runtime exception notifications were exercised against disposable resources. HTTP failure-rate and explicit scheduled SQL failure policies remain supplementary sampled signals. Native production Issues automations remain enabled; only six verified 404 scanner fingerprints are ignored.",
+  "note": "The 2026-10-14 repair replaces the sampled-log missing-aggregation policy with an independent native Health Check reading durable task state. Native failure and recovery notifications and real runtime exception notifications were exercised against disposable resources. HTTP failure-rate and explicit scheduled SQL failure policies remain supplementary sampled signals. Native production Issues automations remain enabled; six verified 404 scanner fingerprints are marked ignored, and 67 exact retained scanner paths are blocked at the WAF before Worker invocation because ignored issues can still notify.",
   "candidates": [
     {
       "name": "OMG API HTTP failure rate",
