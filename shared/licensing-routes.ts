@@ -7,6 +7,12 @@ interface LicensingRouteDefinition {
 }
 
 export const LicensingRoutes = {
+  scheduledHealth: {
+    method: 'GET',
+    path: '/health/scheduled',
+    authentication: 'none',
+    transport: 'direct',
+  },
   health: {
     method: 'GET',
     path: '/health',

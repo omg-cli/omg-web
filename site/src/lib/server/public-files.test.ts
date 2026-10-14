@@ -94,7 +94,14 @@ Sitemap: https://getomg.dev/sitemap.xml
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(response.headers.get('x-robots-tag')).toBe('noindex');
     await expect(response.text()).resolves.toBe(
-      JSON.stringify({ runtime: 'sveltekit-alchemy', status: 'ok' })
+      JSON.stringify({ runtime: 'sveltekit-alchemy', status: 'ok', version: null })
+    );
+  });
+
+  it('reports the deployed Cloudflare version without inventing source provenance', async () => {
+    const version = { id: 'worker-version-id', tag: '', timestamp: '2026-10-09T16:00:00Z' };
+    await expect(healthResponse(version).text()).resolves.toBe(
+      JSON.stringify({ runtime: 'sveltekit-alchemy', status: 'ok', version })
     );
   });
 

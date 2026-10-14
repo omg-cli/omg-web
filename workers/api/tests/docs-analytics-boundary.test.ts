@@ -9,8 +9,10 @@ import {
 import worker from '../src/worker';
 import {
   handleDocsAnalytics,
+  handleDocsAnalyticsDashboard,
   refreshDocsAnalyticsAggregates,
 } from '../src/handlers/docs-analytics';
+import { fetchWorker } from './test-utils';
 
 const tables = [
   'docs_analytics_events',
@@ -23,6 +25,7 @@ const tables = [
 ];
 afterEach(async () => {
   for (const table of tables) await env.DB.prepare(`DELETE FROM ${table}`).run();
+  await env.DB.prepare('DELETE FROM site_analytics_events').run();
 });
 
 function request(empty: boolean) {
@@ -46,6 +49,80 @@ function request(empty: boolean) {
 }
 
 describe('docs ingestion resource boundary', () => {
+  it('aggregates documentation CTA clicks without a legacy target property', async () => {
+    const response = await fetchWorker(
+      new Request('https://example.test/api/site/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          events: [
+            {
+              event_type: 'cta_click',
+              event_name: 'cta_interaction',
+              session_id: 'docs-reader',
+              properties: {
+                path: '/docs/install/',
+                cta_type: 'install_command_copied',
+                cta_label: 'Install command',
+              },
+            },
+          ],
+        }),
+      })
+    );
+    expect(response.status).toBe(200);
+    await refreshDocsAnalyticsAggregates(env.DB, Date.now());
+    const dashboard = await handleDocsAnalyticsDashboard(
+      new Request('https://example.test/api/docs/analytics/dashboard'),
+      env
+    );
+    expect(dashboard.status).toBe(200);
+    expect(await dashboard.json()).toMatchObject({
+      top_interactions: [
+        { interaction_type: 'cta_interaction', target: 'install_command_copied', count: 1 },
+      ],
+    });
+  });
+  it('includes collected site documentation traffic and excludes other paths', async () => {
+    const response = await fetchWorker(
+      new Request('https://example.test/api/site/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'CF-IPCountry': 'US' },
+        body: JSON.stringify({
+          events: ['/docs', '/docs/install/', '/docs-lookalike', '/pricing'].map(path => ({
+            event_type: 'pageview',
+            event_name: 'page_view',
+            session_id: 'docs-reader',
+            properties: { path, referrer: 'github.com', utm: { source: 'newsletter' } },
+          })),
+        }),
+      })
+    );
+    expect(response.status).toBe(200);
+    await refreshDocsAnalyticsAggregates(env.DB, Date.now());
+    await refreshDocsAnalyticsAggregates(env.DB, Date.now());
+    const dashboard = await handleDocsAnalyticsDashboard(
+      new Request('https://example.test/api/docs/analytics/dashboard?days=7'),
+      env
+    );
+    expect(dashboard.status).toBe(200);
+    expect(await dashboard.json()).toMatchObject({
+      summary: { total_pageviews: 2 },
+      top_pages: expect.arrayContaining([
+        expect.objectContaining({ path: '/docs', views: 1 }),
+        expect.objectContaining({ path: '/docs/install/', views: 1 }),
+      ]),
+      top_referrers: [expect.objectContaining({ referrer: 'github.com', pageviews: 2 })],
+      utm_campaigns: [expect.objectContaining({ utm_source: 'newsletter', pageviews: 2 })],
+      geographic: [expect.objectContaining({ country_code: 'US', pageviews: 2 })],
+    });
+    expect(
+      await env.DB.prepare('SELECT COUNT(*) AS count FROM site_analytics_events').first('count')
+    ).toBe(4);
+    expect(
+      await env.DB.prepare('SELECT COUNT(*) AS count FROM docs_analytics_events').first('count')
+    ).toBe(0);
+  });
   it.each([true, false])('does not schedule aggregates for empty=%s', async empty => {
     const ctx = createExecutionContext();
     const queries: string[] = [];

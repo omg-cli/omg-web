@@ -31,6 +31,12 @@ const LicenseJwtTimingSchema = Schema.Struct({
   iat: Schema.Number,
   exp: Schema.Number,
 });
+const StagingLicenseJwtTimingSchema = Schema.Struct({
+  iss: Schema.Literal('https://staging-api.getomg.xyz'),
+  aud: Schema.Literal('omg-cli'),
+  iat: Schema.Number,
+  exp: Schema.Number,
+});
 
 function decodeJwtSegment<S extends Schema.Schema.AnyNoContext>(
   token: string,
@@ -231,6 +237,29 @@ describe('POST /api/validate-license', () => {
     });
     const timing = decodeJwtSegment(payload.token, 1, LicenseJwtTimingSchema);
     expect(timing.iss).toBe('https://omg-api.latham.cloud');
+    expect(timing.aud).toBe('omg-cli');
+    expect(timing.exp - timing.iat).toBe(60 * 60);
+  });
+
+  it('issues staging tokens with the configured issuer regardless of the request host', async () => {
+    await insertCustomer();
+    await insertLicense('active', null);
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(
+      new Request('https://untrusted.example/api/validate-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ license_key: TEST_KEY }),
+      }),
+      { ...env, DEPLOYMENT_STAGE: 'staging', STRIPE_SECRET_KEY: 'sk_test_fixture' },
+      ctx
+    );
+    await waitOnExecutionContext(ctx);
+    expect(response.status).toBe(200);
+    const payload = await decodeResponse(response, ValidLicensePayloadSchema);
+    expect(payload.valid).toBe(true);
+    const timing = decodeJwtSegment(payload.token, 1, StagingLicenseJwtTimingSchema);
+    expect(timing.iss).toBe('https://staging-api.getomg.xyz');
     expect(timing.aud).toBe('omg-cli');
     expect(timing.exp - timing.iat).toBe(60 * 60);
   });

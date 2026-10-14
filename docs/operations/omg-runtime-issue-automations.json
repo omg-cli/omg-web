@@ -1,0 +1,47 @@
+{
+  "accountId": "f1e95b3e1b502cf366dfc81a863695fa",
+  "policyId": "919cda26f3474d09bf66616a2e4b54ab",
+  "alertType": "workers_observability_real_time_issue",
+  "automations": [
+    {
+      "id": "7f556d1b-536a-47f0-8008-ea9287de7b32",
+      "body": {
+        "name": "OMG API first runtime issue",
+        "policyId": "919cda26f3474d09bf66616a2e4b54ab",
+        "enabled": true,
+        "service": "omg-saas",
+        "afterOccurrences": 1
+      }
+    },
+    {
+      "id": "369aa3af-2d23-4377-92cf-5e1cb9af5865",
+      "body": {
+        "name": "OMG API recurring runtime issue",
+        "policyId": "919cda26f3474d09bf66616a2e4b54ab",
+        "enabled": true,
+        "service": "omg-saas",
+        "afterInactivitySeconds": 3600
+      }
+    },
+    {
+      "id": "ce50c39b-3001-4dcc-bf8c-2d9c240f5cd2",
+      "body": {
+        "name": "OMG site first runtime issue",
+        "policyId": "919cda26f3474d09bf66616a2e4b54ab",
+        "enabled": true,
+        "service": "omgsveltesite-website-prod-dlaqgfttmir2ky5x",
+        "afterOccurrences": 1
+      }
+    },
+    {
+      "id": "be5f93cd-384e-4743-a57b-4523c355d8ba",
+      "body": {
+        "name": "OMG site recurring runtime issue",
+        "policyId": "919cda26f3474d09bf66616a2e4b54ab",
+        "enabled": true,
+        "service": "omgsveltesite-website-prod-dlaqgfttmir2ky5x",
+        "afterInactivitySeconds": 3600
+      }
+    }
+  ]
+}

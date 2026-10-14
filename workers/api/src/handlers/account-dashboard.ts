@@ -62,19 +62,143 @@ function queryFirst(
   });
 }
 
-function queryAll(
-  db: D1Database,
-  sql: string,
-  params: ReadonlyArray<string | number>,
-  operation: string
-) {
+function queryDashboardReads(db: D1Database, customerId: string, licenseId: string) {
   return Effect.tryPromise({
-    try: () =>
-      db
-        .prepare(sql)
-        .bind(...params)
-        .all(),
-    catch: cause => new DashboardStoreUnavailable(operation, cause),
+    try: async () => {
+      const [
+        listMachines,
+        usageStats,
+        dailyUsage,
+        achievements,
+        streak,
+        subscription,
+        invoices,
+        breakdown,
+        topPackage,
+        topRuntime,
+        percentileTotal,
+        leaderboard,
+      ] = await db.batch([
+        db
+          .prepare(
+            `SELECT id, machine_id, hostname, os, arch, omg_version, last_seen_at, first_seen_at, is_active
+       FROM machines WHERE license_id = ? AND is_active = 1 ORDER BY last_seen_at DESC`
+          )
+          .bind(licenseId),
+        db
+          .prepare(
+            `SELECT
+         SUM(commands_run) as total_commands,
+         SUM(packages_installed) as total_packages_installed,
+         SUM(packages_searched) as total_packages_searched,
+         SUM(runtimes_switched) as total_runtimes_switched,
+         SUM(sbom_generated) as total_sbom_generated,
+         SUM(vulnerabilities_found) as total_vulnerabilities_found,
+         SUM(time_saved_ms) as total_time_saved_ms
+       FROM usage_daily
+       WHERE license_id = ? AND date >= date('now', '-30 days')`
+          )
+          .bind(licenseId),
+        db
+          .prepare(
+            `SELECT date, commands_run, time_saved_ms
+       FROM usage_daily
+       WHERE license_id = ? AND date >= date('now', '-14 days')
+       ORDER BY date ASC`
+          )
+          .bind(licenseId),
+        db
+          .prepare(`SELECT achievement_id, unlocked_at FROM achievements WHERE customer_id = ?`)
+          .bind(customerId),
+        db
+          .prepare(
+            `SELECT date FROM usage_daily
+       WHERE license_id = ? AND commands_run > 0
+       ORDER BY date DESC`
+          )
+          .bind(licenseId),
+        db
+          .prepare(
+            `SELECT status, current_period_start, current_period_end, cancel_at_period_end
+       FROM subscriptions WHERE customer_id = ? ORDER BY created_at DESC LIMIT 1`
+          )
+          .bind(customerId),
+        db
+          .prepare(
+            `SELECT id, amount_cents, currency, status, invoice_url, invoice_pdf, period_start, period_end, created_at
+       FROM invoices WHERE customer_id = ? ORDER BY created_at DESC LIMIT 10`
+          )
+          .bind(customerId),
+        db
+          .prepare(
+            `SELECT packages_installed, packages_searched, runtimes_switched, sbom_generated, vulnerabilities_found
+       FROM usage_daily
+       WHERE license_id = ? AND date >= date('now', '-30 days')`
+          )
+          .bind(licenseId),
+        db
+          .prepare(
+            `SELECT package_name
+       FROM usage_package_daily
+       WHERE license_id = ? AND date >= date('now', '-30 days')
+       GROUP BY package_name
+       ORDER BY SUM(usage_count) DESC, package_name ASC
+       LIMIT 1`
+          )
+          .bind(licenseId),
+        db
+          .prepare(
+            `SELECT runtime AS dimension
+       FROM usage_runtime_daily
+       WHERE license_id = ? AND date >= date('now', '-30 days')
+       GROUP BY runtime
+       ORDER BY SUM(usage_count) DESC, runtime ASC
+       LIMIT 1`
+          )
+          .bind(licenseId),
+        db.prepare(`SELECT COUNT(DISTINCT license_id) as count FROM usage_daily`),
+        db.prepare(
+          `SELECT SUBSTR(c.email, 1, 1) || '***' as user, SUM(u.time_saved_ms) as time_saved
+       FROM usage_daily u
+       JOIN licenses l ON u.license_id = l.id
+       JOIN customers c ON l.customer_id = c.id
+       GROUP BY c.id
+       ORDER BY time_saved DESC
+       LIMIT 3`
+        ),
+      ]);
+      if (
+        !listMachines?.success ||
+        !usageStats?.success ||
+        !dailyUsage?.success ||
+        !achievements?.success ||
+        !streak?.success ||
+        !subscription?.success ||
+        !invoices?.success ||
+        !breakdown?.success ||
+        !topPackage?.success ||
+        !topRuntime?.success ||
+        !percentileTotal?.success ||
+        !leaderboard?.success
+      ) {
+        throw new Error('Incomplete dashboard batch results');
+      }
+      return {
+        listMachines,
+        usageStats,
+        dailyUsage,
+        achievements,
+        streak,
+        subscription,
+        invoices,
+        breakdown,
+        topPackage,
+        topRuntime,
+        percentileTotal,
+        leaderboard,
+      };
+    },
+    catch: cause => new DashboardStoreUnavailable('dashboardBatch', cause),
   });
 }
 
@@ -119,34 +243,16 @@ function getAccountDashboard(
       licenseRow
     );
 
-    const machineResult = yield* queryAll(
-      env.DB,
-      `SELECT id, machine_id, hostname, os, arch, omg_version, last_seen_at, first_seen_at, is_active
-       FROM machines WHERE license_id = ? AND is_active = 1 ORDER BY last_seen_at DESC`,
-      [license.id],
-      'listMachines'
-    );
+    const reads = yield* queryDashboardReads(env.DB, user.id, license.id);
+
+    const machineResult = reads.listMachines;
     const machines = yield* decodeRowArray(
       DashboardMachineRowSchema,
       'Machine rows have an invalid shape',
       machineResult.results
     );
 
-    const usageRow = yield* queryFirst(
-      env.DB,
-      `SELECT
-         SUM(commands_run) as total_commands,
-         SUM(packages_installed) as total_packages_installed,
-         SUM(packages_searched) as total_packages_searched,
-         SUM(runtimes_switched) as total_runtimes_switched,
-         SUM(sbom_generated) as total_sbom_generated,
-         SUM(vulnerabilities_found) as total_vulnerabilities_found,
-         SUM(time_saved_ms) as total_time_saved_ms
-       FROM usage_daily
-       WHERE license_id = ? AND date >= date('now', '-30 days')`,
-      [license.id],
-      'usageStats'
-    );
+    const usageRow = reads.usageStats.results[0] ?? null;
     const usageStats =
       usageRow === null
         ? {
@@ -160,27 +266,14 @@ function getAccountDashboard(
           }
         : yield* decodeRow(UsageStatsRowSchema, 'Usage stats row has an invalid shape', usageRow);
 
-    const dailyResult = yield* queryAll(
-      env.DB,
-      `SELECT date, commands_run, time_saved_ms
-       FROM usage_daily
-       WHERE license_id = ? AND date >= date('now', '-14 days')
-       ORDER BY date ASC`,
-      [license.id],
-      'dailyUsage'
-    );
+    const dailyResult = reads.dailyUsage;
     const daily = yield* decodeRowArray(
       DailyUsageRowSchema,
       'Daily usage rows have an invalid shape',
       dailyResult.results
     );
 
-    const unlockResult = yield* queryAll(
-      env.DB,
-      `SELECT achievement_id, unlocked_at FROM achievements WHERE customer_id = ?`,
-      [user.id],
-      'achievements'
-    );
+    const unlockResult = reads.achievements;
     const unlocks = yield* decodeRowArray(
       AchievementUnlockRowSchema,
       'Achievement rows have an invalid shape',
@@ -196,14 +289,7 @@ function getAccountDashboard(
       unlocked_at: unlockMap.get(item.id) ?? null,
     }));
 
-    const streakResult = yield* queryAll(
-      env.DB,
-      `SELECT date FROM usage_daily
-       WHERE license_id = ? AND commands_run > 0
-       ORDER BY date DESC`,
-      [license.id],
-      'streak'
-    );
+    const streakResult = reads.streak;
     const streakRows = yield* decodeRowArray(
       StreakDateRowSchema,
       'Streak rows have an invalid shape',
@@ -236,13 +322,7 @@ function getAccountDashboard(
       }
     }
 
-    const subscriptionRow = yield* queryFirst(
-      env.DB,
-      `SELECT status, current_period_start, current_period_end, cancel_at_period_end
-       FROM subscriptions WHERE customer_id = ? ORDER BY created_at DESC LIMIT 1`,
-      [user.id],
-      'subscription'
-    );
+    const subscriptionRow = reads.subscription.results[0] ?? null;
     const subscription =
       subscriptionRow === null
         ? null
@@ -252,27 +332,14 @@ function getAccountDashboard(
             subscriptionRow
           );
 
-    const invoiceResult = yield* queryAll(
-      env.DB,
-      `SELECT id, amount_cents, currency, status, invoice_url, invoice_pdf, period_start, period_end, created_at
-       FROM invoices WHERE customer_id = ? ORDER BY created_at DESC LIMIT 10`,
-      [user.id],
-      'invoices'
-    );
+    const invoiceResult = reads.invoices;
     const invoices = yield* decodeRowArray(
       InvoiceRowSchema,
       'Invoice rows have an invalid shape',
       invoiceResult.results
     );
 
-    const breakdownResult = yield* queryAll(
-      env.DB,
-      `SELECT packages_installed, packages_searched, runtimes_switched, sbom_generated, vulnerabilities_found
-       FROM usage_daily
-       WHERE license_id = ? AND date >= date('now', '-30 days')`,
-      [license.id],
-      'breakdown'
-    );
+    const breakdownResult = reads.breakdown;
     const breakdownRows = yield* decodeRowArray(
       CommandBreakdownRowSchema,
       'Breakdown rows have an invalid shape',
@@ -289,17 +356,7 @@ function getAccountDashboard(
       { installed: 0, searched: 0, switched: 0, sbom: 0, vulns: 0 }
     );
 
-    const topPackageRow = yield* queryFirst(
-      env.DB,
-      `SELECT package_name
-       FROM usage_package_daily
-       WHERE license_id = ? AND date >= date('now', '-30 days')
-       GROUP BY package_name
-       ORDER BY SUM(usage_count) DESC, package_name ASC
-       LIMIT 1`,
-      [license.id],
-      'topPackage'
-    );
+    const topPackageRow = reads.topPackage.results[0] ?? null;
     const topPackage =
       topPackageRow === null
         ? null
@@ -309,17 +366,7 @@ function getAccountDashboard(
             topPackageRow
           )).package_name;
 
-    const topRuntimeRow = yield* queryFirst(
-      env.DB,
-      `SELECT runtime AS dimension
-       FROM usage_runtime_daily
-       WHERE license_id = ? AND date >= date('now', '-30 days')
-       GROUP BY runtime
-       ORDER BY SUM(usage_count) DESC, runtime ASC
-       LIMIT 1`,
-      [license.id],
-      'topRuntime'
-    );
+    const topRuntimeRow = reads.topRuntime.results[0] ?? null;
     const topRuntime =
       topRuntimeRow === null
         ? null
@@ -337,12 +384,7 @@ function getAccountDashboard(
       [usageStats.total_commands],
       'percentileRank'
     );
-    const totalUsersRow = yield* queryFirst(
-      env.DB,
-      `SELECT COUNT(DISTINCT license_id) as count FROM usage_daily`,
-      [],
-      'percentileTotal'
-    );
+    const totalUsersRow = reads.percentileTotal.results[0] ?? null;
     const betterUsers =
       rankRow === null
         ? null
@@ -361,18 +403,7 @@ function getAccountDashboard(
         ? null
         : Math.round((1 - betterUsers / totalUsers) * 100);
 
-    const leaderboardResult = yield* queryAll(
-      env.DB,
-      `SELECT SUBSTR(c.email, 1, 1) || '***' as user, SUM(u.time_saved_ms) as time_saved
-       FROM usage_daily u
-       JOIN licenses l ON u.license_id = l.id
-       JOIN customers c ON l.customer_id = c.id
-       GROUP BY c.id
-       ORDER BY time_saved DESC
-       LIMIT 3`,
-      [],
-      'leaderboard'
-    );
+    const leaderboardResult = reads.leaderboard;
     const leaderboard = yield* decodeRowArray(
       LeaderboardRowSchema,
       'Leaderboard rows have an invalid shape',

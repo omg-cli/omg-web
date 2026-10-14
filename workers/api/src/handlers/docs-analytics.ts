@@ -178,7 +178,7 @@ export async function refreshDocsAnalyticsAggregates(db: D1Database, now: number
                COUNT(*) as views,
                COUNT(DISTINCT session_id) as unique_sessions,
                AVG(COALESCE(duration_ms, 0)) as avg_time_on_page_ms
-             FROM docs_analytics_events
+             FROM docs_analytics_source_events
              WHERE event_type = 'pageview' AND DATE(timestamp) = ?
              GROUP BY date, path
              ON CONFLICT(date, path) DO UPDATE SET
@@ -191,7 +191,7 @@ export async function refreshDocsAnalyticsAggregates(db: D1Database, now: number
                COALESCE(JSON_EXTRACT(properties, '$.referrer'), 'direct') as referrer,
                COUNT(DISTINCT session_id) as sessions,
                COUNT(*) as pageviews
-             FROM docs_analytics_events
+             FROM docs_analytics_source_events
              WHERE event_type = 'pageview' AND DATE(timestamp) = ?
              GROUP BY date, referrer
              ON CONFLICT(date, referrer) DO UPDATE SET
@@ -205,7 +205,7 @@ export async function refreshDocsAnalyticsAggregates(db: D1Database, now: number
                JSON_EXTRACT(properties, '$.utm.campaign') as utm_campaign,
                COUNT(DISTINCT session_id) as sessions,
                COUNT(*) as pageviews
-             FROM docs_analytics_events
+             FROM docs_analytics_source_events
              WHERE event_type = 'pageview'
                AND DATE(timestamp) = ?
                AND JSON_EXTRACT(properties, '$.utm.source') IS NOT NULL
@@ -219,7 +219,7 @@ export async function refreshDocsAnalyticsAggregates(db: D1Database, now: number
                event_name as interaction_type,
                JSON_EXTRACT(properties, '$.target') as target,
                COUNT(*) as count
-             FROM docs_analytics_events
+             FROM docs_analytics_source_events
              WHERE event_type = 'interaction' AND DATE(timestamp) = ?
              GROUP BY date, interaction_type, target
              ON CONFLICT(date, interaction_type, target) DO UPDATE SET
@@ -230,7 +230,7 @@ export async function refreshDocsAnalyticsAggregates(db: D1Database, now: number
                JSON_EXTRACT(properties, '$.country') as country_code,
                COUNT(DISTINCT session_id) as sessions,
                COUNT(*) as pageviews
-             FROM docs_analytics_events
+             FROM docs_analytics_source_events
              WHERE event_type = 'pageview' AND DATE(timestamp) = ?
              GROUP BY date, country_code
              ON CONFLICT(date, country_code) DO UPDATE SET

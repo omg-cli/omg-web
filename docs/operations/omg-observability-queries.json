@@ -1,0 +1,112 @@
+[
+  {
+    "name": "OMG production HTTP 5xx",
+    "description": "Production site and API responses >=500. Review count and total traffic before enabling a notification threshold.",
+    "parameters": {
+      "filters": [
+        {
+          "key": "$metadata.service",
+          "operation": "in",
+          "type": "string",
+          "value": "omg-saas,omgsveltesite-website-prod-dlaqgfttmir2ky5x"
+        },
+        {
+          "key": "$workers.event.response.status",
+          "operation": "gte",
+          "type": "number",
+          "value": 500
+        }
+      ],
+      "calculations": [
+        {
+          "operator": "count",
+          "alias": "failed_requests"
+        }
+      ],
+      "groupBys": [
+        {
+          "type": "string",
+          "value": "$workers.scriptName"
+        },
+        {
+          "type": "number",
+          "value": "$workers.event.response.status"
+        }
+      ]
+    }
+  },
+  {
+    "name": "OMG production request latency",
+    "description": "Invocation wall time and request count for the production site and API. Includes Worker and upstream time; use traces to diagnose slow requests.",
+    "parameters": {
+      "filters": [
+        {
+          "key": "$metadata.service",
+          "operation": "in",
+          "type": "string",
+          "value": "omg-saas,omgsveltesite-website-prod-dlaqgfttmir2ky5x"
+        },
+        {
+          "key": "$workers.eventType",
+          "operation": "eq",
+          "type": "string",
+          "value": "fetch"
+        }
+      ],
+      "calculations": [
+        {
+          "operator": "count",
+          "alias": "requests"
+        },
+        {
+          "operator": "p95",
+          "key": "$workers.wallTimeMs",
+          "keyType": "number",
+          "alias": "p95_wall_ms"
+        }
+      ],
+      "groupBys": [
+        {
+          "type": "string",
+          "value": "$workers.scriptName"
+        }
+      ]
+    }
+  },
+  {
+    "name": "OMG production scheduled outcomes",
+    "description": "Scheduled invocations by cron and runtime outcome. Before the scheduled-error fix is deployed, caught task failures can still appear as ok. Missing-run and alert delivery checks remain separate.",
+    "parameters": {
+      "filters": [
+        {
+          "key": "$metadata.service",
+          "operation": "eq",
+          "type": "string",
+          "value": "omg-saas"
+        },
+        {
+          "key": "$workers.eventType",
+          "operation": "eq",
+          "type": "string",
+          "value": "scheduled"
+        }
+      ],
+      "calculations": [
+        {
+          "operator": "count",
+          "alias": "invocations"
+        }
+      ],
+      "groupBys": [
+        {
+          "type": "string",
+          "value": "$workers.event.cron"
+        },
+        {
+          "type": "string",
+          "value": "$workers.outcome"
+        }
+      ]
+    }
+  }
+]

@@ -1,7 +1,8 @@
 import { Cause, Effect, Exit, Option } from 'effect';
 import * as Schema from 'effect/Schema';
 import type { OrganizationInvitationEmailResponse } from '../../../../shared/organization-invitation-email';
-import { SITE_HOSTNAME } from '../../../../shared/public-site';
+import { ACCOUNT_ORIGIN } from '../../../../shared/public-site';
+import { deploymentAccountOrigin } from '../deployment';
 import { EMAIL_PATTERN } from '../../../../shared/email';
 import { AdminUnauthorizedError, requireInternalSecret } from '../admin-secret';
 import { decodeJsonBody, InvalidJsonBodyError } from '../body';
@@ -99,13 +100,15 @@ function escapeHtml(value: string): string {
   );
 }
 
-function invitationUrl(value: string): Effect.Effect<URL, InvitationEmailPayloadInvalid> {
+function invitationUrl(value: string, env: Env): Effect.Effect<URL, InvitationEmailPayloadInvalid> {
   const parsed = URL.parse(value);
   if (
     parsed === null ||
     parsed.protocol !== 'https:' ||
     parsed.port !== '' ||
-    (parsed.hostname !== SITE_HOSTNAME && !parsed.hostname.endsWith('.latham.workers.dev'))
+    (env.DEPLOYMENT_STAGE === 'staging'
+      ? parsed.origin !== deploymentAccountOrigin(env)
+      : parsed.origin !== ACCOUNT_ORIGIN && !parsed.hostname.endsWith('.latham.workers.dev'))
   ) {
     return Effect.fail(new InvitationEmailPayloadInvalid());
   }
@@ -186,7 +189,7 @@ function sendInvitationEmail(
       OrganizationInvitationEmailRequestSchema,
       PRIVATE_BODY_LIMIT
     ).pipe(Effect.mapError(error => error));
-    const url = yield* invitationUrl(body.invitationUrl);
+    const url = yield* invitationUrl(body.invitationUrl, env);
     const reference = Schema.decodeUnknownEither(OpaqueReference)(url.searchParams.get('token'));
     if (reference._tag === 'Left') {
       return yield* Effect.fail(new InvitationEmailPayloadInvalid());

@@ -2,6 +2,7 @@
 import { Effect } from 'effect';
 import * as Schema from 'effect/Schema';
 import { decodeJsonBody, InvalidJsonBodyError } from '../body';
+import { deploymentApiOrigin } from '../deployment';
 import {
   type Env,
   jsonResponse,
@@ -319,7 +320,8 @@ function validateLicense(
       );
     }
     const token = yield* Effect.tryPromise({
-      try: () => generateLicenseJWT(license, body.machineId, env.JWT_PRIVATE_KEY),
+      try: () =>
+        generateLicenseJWT(license, body.machineId, env.JWT_PRIVATE_KEY, deploymentApiOrigin(env)),
       catch: cause =>
         new LicenseHandlerError('LicenseJwtError', 'Internal server error', 500, cause),
     });
@@ -772,7 +774,8 @@ export async function handleInstallPing(request: Request, env: Env): Promise<Res
 async function generateLicenseJWT(
   license: ValidateLicenseRow,
   machineId: string | null,
-  privateKey: string
+  privateKey: string,
+  issuer: string
 ): Promise<string> {
   const header = { alg: 'EdDSA', kid: 'omg-license-ed25519-v1', typ: 'JWT' } as const;
   const now = Math.floor(Date.now() / 1000);
@@ -782,7 +785,7 @@ async function generateLicenseJWT(
       ? maximumExpiry
       : Math.floor(new Date(license.expires_at).getTime() / 1000);
   const payload = {
-    iss: 'https://omg-api.latham.cloud',
+    iss: issuer,
     aud: 'omg-cli',
     sub: license.customer_id,
     tier: license.tier,

@@ -224,6 +224,56 @@ async function readBillingProjection(customerId: string) {
 }
 
 describe('Stripe webhook inbox', () => {
+  it.each([true, undefined])(
+    'rejects staging webhook livemode=%s before claiming it',
+    async livemode => {
+      const eventId = `evt_staging_${String(livemode)}`;
+      const payload = JSON.stringify({
+        id: eventId,
+        type: 'test.event',
+        livemode,
+        data: { object: { id: 'object_1' } },
+      });
+      const response = await handleStripeWebhook(
+        new Request('https://staging-api.getomg.xyz/api/webhooks/stripe', {
+          method: 'POST',
+          headers: { 'stripe-signature': await stripeSignature(payload) },
+          body: payload,
+        }),
+        { ...env, DEPLOYMENT_STAGE: 'staging', STRIPE_WEBHOOK_SECRET: WEBHOOK_SECRET }
+      );
+      expect(response.status).toBe(400);
+      expect(
+        await env.DB.prepare('SELECT id FROM stripe_events WHERE stripe_event_id = ?')
+          .bind(eventId)
+          .first()
+      ).toBeNull();
+    }
+  );
+
+  it('accepts a signed test-mode event into the staging inbox', async () => {
+    const payload = JSON.stringify({
+      id: 'evt_staging_test',
+      type: 'test.event',
+      livemode: false,
+      data: { object: { id: 'object_1' } },
+    });
+    const response = await handleStripeWebhook(
+      new Request('https://staging-api.getomg.xyz/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': await stripeSignature(payload) },
+        body: payload,
+      }),
+      { ...env, DEPLOYMENT_STAGE: 'staging', STRIPE_WEBHOOK_SECRET: WEBHOOK_SECRET }
+    );
+    expect(response.status).toBe(200);
+    expect(
+      await env.DB.prepare('SELECT status FROM stripe_events WHERE stripe_event_id = ?')
+        .bind('evt_staging_test')
+        .first()
+    ).toMatchObject({ status: 'processed' });
+  });
+
   beforeEach(async () => {
     env.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET;
     env.STRIPE_SECRET_KEY = 'sk_test_reconciliation';
@@ -386,20 +436,75 @@ describe('Stripe webhook inbox', () => {
     });
   });
 
-  it('asks Stripe to retry an event already being processed', async () => {
+  it.each([1, 20])('keeps an active processing lease at attempt %i', async attemptCount => {
     await env.DB.prepare(
       `INSERT INTO stripe_events (
         id, stripe_event_id, event_type, event_data, status, attempt_count,
         processing_started_at, processed
-      ) VALUES (?, ?, 'test.event', '{}', 'processing', 1, CURRENT_TIMESTAMP, 0)`
+      ) VALUES (?, ?, 'test.event', '{}', 'processing', ?, CURRENT_TIMESTAMP, 0)`
     )
-      .bind('inbox-processing', 'evt_inbox_processing')
+      .bind('inbox-processing', 'evt_inbox_processing', attemptCount)
       .run();
 
     const response = await handleStripeWebhook(await webhookRequest('evt_inbox_processing'), env);
 
     expect(response.status).toBe(409);
-    expect((await readInboxRow('evt_inbox_processing')).attempt_count).toBe(1);
+    expect((await readInboxRow('evt_inbox_processing')).attempt_count).toBe(attemptCount);
+  });
+
+  it.each(['processing', 'failed'])(
+    'dead-letters an exhausted %s event after its lease expires',
+    async status => {
+      await env.DB.prepare(
+        `INSERT INTO stripe_events (
+          id, stripe_event_id, event_type, event_data, status, attempt_count,
+          processing_started_at, claim_token, processed
+        ) VALUES (?, ?, 'test.event', '{"synthetic":"payload"}', ?, 20,
+          datetime('now', '-6 minutes'), 'abandoned-final-claim', 0)`
+      )
+        .bind('inbox-exhausted', 'evt_inbox_exhausted', status)
+        .run();
+
+      const response = await handleStripeWebhook(await webhookRequest('evt_inbox_exhausted'), env);
+      expect(response.status).toBe(200);
+      expect(await readInboxRow('evt_inbox_exhausted')).toEqual({
+        status: 'dead',
+        attempt_count: 20,
+        processed: 0,
+      });
+      expect(
+        await env.DB.prepare(
+          'SELECT event_data, claim_token, processing_started_at, last_error FROM stripe_events WHERE stripe_event_id = ?'
+        )
+          .bind('evt_inbox_exhausted')
+          .first()
+      ).toEqual({
+        event_data: '',
+        claim_token: null,
+        processing_started_at: null,
+        last_error: 'Retry limit reached without a completed processing attempt',
+      });
+      const replay = await handleStripeWebhook(await webhookRequest('evt_inbox_exhausted'), env);
+      expect(replay.status).toBe(200);
+      expect((await readInboxRow('evt_inbox_exhausted')).attempt_count).toBe(20);
+    }
+  );
+
+  it('reclaims an expired lease when the final attempt is still available', async () => {
+    await env.DB.prepare(
+      `INSERT INTO stripe_events (
+        id, stripe_event_id, event_type, event_data, status, attempt_count,
+        processing_started_at, claim_token, processed
+      ) VALUES ('last-attempt', 'evt_last_attempt', 'test.event', '{}', 'processing', 19,
+        datetime('now', '-6 minutes'), 'expired-claim', 0)`
+    ).run();
+    const response = await handleStripeWebhook(await webhookRequest('evt_last_attempt'), env);
+    expect(response.status).toBe(200);
+    expect(await readInboxRow('evt_last_attempt')).toEqual({
+      status: 'processed',
+      attempt_count: 20,
+      processed: 1,
+    });
   });
 
   it('projects the current Team subscription instead of a stale event snapshot', async () => {

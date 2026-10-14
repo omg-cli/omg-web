@@ -8,20 +8,22 @@
     "node": ">=24"
   },
   "scripts": {
-    "check": "npm run check:installer && npm run check:anti-slop && npm run check:audit-evidence && npm run check:migrations && npm run check:lockfiles && npm run check:source-policy && npm run check:unused-exports && npm run typecheck && npm run lint && npm run format:check && npm run audit && npm run check:deploy && npm test",
+    "check": "npm run check:installer && npm run check:anti-slop && npm run check:audit-evidence && npm run check:migrations && npm run check:lockfiles && npm run check:source-policy && npm run check:unused-exports && npm run test:release && npm run typecheck && npm run lint && npm run format:check && npm run audit && npm run check:deploy && npm test",
     "audit": "node tools/check-npm-audits.ts",
     "check:anti-slop": "node tools/oxlint/sync-anti-slop.mjs --check",
     "check:audit-evidence": "node tools/check-audit-evidence.mjs",
     "check:cloudflare:remote": "node tools/check-cloudflare-remote.mjs",
-    "check:deploy": "npm run build:check --prefix site && wrangler deploy --dry-run --config workers/api/wrangler.toml",
+    "check:deploy": "npm run check:staging && npm run build:check --prefix site && wrangler deploy --dry-run --config workers/api/wrangler.toml && wrangler deploy --dry-run --config workers/api/wrangler.staging.jsonc && wrangler deploy --dry-run --config site/wrangler.staging.jsonc && wrangler deploy --dry-run --config site/wrangler.production.jsonc",
+    "check:staging": "node tools/check-staging.mjs",
+    "drill:d1-recovery": "node tools/drill-d1-recovery.mjs",
     "check:migrations": "npm run check:migrations --prefix workers/api",
     "check:lockfiles": "node tools/check-lockfile-integrity.mjs",
     "check:source-policy": "node tools/check-source-policy.mjs",
     "check:unused-exports": "node tools/check-unused-exports.mjs",
-    "format": "prettier --write --ignore-unknown contracts docs/operations shared site/e2e site/tools site/playwright.config.ts site/src site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/package.json site/tsconfig.json workers/api/src workers/api/tests workers/api/tools .github/workflows/ci.yml tools/check-*.mjs tools/check-npm-audits.ts tools/oxlint/sync-anti-slop.mjs oxlint.config.ts prettier.config.js package.json workers/api/package.json tsconfig.json workers/api/tsconfig.json workers/api/wrangler.toml workers/api/wrangler.test.toml",
-    "format:check": "prettier --check --ignore-unknown contracts docs/operations shared site/e2e site/tools site/playwright.config.ts site/src site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/package.json site/tsconfig.json workers/api/src workers/api/tests workers/api/tools .github/workflows/ci.yml tools/check-*.mjs tools/check-npm-audits.ts tools/oxlint/sync-anti-slop.mjs oxlint.config.ts prettier.config.js package.json workers/api/package.json tsconfig.json workers/api/tsconfig.json workers/api/wrangler.toml workers/api/wrangler.test.toml",
+    "format": "prettier --write --ignore-unknown contracts docs/operations shared site/e2e site/tools site/playwright.config.ts site/src site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/package.json site/tsconfig.json workers/api/src workers/api/tests workers/api/tools .github/workflows/ci.yml tools/check-*.mjs tools/drill-*.mjs tools/release-staging.mjs tools/release tools/check-npm-audits.ts tools/oxlint/sync-anti-slop.mjs oxlint.config.ts prettier.config.js package.json workers/api/package.json tsconfig.json workers/api/tsconfig.json workers/api/wrangler.toml workers/api/wrangler.test.toml",
+    "format:check": "prettier --check --ignore-unknown contracts docs/operations shared site/e2e site/tools site/playwright.config.ts site/src site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/package.json site/tsconfig.json workers/api/src workers/api/tests workers/api/tools .github/workflows/ci.yml tools/check-*.mjs tools/drill-*.mjs tools/release-staging.mjs tools/release tools/check-npm-audits.ts tools/oxlint/sync-anti-slop.mjs oxlint.config.ts prettier.config.js package.json workers/api/package.json tsconfig.json workers/api/tsconfig.json workers/api/wrangler.toml workers/api/wrangler.test.toml",
     "lint": "npm run lint:oxlint",
-    "lint:oxlint": "oxlint --config oxlint.config.ts shared site/e2e site/tools site/playwright.config.ts site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/src workers/api/src workers/api/tests tools/check-*.mjs tools/check-npm-audits.ts",
+    "lint:oxlint": "oxlint --config oxlint.config.ts shared site/e2e site/tools site/playwright.config.ts site/alchemy.run.ts site/alchemy.environment.mjs site/vite.config.ts site/src workers/api/src workers/api/tests tools/check-*.mjs tools/drill-*.mjs tools/release-staging.mjs tools/release tools/check-npm-audits.ts",
     "lint:workers": "oxlint --config oxlint.config.ts workers/api/src workers/api/tests",
     "lint:workers:fix": "oxlint --fix --config oxlint.config.ts workers/api/src workers/api/tests",
     "sync:anti-slop": "node tools/oxlint/sync-anti-slop.mjs",
@@ -32,7 +34,9 @@
     "typecheck:site": "npm run check --prefix site",
     "typecheck:tools": "tsc --project tsconfig.json --noEmit && tsc --project tools/oxlint/anti-slop/tsconfig.json --noEmit",
     "typecheck:workers": "npm run typecheck --prefix workers/api",
-    "check:installer": "node tools/check-installer-sync.mjs && bash tools/installer-security.sh"
+    "check:installer": "node tools/check-installer-sync.mjs && bash tools/installer-security.sh",
+    "release:staging": "node tools/release-staging.mjs",
+    "test:release": "node --test tools/release/*.test.mjs"
   },
   "devDependencies": {
     "@oxlint/plugins": "1.82.0",
@@ -42,7 +46,7 @@
     "prettier-plugin-svelte": "4.1.1",
     "prettier-plugin-tailwindcss": "0.8.1",
     "typescript": "7.0.2",
-    "wrangler": "4.131.1"
+    "wrangler": "4.149.0"
   },
   "overrides": {
     "miniflare": {
@@ -52,9 +56,9 @@
     "devalue": "5.9.4"
   },
   "allowScripts": {
-    "esbuild@0.28.1": true,
+    "esbuild@0.28.2": true,
     "fsevents@2.3.3": false,
-    "workerd@1.20260911.1": true
+    "workerd@1.20261006.1": true
   },
   "dependencies": {
     "effect": "3.22.2"

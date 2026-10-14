@@ -25,14 +25,27 @@ commit feed does not infer release inclusion.
 
 The server checks up to 100 recent commits per source, deduplicates by repository
 and SHA, and retains up to 150 entries. Main takes precedence over development.
-Refreshes are coalesced and cached for five minutes. Visible pages refresh every
+On Cloudflare, a named Cache API entry holds only this public feed, partitioned by
+request origin and schema version. Entries are fresh for five minutes and retained
+for up to one day as an outage fallback. An expired entry, or the committed snapshot
+on a cache miss, is returned immediately with `stale: true`. The request's
+`ctx.waitUntil` keeps the refresh and cache write alive after the response. Failed
+refreshes retain history and the last successful sync time and retry after one
+minute. Stale responses require revalidation so an initial snapshot is not held in
+the browser or outer CDN after the background refresh completes.
+
+The cache is local to each Cloudflare data center and may be evicted; it is not a
+global or permanent archive. Concurrent misses can each refresh. No request I/O
+promise is shared across Worker invocations. Cache errors produce sanitized warning
+events and leave the public snapshot available. Local development without Cache API
+and request-context support uses the existing awaited, coalesced in-memory refresh.
+Visible pages refresh every
 five minutes and when a visitor returns to the tab. CDN caching can add delay;
 this is periodic synchronization, not a push webhook.
 
 Each GitHub request has an eight-second timeout. If any source is unavailable,
 the page shows saved updates with the last successful sync time. A committed
-snapshot provides an initial fallback on cold starts. The in-memory cache is
-not a permanent archive. Update `security-snapshot.ts` when retaining older
+snapshot provides an initial fallback on cold starts. Update `security-snapshot.ts` when retaining older
 history across deployments is useful. GitHub's unauthenticated rate limits can
 delay refreshes; no credentials are sent to visitors.
 
