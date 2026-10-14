@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/cloudflare';
 import { runScheduledJobs } from './scheduled';
+import { handleScheduledHealth } from './scheduled-health';
 import { billingIsEnabled, deploymentIsReady, deploymentAccountOrigin } from './deployment';
 import { forbiddenUnlessAdminSession } from './admin-auth';
 import {
@@ -310,6 +311,8 @@ export default Sentry.withSentry(
         }
 
         switch (route.path) {
+          case '/health/scheduled':
+            return handleScheduledHealth(env);
           case '/health':
             return jsonResponse({
               status: 'ok',

@@ -1,11 +1,11 @@
 {
-  "status": "http-and-two-scheduled-policies-enabled-daily-candidate-disabled",
+  "status": "durable-scheduled-health-replaces-sampled-absence",
   "dataset": "logs.workersLogs",
   "datasetSampling": "adaptive",
   "detectionMethod": "threshold",
   "timeRangeMode": "manual",
   "evaluationWindow": "1m",
-  "note": "Operational record, not a Notifications API request. Two HTTP policies remain enabled with their existing authorized destination and IDs unchanged. Two scheduled policies were enabled after explicit delivery authorization and exact API readback on 2026-10-09; the daily candidate has no policy/delivery configured. Exact structured attributes replace the broken message text search. Counts represent adaptively sampled events, not exact raw totals; missing-log signals can reflect ingestion or sampling gaps. Native daily healthy completion is now verified; the daily candidate stays disabled pending its specific delivery authorization. No additional synthetic email was sent; incident delivery remains unverified.",
+  "note": "The 2026-10-14 repair replaces the sampled-log missing-aggregation policy with an independent native Health Check reading durable task state. Native failure and recovery notifications and real runtime exception notifications were exercised against disposable resources. HTTP failure-rate and explicit scheduled SQL failure policies remain supplementary sampled signals. Native production Issues automations remain enabled; six verified handled scanner fingerprints are marked ignored, and 462 exact retained scanner paths are blocked at the WAF before Worker invocation because ignored issues can still notify.",
   "candidates": [
     {
       "name": "OMG API HTTP failure rate",
@@ -36,8 +36,8 @@
     {
       "name": "OMG missing successful aggregation",
       "policyId": "5ff482687d4f4415aac1bed9ec84c705",
-      "enabled": true,
-      "validation": "Signed-in SQL preview: corrected exact structured attribute finds known native completions, healthy absence expression returns 0, nonexistent-event control returns 1. Old message-LIKE draft returned 0 despite live completions. Enabled after explicit authorization; exact query, threshold, intervals, enabled state and sole existing destination verified by API readback. No delivery test; incident delivery unverified.",
+      "enabled": false,
+      "validation": "Retired in favor of native scheduled analytics health. A sampled zero count fired despite actual successful aggregation; it cannot prove a stopped job.",
       "executionInterval": "5m",
       "repeatNotificationInterval": "1h",
       "comparison": {
@@ -73,6 +73,20 @@
         "value": 1
       },
       "query": "SELECT COUNT(*) AS value FROM logs.workersLogs WHERE accountTag = 'f1e95b3e1b502cf366dfc81a863695fa' AND scriptName = 'omg-saas' AND invocationType = 'scheduled' AND logType = 'cf-worker' AND (attributes['message.event'] = 'stripe_inbox.health_failed' OR attributes['message.event'] = 'docs_analytics.aggregate_failed' OR attributes['message.event'] = 'analytics_retention.cleanup_failed' OR attributes['message.event'] = 'stripe_events.cleanup_failed' OR attributes['message.event'] = 'marketing_offer.cleanup_failed' OR attributes['message.event'] = 'audit_log.cleanup_failed') AND timestamp >= NOW() - INTERVAL '15' MINUTE"
+    },
+    {
+      "name": "OMG scheduled analytics health",
+      "policyId": "2cf9777ce6204fdfbbf6b58250b52da0",
+      "enabled": true,
+      "alertType": "health_check_status_notification",
+      "healthCheckId": "f321dfc5cdbf6737d5fb63e8f7191704",
+      "zoneId": "2cac36710ac5f0f5728f219b9d1af6bf",
+      "endpoint": "https://omg-api.latham.cloud/health/scheduled",
+      "intervalSeconds": 60,
+      "consecutiveFailures": 2,
+      "consecutiveSuccesses": 2,
+      "aggregationFreshnessMinutes": 20,
+      "validation": "Controlled D1 aggregation failure produced 503, native unhealthy notification, runtime exception notification, and healthy recovery notification. Existing destination preserved. Production promotion uses the same health check and the existing account-wide health notification policy; the redundant task-created policy was removed."
     }
   ]
 }

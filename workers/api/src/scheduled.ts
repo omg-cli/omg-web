@@ -8,6 +8,11 @@ import { cleanupMarketingOfferLeads } from './handlers/marketing-offer';
 import { cleanupExpiredAuditLogs } from './handlers/privacy';
 import { reportError, reportInfo } from './observability';
 import { checkStripeInboxHealth } from './stripe-inbox-health';
+import {
+  beginScheduledTaskHealth,
+  completeScheduledTaskHealth,
+  failScheduledTaskHealth,
+} from './scheduled-health';
 
 interface ScheduledTask {
   readonly name: string;
@@ -39,11 +44,21 @@ export async function runScheduledJobs(
   const outcomes = await Promise.allSettled(
     tasks.map(async task => {
       try {
+        const attempt = await beginScheduledTaskHealth(db, task.name);
         await task.run();
+        await completeScheduledTaskHealth(db, task.name, attempt);
         reportInfo(`${task.name}_completed`);
       } catch (error) {
         reportError(`${task.name}_failed`, error);
         Sentry.captureException(error);
+        try {
+          await failScheduledTaskHealth(db, task.name);
+        } catch (healthError) {
+          reportError('scheduled_health.write_failed', healthError);
+          throw new AggregateError([error, healthError], 'Task failure receipt unavailable', {
+            cause: healthError,
+          });
+        }
         throw error;
       }
     })

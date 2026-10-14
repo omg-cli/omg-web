@@ -59,6 +59,8 @@ describe('canonical D1 migrations', () => {
       '024_better_auth_organizations.sql',
       '025_organization_owner_integrity.sql',
       '026_stripe_subscription_reconciliations.sql',
+      '027_scheduled_health_and_docs_source.sql',
+      '028_scheduled_failure_order.sql',
     ]);
   });
 
