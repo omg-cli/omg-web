@@ -277,10 +277,10 @@ during promotion. Site-derived input remains subject to the existing ninety-day
 site retention and legacy docs input to its existing seven-day retention.
 
 The six ignored site issues are specific low-risk scanner fingerprints. Their
-retained occurrences returned 404 and reported no matching outbound fetch.
+retained occurrences returned 403 or 404 and reported no matching outbound fetch.
 Live recurrence testing showed that an ignored issue can still dispatch an
 automation notification. Ignoring status is therefore only review bookkeeping.
-Two apex-only WAF rules block the 67 exact retained scanner paths before Worker
+Eight apex-only WAF rules block the 462 exact retained scanner paths before Worker
 invocation. Their expressions and rollback identifiers are recorded in
 `omg-scanner-waf-rules.json`; the existing getomg.dev scanner rule is preserved.
 First-occurrence and recurrence automations for production API and site remain
