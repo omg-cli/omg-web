@@ -246,3 +246,47 @@ Never mutate production bindings or sampling settings during an audit-only task.
 - [Cloudflare alert conditions](https://developers.cloudflare.com/notifications/notification-available/)
 - [Budget alert scope and behavior](https://developers.cloudflare.com/billing/manage/budget-alerts/)
 - [SQL API function and sampling semantics](https://developers.cloudflare.com/analytics/sql-api/sql-reference/functions/)
+
+# Scheduled health and documentation repair, 2026-10-14
+
+`GET /health/scheduled` reads durable D1 task receipts and returns uncached HTTP
+200 only when documentation aggregation completed within twenty minutes and no
+task has a pending or failed attempt. Missing state, future success timestamps,
+stale completion, and unreadable D1 return sanitized HTTP 503. Each task records
+a pending UUID before execution. Only that attempt can complete its receipt;
+a failure also records its completion time, so overlapping work cannot hide a
+later failure. If D1 cannot admit an attempt, the task does not run and the
+scheduled invocation rejects. Native Issues remains the immediate signal when
+the durable store itself cannot record an admission failure.
+
+An independent native Health Check probes this endpoint every sixty seconds,
+validates TLS, and requires two consecutive failed or successful probes before
+notifying the existing destination. The existing account-wide policy `2cf9777ce6204fdfbbf6b58250b52da0`
+replaces the sampled-log absence policy `5ff482687d4f4415aac1bed9ec84c705`.
+Do not restore that absence expression: SQL sampling can remove the handful of
+completion logs in its window even with full log ingestion. The HTTP failure-rate
+and scheduled SQL failure policies remain supplementary diagnostics.
+
+Documentation aggregation now reads `docs_analytics_source_events`, a read-only
+view of retained legacy docs events and site events at exactly `/docs` or below
+`/docs/`. It uses server ingestion dates, reduced referrer domains, geographic
+columns and a non-null CTA target. Raw events are not copied, modified, or given
+a longer retention period. Current and previous UTC days are refreshed by the
+existing scheduler; retained historical documentation dates are rebuilt once
+during promotion. Site-derived input remains subject to the existing ninety-day
+site retention and legacy docs input to its existing seven-day retention.
+
+The six ignored site issues are specific low-risk scanner fingerprints. Their
+retained occurrences returned 404 and reported no matching outbound fetch.
+First-occurrence and recurrence automations for production API and site remain
+enabled. New issue fingerprints still require review, and actual exceptions
+continue to notify. Restore an ignored fingerprint to active if its evidence
+changes; do not disable Issues or ignore application exception fingerprints.
+
+The controlled remote drill used the real aggregation and health functions with
+a disposable D1 database. Renaming an aggregate table produced a rejected task,
+persisted unhealthy state, a native unhealthy notification and runtime exception
+notifications. Restoring the table and running the task produced healthy state
+and a native recovery notification. The native unhealthy and runtime test emails
+were observed in the destination inbox. Production data is not used for fault
+injection.
