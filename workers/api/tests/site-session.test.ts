@@ -63,8 +63,14 @@ describe('POST /api/internal/site-session', () => {
       .run();
   });
 
-  it('rate limits the public route before comparing shared secrets', async () => {
-    env.API_RATE_LIMITER = { limit: async () => ({ success: false }) };
+  it('rate limits unauthorized public requests without a principal bucket', async () => {
+    const keys: string[] = [];
+    env.API_RATE_LIMITER = {
+      limit: async ({ key }: { key: string }) => {
+        keys.push(key);
+        return { success: false };
+      },
+    };
     const ctx = createExecutionContext();
     const response = await worker.fetch(
       createSessionRequest('wrong-secret', JSON.stringify({ email: TEST_EMAIL })),
@@ -74,6 +80,81 @@ describe('POST /api/internal/site-session', () => {
     await waitOnExecutionContext(ctx);
 
     expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('60');
+    expect(keys).toEqual(['internal_site_session:unknown']);
+  });
+
+  it('isolates authenticated customer budgets without a connecting IP', async () => {
+    const keys: string[] = [];
+    env.API_RATE_LIMITER = {
+      limit: async ({ key }: { key: string }) => {
+        keys.push(key);
+        return { success: true };
+      },
+    };
+    for (const email of [NON_ADMIN_EMAIL, TEST_EMAIL, NON_ADMIN_EMAIL.toUpperCase()]) {
+      const context = createExecutionContext();
+      const response = await worker.fetch(
+        createSessionRequest(TEST_SECRET, JSON.stringify({ email, role: 'user' })),
+        env,
+        context
+      );
+      await waitOnExecutionContext(context);
+      expect(response.status).toBe(200);
+    }
+    expect(keys).toHaveLength(3);
+    expect(keys[0]).not.toBe(keys[1]);
+    expect(keys[2]).toBe(keys[0]);
+    expect(keys.every(key => key.startsWith('internal_site_session:customer:'))).toBe(true);
+    expect(keys.join()).not.toContain('@');
+  });
+
+  it.each(['exhausted', 'missing', 'failed'])(
+    'fails closed for an authenticated customer when the limiter is %s',
+    async state => {
+      env.API_RATE_LIMITER =
+        state === 'missing'
+          ? undefined
+          : {
+              limit: async () => {
+                if (state === 'failed') throw new Error('limiter unavailable');
+                return { success: false };
+              },
+            };
+      const context = createExecutionContext();
+      const response = await worker.fetch(
+        createSessionRequest(TEST_SECRET, JSON.stringify({ email: NON_ADMIN_EMAIL, role: 'user' })),
+        env,
+        context
+      );
+      await waitOnExecutionContext(context);
+      expect(response.status).toBe(state === 'exhausted' ? 429 : 503);
+      if (state === 'exhausted') expect(response.headers.get('Retry-After')).toBe('60');
+      expect(
+        await env.DB.prepare('SELECT id FROM customers WHERE email = ?')
+          .bind(NON_ADMIN_EMAIL)
+          .first()
+      ).toBeNull();
+    }
+  );
+
+  it('rejects invalid trusted payloads before selecting a principal bucket', async () => {
+    const keys: string[] = [];
+    env.API_RATE_LIMITER = {
+      limit: async ({ key }: { key: string }) => {
+        keys.push(key);
+        return { success: true };
+      },
+    };
+    const context = createExecutionContext();
+    const response = await worker.fetch(
+      createSessionRequest(TEST_SECRET, JSON.stringify({ email: 'invalid', role: 'user' })),
+      env,
+      context
+    );
+    await waitOnExecutionContext(context);
+    expect(response.status).toBe(400);
+    expect(keys).toEqual([]);
   });
 
   it('returns 401 when the secret is missing', async () => {
@@ -306,6 +387,19 @@ describe('POST /api/internal/site-session', () => {
       .bind(NON_ADMIN_EMAIL)
       .all();
     expect(licenses.results).toEqual([{ tier: 'free', status: 'active', max_seats: 1 }]);
+    const session = await Effect.runPromise(
+      decodeSiteSessionWorkerResponse(await responses[0]?.json())
+    );
+    const dashboardContext = createExecutionContext();
+    const dashboard = await worker.fetch(
+      new Request('http://localhost/api/dashboard', {
+        headers: { Authorization: `Bearer ${session.token}` },
+      }),
+      env,
+      dashboardContext
+    );
+    await waitOnExecutionContext(dashboardContext);
+    expect(dashboard.status).toBe(200);
   });
 
   it('preserves an existing paid license when minting a session', async () => {

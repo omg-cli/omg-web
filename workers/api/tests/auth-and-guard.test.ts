@@ -379,6 +379,15 @@ describe('POST /api/auth/verify-code', () => {
       .bind(TEST_EMAIL)
       .all();
     expect(licenses.results).toEqual([{ tier: 'free', status: 'active', max_seats: 1 }]);
+    const session = Schema.decodeUnknownSync(VerifyCodeResponseSchema)(await response.json());
+    const dashboardContext = createExecutionContext();
+    const dashboard = await worker.fetch(
+      getPath('/api/dashboard', session.token),
+      env,
+      dashboardContext
+    );
+    await waitOnExecutionContext(dashboardContext);
+    expect(dashboard.status).toBe(200);
   });
 
   it('preserves a paid license through OTP login', async () => {
@@ -728,6 +737,11 @@ describe('admin handler authorization', () => {
     await env.DB.prepare(`DELETE FROM customer_notes WHERE customer_id IN (?, ?)`)
       .bind(adminCustomerId, userCustomerId)
       .run();
+    await env.DB.prepare(
+      `DELETE FROM machines WHERE license_id IN (SELECT id FROM licenses WHERE customer_id IN (?, ?))`
+    )
+      .bind(adminCustomerId, userCustomerId)
+      .run();
     await env.DB.prepare(`DELETE FROM audit_log WHERE customer_id IN (?, ?)`)
       .bind(adminCustomerId, userCustomerId)
       .run();
@@ -889,6 +903,32 @@ describe('admin handler authorization', () => {
         max_seats: expectedLimit,
         max_machines: expectedLimit,
       });
+      if (expectedTier === 'free') {
+        await env.DB.prepare(
+          `INSERT INTO machines (id, license_id, machine_id, is_active)
+           VALUES ('admin-existing-machine', 'admin-update-license', 'machine-a', 1)`
+        ).run();
+        const validationContext = createExecutionContext();
+        const validation = await worker.fetch(
+          postJson(
+            '/api/validate-license',
+            JSON.stringify({ key: 'admin-update-key', machine_id: 'machine-b' })
+          ),
+          env,
+          validationContext
+        );
+        await waitOnExecutionContext(validationContext);
+        expect(validation.status).toBe(200);
+        expect(await validation.json()).toEqual({
+          valid: false,
+          error: 'Machine limit reached (1). Revoke a machine in your dashboard or upgrade.',
+        });
+        expect(
+          await env.DB.prepare(
+            "SELECT COUNT(*) count FROM machines WHERE license_id = 'admin-update-license'"
+          ).first()
+        ).toEqual({ count: 1 });
+      }
     }
   );
 
