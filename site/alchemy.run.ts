@@ -48,7 +48,7 @@ export const Website = Cloudflare.Website.SvelteKit(
           simple: { limit: 30, period: 60 },
         }),
         BETTER_AUTH_SECRET: authSecret.text,
-        DEPLOYMENT_STAGE: stage === 'prod' ? 'production' : 'staging',
+        DEPLOYMENT_STAGE: stage === 'prod' ? 'prod' : 'staging',
         GITHUB_CLIENT_ID: Config.String('GITHUB_CLIENT_ID'),
         GITHUB_CLIENT_SECRET:
           stage === 'prod'
