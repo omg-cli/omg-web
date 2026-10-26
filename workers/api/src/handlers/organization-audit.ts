@@ -4,16 +4,15 @@ import type {
   OrganizationAuditFilter,
   OrganizationAuditResponse,
 } from '../../../../shared/organization-audit';
-import { AdminUnauthorizedError, requireInternalSecret } from '../admin-secret';
+import { requireInternalSecret } from '../admin-secret';
 import { isTeamOrEnterpriseTier } from '../contracts/d1-extras';
-import {
-  type Env,
-  enforceRateLimit,
-  errorResponse,
-  rateLimitClientIp,
-  respondFromEffect,
-} from '../api';
+import { type Env, errorResponse, rateLimitClientIp, respondFromEffect } from '../api';
 import { decodeJsonBody, InvalidJsonBodyError } from '../body';
+import {
+  enforceInternalRateLimit,
+  enforceInternalPrincipalRateLimit,
+  InternalRateLimitError,
+} from '../internal-rate-limit';
 import {
   OrganizationAuditContextRowSchema,
   OrganizationAuditMetadataSchema,
@@ -83,7 +82,7 @@ class OrganizationAuditStoreUnavailable extends Error {
 }
 
 type OrganizationAuditError =
-  | AdminUnauthorizedError
+  | InternalRateLimitError
   | InvalidJsonBodyError
   | OrganizationAuditInvalidRow
   | OrganizationAuditNotFound
@@ -159,11 +158,15 @@ function loadOrganizationAudit(
   env: Env
 ): Effect.Effect<OrganizationAuditResponse, OrganizationAuditError> {
   return Effect.gen(function* () {
-    yield* requireInternalSecret(request.headers.get('X-Admin-Secret'), [env.SVELTE_BFF_SECRET]);
     const input = yield* decodeJsonBody(
       request,
       OrganizationAuditRequestSchema,
       PRIVATE_BODY_LIMIT
+    );
+    yield* enforceInternalPrincipalRateLimit(
+      env,
+      'internal_organization_audit:principal',
+      JSON.stringify([input.organizationId, input.userId])
     );
 
     const contextResult = yield* queryAll(
@@ -249,18 +252,21 @@ export async function handleOrganizationAudit(request: Request, env: Env): Promi
   if (request.headers.get('X-Internal-Call') !== 'service-binding') {
     return errorResponse('Not found', 404);
   }
-  const limited = await enforceRateLimit(
-    env.API_RATE_LIMITER,
-    `internal_organization_audit:${rateLimitClientIp(request)}`
+  const authorization = Effect.runSyncExit(
+    requireInternalSecret(request.headers.get('X-Admin-Secret'), [env.SVELTE_BFF_SECRET])
   );
-  if (limited !== null) {
-    return limited;
+  if (authorization._tag === 'Failure') {
+    const limited = await enforceInternalRateLimit(
+      env,
+      `internal_organization_audit:${rateLimitClientIp(request)}`
+    );
+    return limited ?? errorResponse('Not found', 404);
   }
 
   return respondFromEffect(loadOrganizationAudit(request, env), auditError => {
     switch (auditError._tag) {
-      case 'AdminUnauthorizedError':
-        return errorResponse('Not found', 404);
+      case 'InternalRateLimitError':
+        return auditError.response;
       case 'InvalidJsonBodyError':
         return errorResponse('Organization audit request is invalid', 400);
       case 'OrganizationAuditNotFound':

@@ -1,15 +1,14 @@
 import { Effect } from 'effect';
 import * as Schema from 'effect/Schema';
 import type { OrganizationUsageResponse } from '../../../../shared/organization-usage';
-import { AdminUnauthorizedError, requireInternalSecret } from '../admin-secret';
-import {
-  type Env,
-  enforceRateLimit,
-  errorResponse,
-  rateLimitClientIp,
-  respondFromEffect,
-} from '../api';
+import { requireInternalSecret } from '../admin-secret';
+import { type Env, errorResponse, rateLimitClientIp, respondFromEffect } from '../api';
 import { decodeJsonBody, InvalidJsonBodyError } from '../body';
+import {
+  enforceInternalRateLimit,
+  enforceInternalPrincipalRateLimit,
+  InternalRateLimitError,
+} from '../internal-rate-limit';
 import { isTeamOrEnterpriseTier } from '../contracts/d1-extras';
 import {
   decodeOrganizationUsageRow,
@@ -128,7 +127,7 @@ class OrganizationUsageStoreUnavailable extends Error {
 }
 
 type OrganizationUsageError =
-  | AdminUnauthorizedError
+  | InternalRateLimitError
   | InvalidJsonBodyError
   | OrganizationUsageNotFound
   | OrganizationUsageParseError
@@ -171,11 +170,15 @@ function loadOrganizationUsage(
   env: Env
 ): Effect.Effect<OrganizationUsageResponse, OrganizationUsageError> {
   return Effect.gen(function* () {
-    yield* requireInternalSecret(request.headers.get('X-Admin-Secret'), [env.SVELTE_BFF_SECRET]);
     const input = yield* decodeJsonBody(
       request,
       OrganizationUsageRequestSchema,
       PRIVATE_BODY_LIMIT
+    );
+    yield* enforceInternalPrincipalRateLimit(
+      env,
+      'internal_organization_usage:principal',
+      JSON.stringify([input.organizationId, input.userId])
     );
 
     const contextResult = yield* queryAll(
@@ -302,18 +305,21 @@ export async function handleOrganizationUsage(request: Request, env: Env): Promi
   if (request.headers.get('X-Internal-Call') !== 'service-binding') {
     return errorResponse('Not found', 404);
   }
-  const limited = await enforceRateLimit(
-    env.API_RATE_LIMITER,
-    `internal_organization_usage:${rateLimitClientIp(request)}`
+  const authorization = Effect.runSyncExit(
+    requireInternalSecret(request.headers.get('X-Admin-Secret'), [env.SVELTE_BFF_SECRET])
   );
-  if (limited !== null) {
-    return limited;
+  if (authorization._tag === 'Failure') {
+    const limited = await enforceInternalRateLimit(
+      env,
+      `internal_organization_usage:${rateLimitClientIp(request)}`
+    );
+    return limited ?? errorResponse('Not found', 404);
   }
 
   return respondFromEffect(loadOrganizationUsage(request, env), error => {
     switch (error._tag) {
-      case 'AdminUnauthorizedError':
-        return errorResponse('Not found', 404);
+      case 'InternalRateLimitError':
+        return error.response;
       case 'InvalidJsonBodyError':
         return errorResponse('Organization usage request is invalid', 400);
       case 'OrganizationUsageNotFound':

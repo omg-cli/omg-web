@@ -1,12 +1,5 @@
 import { Effect } from 'effect';
-import {
-  type Env,
-  enforceRateLimit,
-  errorResponse,
-  logAudit,
-  rateLimitClientIp,
-  respondFromEffect,
-} from '../api';
+import { type Env, errorResponse, logAudit, rateLimitClientIp, respondFromEffect } from '../api';
 import { decodeJsonBody, type InvalidJsonBodyError } from '../body';
 import * as Schema from 'effect/Schema';
 import {
@@ -18,6 +11,11 @@ import {
 import { requireInternalSecret } from '../admin-secret';
 import { casesHandled } from '../prelude';
 import { deriveSiteSessionToken, hashSessionToken } from '../session-token';
+import {
+  enforceInternalRateLimit,
+  enforceInternalPrincipalRateLimit,
+  InternalRateLimitError,
+} from '../internal-rate-limit';
 
 /** D1 was unavailable or returned an unreadable row during site-session minting. */
 class CustomerStoreUnavailable extends Error {
@@ -30,25 +28,11 @@ class CustomerStoreUnavailable extends Error {
       | 'syncRole'
       | 'revokeSessionsOnRoleChange'
       | 'deriveSessionToken'
-      | 'deriveRateLimitKey'
       | 'insertSession',
     override readonly cause?: unknown
   ) {
     super(`Customer store unavailable during ${operation}`);
   }
-}
-
-class SiteSessionRateLimitError extends Error {
-  readonly _tag = 'SiteSessionRateLimitError';
-  constructor(readonly response: Response) {
-    super('Site session rate limit rejected');
-  }
-}
-
-async function enforceSiteSessionRateLimit(env: Env, key: string): Promise<Response | null> {
-  const response = await enforceRateLimit(env.API_RATE_LIMITER, key);
-  if (response?.status === 429) response.headers.set('Retry-After', '60');
-  return response;
 }
 
 function storeOperation<A>(
@@ -73,17 +57,11 @@ function mintSiteSession(
   env: Env
 ): Effect.Effect<
   SiteSessionWorkerResponse,
-  InvalidJsonBodyError | CustomerStoreUnavailable | SiteSessionRateLimitError
+  InvalidJsonBodyError | CustomerStoreUnavailable | InternalRateLimitError
 > {
   return Effect.gen(function* () {
     const body = yield* decodeJsonBody(request, SiteSessionRequestSchema);
-    const principal = yield* storeOperation('deriveRateLimitKey', () =>
-      hashSessionToken(body.email)
-    );
-    const limited = yield* Effect.promise(() =>
-      enforceSiteSessionRateLimit(env, `internal_site_session:customer:${principal}`)
-    );
-    if (limited !== null) return yield* Effect.fail(new SiteSessionRateLimitError(limited));
+    yield* enforceInternalPrincipalRateLimit(env, 'internal_site_session:customer', body.email);
     const customerRow = yield* storeOperation('findByEmail', () =>
       env.DB.prepare(`SELECT id, email, admin FROM customers WHERE email = ?`)
         .bind(body.email)
@@ -197,7 +175,7 @@ export async function handleCreateSiteSession(request: Request, env: Env): Promi
     ])
   );
   if (authorization._tag === 'Failure') {
-    const limited = await enforceSiteSessionRateLimit(
+    const limited = await enforceInternalRateLimit(
       env,
       `internal_site_session:${rateLimitClientIp(request)}`
     );
@@ -205,7 +183,7 @@ export async function handleCreateSiteSession(request: Request, env: Env): Promi
   }
   return respondFromEffect(mintSiteSession(request, env), error => {
     switch (error._tag) {
-      case 'SiteSessionRateLimitError':
+      case 'InternalRateLimitError':
         return error.response;
       case 'InvalidJsonBodyError':
         return errorResponse(error.message, 400);
