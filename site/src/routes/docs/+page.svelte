@@ -107,8 +107,8 @@
           >.
         </p>
         <p class="install-note">
-          The installer currently serves v0.1.223. This handbook calls out behavior added in the
-          newer main checkout where it differs from that release.
+          The installer downloads the latest published release. This handbook calls out behavior
+          added in the newer main checkout where it differs from that release.
         </p>
       </section>
 

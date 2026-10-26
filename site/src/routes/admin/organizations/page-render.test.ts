@@ -3,6 +3,56 @@ import { describe, expect, it } from 'vitest';
 import OrganizationsPage from './+page.svelte';
 
 describe('operator organization directory', () => {
+  it('recovers an empty later page after results shrink while preserving search', () => {
+    const result = render(OrganizationsPage, {
+      props: {
+        data: {
+          operatorName: 'Operator',
+          search: 'Acme & Sons',
+          directory: {
+            organizations: [],
+            pagination: { page: 2, pageSize: 25, total: 1, pages: 1 },
+          },
+        },
+        form: null,
+        params: {},
+      },
+    });
+    expect(result.body).toContain('Return to first page');
+    expect(result.body).toContain('?page=1&amp;q=Acme%20%26%20Sons');
+    expect(result.body).not.toContain('No organizations match this search.');
+    expect(result.body).not.toContain('Page 2 of 1');
+  });
+
+  it.each([
+    { page: 1, pages: 3, previous: false, next: true },
+    { page: 2, pages: 3, previous: true, next: true },
+    { page: 3, pages: 3, previous: true, next: false },
+    { page: 40, pages: 41, previous: true, next: false },
+    { page: 1, pages: 1, previous: false, next: false },
+  ])('navigates bounded directory page $page of $pages while preserving search', pagination => {
+    const result = render(OrganizationsPage, {
+      props: {
+        data: {
+          operatorName: 'Operator',
+          search: 'Acme & Sons',
+          directory: {
+            organizations: [],
+            pagination: { pageSize: 25, total: pagination.pages * 25, ...pagination },
+          },
+        },
+        form: null,
+        params: {},
+      },
+    });
+    expect(result.body.includes('Previous')).toBe(pagination.previous);
+    expect(result.body.includes('Next')).toBe(pagination.next);
+    if (pagination.previous)
+      expect(result.body).toContain(`?page=${pagination.page - 1}&amp;q=Acme%20%26%20Sons`);
+    if (pagination.next)
+      expect(result.body).toContain(`?page=${pagination.page + 1}&amp;q=Acme%20%26%20Sons`);
+  });
+
   it('renders browser-safe entitlement and workspace summaries', () => {
     const result = render(OrganizationsPage, {
       props: {

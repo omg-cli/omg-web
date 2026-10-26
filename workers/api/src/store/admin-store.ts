@@ -1,4 +1,5 @@
 import { Effect } from 'effect';
+import { TIER_FEATURES } from '../api';
 
 import {
   AdminActivityRowSchema,
@@ -466,12 +467,27 @@ export const updateUser = (
   input: UpdateUserInput
 ): Effect.Effect<UpdateUserResult, AdminStoreError> =>
   Effect.gen(function* () {
+    const maxMachines =
+      input.tier === undefined || input.tier === 'enterprise'
+        ? null
+        : TIER_FEATURES[input.tier].max_machines;
     const updatedRow = yield* Effect.tryPromise({
       try: () =>
         statement(
           db,
-          'UPDATE licenses SET tier = COALESCE(?, tier), status = COALESCE(?, status), updated_at = CURRENT_TIMESTAMP WHERE customer_id = ? RETURNING id',
-          [input.tier ?? null, input.status ?? null, input.userId]
+          `UPDATE licenses SET tier = COALESCE(?, tier), status = COALESCE(?, status),
+             max_seats = CASE WHEN ? != tier THEN COALESCE(?, max_seats) ELSE max_seats END,
+             max_machines = CASE WHEN ? != tier THEN COALESCE(?, max_machines) ELSE max_machines END,
+             updated_at = CURRENT_TIMESTAMP WHERE customer_id = ? RETURNING id`,
+          [
+            input.tier ?? null,
+            input.status ?? null,
+            input.tier ?? null,
+            maxMachines,
+            input.tier ?? null,
+            maxMachines,
+            input.userId,
+          ]
         ).first(),
       catch: fail('updateUser'),
     });

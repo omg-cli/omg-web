@@ -55,7 +55,7 @@
               ></tr
             ></thead
           ><tbody>
-            {#each feed.events as event (`${event.timestamp}:${event.createdAt}:${event.eventType}:${event.eventName}:${event.platform}`)}<tr
+            {#each feed.events as event (event.eventKey)}<tr
                 ><td>{event.createdAt}</td><td>{formatProductLabel(event.eventName)}</td><td
                   >{formatProductLabel(event.eventType)}</td
                 ><td>{formatProductLabel(event.platform)}</td><td>{event.version}</td><td

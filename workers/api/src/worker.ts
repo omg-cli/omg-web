@@ -11,7 +11,6 @@ import {
   errorResponse,
   enforceRateLimit,
   getAuthToken,
-  rateLimitClientIp,
 } from './api';
 import { InstallsBadgeRowSchema, readOptionalExtraRow } from './contracts/d1-extras';
 import { casesHandled } from './prelude';
@@ -207,6 +206,13 @@ function handleAdminCustomerTagsRoute(
  * search terms) so repeated probing of admin surfaces is detectable in Worker
  * logs even when Sentry is unconfigured.
  */
+async function rateLimitTokenKey(request: Request): Promise<string> {
+  const token = getAuthToken(request);
+  return token === null || token.length === 0 || token.length > 256
+    ? 'invalid'
+    : hashSessionToken(token);
+}
+
 async function enforceSessionRouteRateLimit(request: Request, env: Env): Promise<Response | null> {
   const clientIp = request.headers.get('CF-Connecting-IP');
   if (clientIp !== null) {
@@ -216,11 +222,7 @@ async function enforceSessionRouteRateLimit(request: Request, env: Env): Promise
     }
   }
 
-  const token = getAuthToken(request);
-  const tokenKey =
-    token === null || token.length === 0 || token.length > 256
-      ? 'invalid'
-      : await hashSessionToken(token);
+  const tokenKey = await rateLimitTokenKey(request);
   return enforceRateLimit(env.API_RATE_LIMITER, `session_token:${tokenKey}`);
 }
 
@@ -295,9 +297,12 @@ export default Sentry.withSentry(
           return errorResponse('Billing is not enabled', 404);
         }
         if (route.authentication === 'admin-session' || route.path.startsWith('/api/admin/')) {
+          const clientIp = request.headers.get('CF-Connecting-IP');
           const limited = await enforceRateLimit(
             env.ADMIN_RATE_LIMITER,
-            `admin:${rateLimitClientIp(request)}`
+            clientIp === null
+              ? `admin_token:${await rateLimitTokenKey(request)}`
+              : `admin:${clientIp}`
           );
           if (limited !== null) {
             return limited;

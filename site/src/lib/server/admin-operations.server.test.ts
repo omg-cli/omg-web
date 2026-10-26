@@ -27,7 +27,8 @@ class OperationsServiceStub {
     private readonly exportResponse: () => Response = () =>
       new Response('created_at,action\n2026-08-30,auth.login\n', {
         headers: { 'Content-Type': 'text/csv' },
-      })
+      }),
+    private readonly firehoseIds: ReadonlyArray<string> = ['private-event-id']
   ) {}
 
   async fetch(request: Request): Promise<Response> {
@@ -56,22 +57,20 @@ class OperationsServiceStub {
     }
     if (url.pathname === '/api/admin/firehose' || url.pathname === '/api/internal/admin/firehose') {
       return Response.json({
-        events: [
-          {
-            id: 'private-event-id',
-            event_type: 'command',
-            event_name: 'install',
-            properties: { machine_id: 'private-machine-id' },
-            timestamp: '2026-08-30T12:00:00.000Z',
-            session_id: 'private-session-id',
-            machine_id: 'private-machine-id',
-            version: '1.4.0',
-            platform: 'linux',
-            duration_ms: 120,
-            created_at: '2026-08-30 12:00:00',
-          },
-        ],
-        count: 1,
+        events: this.firehoseIds.map(id => ({
+          id,
+          event_type: 'command',
+          event_name: 'install',
+          properties: { machine_id: 'private-machine-id' },
+          timestamp: '2026-08-30T12:00:00.000Z',
+          session_id: 'private-session-id',
+          machine_id: 'private-machine-id',
+          version: '1.4.0',
+          platform: 'linux',
+          duration_ms: 120,
+          created_at: '2026-08-30 12:00:00',
+        })),
+        count: this.firehoseIds.length,
         timestamp: '2026-08-30T12:00:01.000Z',
       });
     }
@@ -130,6 +129,7 @@ describe('admin operations service', () => {
     );
 
     expect(value.events[0]).toEqual({
+      eventKey: expect.stringMatching(/^[a-f0-9]{64}$/u),
       eventType: 'command',
       eventName: 'install',
       timestamp: '2026-08-30T12:00:00.000Z',
@@ -140,6 +140,20 @@ describe('admin operations service', () => {
     });
     expect(JSON.stringify(value)).not.toMatch(/private-(?:event|machine|session)-id/u);
     expect(JSON.stringify(value)).not.toContain('properties');
+  });
+
+  it('assigns stable distinct opaque keys to rows with identical public fields', async () => {
+    const service = new OperationsServiceStub(undefined, ['private-event-id', 'second-private-id']);
+    const initial = await Effect.runPromise(
+      loadAdminFirehose(identity, environment(service), null)
+    );
+    const polled = await Effect.runPromise(loadInternalAdminFirehose(environment(service), null));
+    expect(new Set(initial.events.map(event => event.eventKey)).size).toBe(2);
+    expect(polled.events.map(event => event.eventKey)).toEqual(
+      initial.events.map(event => event.eventKey)
+    );
+    expect(JSON.stringify(initial)).not.toContain('private-id');
+    expect(JSON.stringify(initial)).not.toContain('private-event-id');
   });
 
   it('polls through the internal secret without minting a Worker session', async () => {
