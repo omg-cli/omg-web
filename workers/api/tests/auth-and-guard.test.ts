@@ -342,6 +342,71 @@ describe('POST /api/auth/verify-code', () => {
     await env.DB.prepare(`DELETE FROM auth_codes WHERE email = ?`).bind(TEST_EMAIL).run();
   });
 
+  it('repairs partial provisioning after a fresh OTP login', async () => {
+    const code = await sendCodeWithTestMailer();
+    await env.DB.prepare(
+      `CREATE TRIGGER reject_otp_license BEFORE INSERT ON licenses
+       BEGIN SELECT RAISE(ABORT, 'license store unavailable'); END`
+    ).run();
+    try {
+      const context = createExecutionContext();
+      const response = await worker.fetch(
+        postJson('/api/auth/verify-code', JSON.stringify({ email: TEST_EMAIL, code })),
+        env,
+        context
+      );
+      await waitOnExecutionContext(context);
+      expect(response.status).toBe(500);
+      expect(
+        await env.DB.prepare('SELECT id FROM customers WHERE email = ?').bind(TEST_EMAIL).first()
+      ).not.toBeNull();
+    } finally {
+      await env.DB.prepare('DROP TRIGGER reject_otp_license').run();
+    }
+    const retryCode = await sendCodeWithTestMailer('654321');
+    const context = createExecutionContext();
+    const response = await worker.fetch(
+      postJson('/api/auth/verify-code', JSON.stringify({ email: TEST_EMAIL, code: retryCode })),
+      env,
+      context
+    );
+    await waitOnExecutionContext(context);
+    expect(response.status).toBe(200);
+    const licenses = await env.DB.prepare(
+      `SELECT l.tier, l.status, l.max_seats FROM licenses l
+       JOIN customers c ON c.id = l.customer_id WHERE c.email = ?`
+    )
+      .bind(TEST_EMAIL)
+      .all();
+    expect(licenses.results).toEqual([{ tier: 'free', status: 'active', max_seats: 1 }]);
+  });
+
+  it('preserves a paid license through OTP login', async () => {
+    await env.DB.prepare("INSERT INTO customers (id, email, tier) VALUES ('otp-paid', ?, 'pro')")
+      .bind(TEST_EMAIL)
+      .run();
+    await env.DB.prepare(
+      `INSERT INTO licenses (id, customer_id, license_key, tier, status, max_seats)
+       VALUES ('otp-paid-license', 'otp-paid', 'otp-paid-key', 'pro', 'cancelled', 7)`
+    ).run();
+    const code = await sendCodeWithTestMailer();
+    const context = createExecutionContext();
+    const response = await worker.fetch(
+      postJson('/api/auth/verify-code', JSON.stringify({ email: TEST_EMAIL, code })),
+      env,
+      context
+    );
+    await waitOnExecutionContext(context);
+    expect(response.status).toBe(200);
+    expect(
+      await env.DB.prepare(
+        'SELECT license_key, tier, status, max_seats FROM licenses WHERE customer_id = ?'
+      )
+        .bind('otp-paid')
+        .first()
+    ).toEqual({ license_key: 'otp-paid-key', tier: 'pro', status: 'cancelled', max_seats: 7 });
+  });
+
   it('returns 401 for an unknown code', async () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(
@@ -779,35 +844,53 @@ describe('admin handler authorization', () => {
     expect(response.status).toBe(429);
   });
 
-  it('updates a customer license through one returning mutation', async () => {
-    await env.DB.prepare(
-      `INSERT INTO licenses (id, customer_id, license_key, tier, status, max_machines, max_seats)
-       VALUES ('admin-update-license', ?, 'admin-update-key', 'free', 'active', 1, 1)`
-    )
-      .bind(userCustomerId)
-      .run();
+  it.each([
+    ['free', 1, 'pro', 'cancelled', 'pro', 3],
+    ['free', 1, 'team', 'active', 'team', 10],
+    ['team', 10, 'free', 'active', 'free', 1],
+    ['enterprise', 42, undefined, 'cancelled', 'enterprise', 42],
+    ['team', 17, 'team', 'cancelled', 'team', 17],
+    ['team', 17, 'enterprise', 'active', 'enterprise', 17],
+    ['enterprise', 42, 'pro', 'active', 'pro', 3],
+  ] as const)(
+    'updates %s to %s with matching standard limits and preserved custom limits',
+    async (initialTier, initialLimit, tier, status, expectedTier, expectedLimit) => {
+      await env.DB.prepare(
+        `INSERT INTO licenses (id, customer_id, license_key, tier, status, max_machines, max_seats)
+       VALUES ('admin-update-license', ?, 'admin-update-key', ?, 'active', ?, ?)`
+      )
+        .bind(userCustomerId, initialTier, initialLimit, initialLimit)
+        .run();
 
-    const context = createExecutionContext();
-    const response = await worker.fetch(
-      new Request('http://localhost/api/admin/user', {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: userCustomerId, tier: 'pro', status: 'cancelled' }),
-      }),
-      env,
-      context
-    );
-    await waitOnExecutionContext(context);
+      const context = createExecutionContext();
+      const response = await worker.fetch(
+        new Request('http://localhost/api/admin/user', {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: userCustomerId, tier, status }),
+        }),
+        env,
+        context
+      );
+      await waitOnExecutionContext(context);
 
-    expect(response.status).toBe(200);
-    const license = await env.DB.prepare(`SELECT tier, status FROM licenses WHERE id = ?`)
-      .bind('admin-update-license')
-      .first<{ tier: string; status: string }>();
-    expect(license).toEqual({ tier: 'pro', status: 'cancelled' });
-  });
+      expect(response.status).toBe(200);
+      const license = await env.DB.prepare(
+        `SELECT tier, status, max_seats, max_machines FROM licenses WHERE id = ?`
+      )
+        .bind('admin-update-license')
+        .first();
+      expect(license).toEqual({
+        tier: expectedTier,
+        status,
+        max_seats: expectedLimit,
+        max_machines: expectedLimit,
+      });
+    }
+  );
 
   it('accepts every note type offered by the admin customer workspace', async () => {
     const context = createExecutionContext();

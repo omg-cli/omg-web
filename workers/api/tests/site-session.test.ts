@@ -270,6 +270,69 @@ describe('POST /api/internal/site-session', () => {
     expect(licenseCount.count).toBe(1);
   });
 
+  it('repairs a license insert failure on concurrent session retries', async () => {
+    const body = JSON.stringify({ email: NON_ADMIN_EMAIL, role: 'user' });
+    await env.DB.prepare(
+      `CREATE TRIGGER reject_site_license BEFORE INSERT ON licenses
+       BEGIN SELECT RAISE(ABORT, 'license store unavailable'); END`
+    ).run();
+    try {
+      const context = createExecutionContext();
+      const response = await worker.fetch(createSessionRequest(TEST_SECRET, body), env, context);
+      await waitOnExecutionContext(context);
+      expect(response.status).toBe(500);
+      expect(
+        await env.DB.prepare('SELECT id FROM customers WHERE email = ?')
+          .bind(NON_ADMIN_EMAIL)
+          .first()
+      ).not.toBeNull();
+    } finally {
+      await env.DB.prepare('DROP TRIGGER reject_site_license').run();
+    }
+
+    const responses = await Promise.all(
+      [0, 1].map(async () => {
+        const context = createExecutionContext();
+        const response = await worker.fetch(createSessionRequest(TEST_SECRET, body), env, context);
+        await waitOnExecutionContext(context);
+        return response;
+      })
+    );
+    expect(responses.map(response => response.status)).toEqual([200, 200]);
+    const licenses = await env.DB.prepare(
+      `SELECT l.tier, l.status, l.max_seats FROM licenses l
+       JOIN customers c ON c.id = l.customer_id WHERE c.email = ?`
+    )
+      .bind(NON_ADMIN_EMAIL)
+      .all();
+    expect(licenses.results).toEqual([{ tier: 'free', status: 'active', max_seats: 1 }]);
+  });
+
+  it('preserves an existing paid license when minting a session', async () => {
+    await env.DB.prepare("INSERT INTO customers (id, email, tier) VALUES ('paid-cust', ?, 'team')")
+      .bind(NON_ADMIN_EMAIL)
+      .run();
+    await env.DB.prepare(
+      `INSERT INTO licenses (id, customer_id, license_key, tier, status, max_seats)
+       VALUES ('paid-license', 'paid-cust', 'paid-key', 'team', 'active', 17)`
+    ).run();
+    const context = createExecutionContext();
+    const response = await worker.fetch(
+      createSessionRequest(TEST_SECRET, JSON.stringify({ email: NON_ADMIN_EMAIL, role: 'user' })),
+      env,
+      context
+    );
+    await waitOnExecutionContext(context);
+    expect(response.status).toBe(200);
+    expect(
+      await env.DB.prepare(
+        'SELECT license_key, tier, max_seats FROM licenses WHERE customer_id = ?'
+      )
+        .bind('paid-cust')
+        .first()
+    ).toEqual({ license_key: 'paid-key', tier: 'team', max_seats: 17 });
+  });
+
   it('creates a session for a new admin customer', async () => {
     const ctx = createExecutionContext();
     const response = await worker.fetch(
