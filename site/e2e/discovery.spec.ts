@@ -1,5 +1,26 @@
 import { expect, test } from '@playwright/test';
 
+test('security headers cover dynamic and prerendered pages for GET and HEAD', async ({
+  request,
+}) => {
+  for (const path of ['/', '/docs/installation/', '/guides/node-npm-pnpm/']) {
+    for (const method of ['GET', 'HEAD']) {
+      const response = await request.fetch(path, { method });
+      expect(response.status(), `${method} ${path}`).toBe(200);
+      const headers = response.headers();
+      expect(headers['content-security-policy'], path).toContain("frame-ancestors 'none'");
+      expect(headers['strict-transport-security'], path).toBe(
+        'max-age=31536000; includeSubDomains; preload'
+      );
+      expect(headers['x-content-type-options'], path).toBe('nosniff');
+      expect(headers['x-frame-options'], path).toBe('DENY');
+      expect(headers['referrer-policy'], path).toBe('strict-origin-when-cross-origin');
+      expect(headers['permissions-policy'], path).toBe('geolocation=(), microphone=(), camera=()');
+      expect(headers['cross-origin-opener-policy'], path).toBe('same-origin');
+    }
+  }
+});
+
 test('desktop header links align vertically with the brand and account actions', async ({
   page,
 }) => {

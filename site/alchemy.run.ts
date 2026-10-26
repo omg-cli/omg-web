@@ -61,6 +61,7 @@ export const Website = Cloudflare.Website.SvelteKit(
       },
       memo: {
         include: [
+          '_headers',
           'src/**',
           'static/**',
           '../shared/**',
