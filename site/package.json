@@ -48,15 +48,15 @@
     "svelte": "5.57.0",
     "svelte-check": "4.7.6",
     "typescript": "6.0.3",
-    "vite": "8.2.2",
-    "vitest": "4.1.11"
+    "vite": "8.2.4",
+    "vitest": "4.1.12"
   },
   "overrides": {
     "@hono/node-server": "2.1.1",
     "better-auth": {
       "@sveltejs/kit": "3.0.0-next.25"
     },
-    "hono": "4.13.7",
+    "hono": "4.13.11",
     "lodash": "4.18.1",
     "valibot": "1.5.0",
     "devalue": "5.9.4",
