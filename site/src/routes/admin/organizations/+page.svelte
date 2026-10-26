@@ -2,6 +2,7 @@
   import { formatTimestamp } from '../../dashboard/dashboard-view';
   import type { PageProps } from './$types';
   let { data }: PageProps = $props();
+  const lastPage = $derived(Math.min(40, data.directory.pagination.pages));
 </script>
 
 <svelte:head
@@ -66,9 +67,45 @@
       </table>
     </div>
   {/if}
+  {#if lastPage > 1}
+    <nav class="pagination" aria-label="Organization directory pages">
+      {#if data.directory.pagination.page > 1}
+        <a
+          href={`?page=${data.directory.pagination.page - 1}${data.search ? `&q=${encodeURIComponent(data.search)}` : ''}`}
+          >← Previous</a
+        >
+      {/if}
+      <span>Page {data.directory.pagination.page} of {lastPage}</span>
+      {#if data.directory.pagination.page < lastPage}
+        <a
+          href={`?page=${data.directory.pagination.page + 1}${data.search ? `&q=${encodeURIComponent(data.search)}` : ''}`}
+          >Next →</a
+        >
+      {/if}
+    </nav>
+  {/if}
+  {#if data.directory.pagination.pages > lastPage}
+    <p class="result-count">
+      Showing the first 1,000 results. Refine your search to find more organizations.
+    </p>
+  {/if}
 </main>
 
 <style>
+  .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+
+  .pagination a {
+    color: var(--signal);
+  }
+
   .directory-shell {
     padding: clamp(1rem, 4vw, 3rem);
   }

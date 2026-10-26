@@ -12,6 +12,7 @@ const Text = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(256))
 const LivePayloadSchema = Schema.Struct({
   events: Schema.Array(
     Schema.Struct({
+      eventKey: Schema.String.check(Schema.isPattern(/^[a-f0-9]{64}$/u)),
       eventType: Text,
       eventName: Text,
       timestamp: Text,
@@ -65,10 +66,6 @@ export function decodeLivePayloadResponse(
   );
 }
 
-function eventKey(event: LiveEvent): string {
-  return `${event.timestamp}\u0000${event.createdAt}\u0000${event.eventType}\u0000${event.eventName}\u0000${event.platform}`;
-}
-
 /** Browser-side owner for bounded, visibility-aware live-feed polling. */
 export class AdminLiveFeed {
   events = $state<Array<LiveEvent>>([]);
@@ -93,6 +90,7 @@ export class AdminLiveFeed {
         this.state = 'paused';
         this.#clearTimer();
         this.#controller?.abort();
+        this.#controller = null;
       } else {
         this.state = 'current';
         this.#schedule(0);
@@ -105,6 +103,7 @@ export class AdminLiveFeed {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       this.#clearTimer();
       this.#controller?.abort();
+      this.#controller = null;
     };
   }
 
@@ -133,19 +132,28 @@ export class AdminLiveFeed {
       if (!response.ok) throw new Error('Live feed request rejected');
       const decoded = await Effect.runPromiseExit(decodeLivePayloadResponse(response));
       if (Exit.isFailure(decoded)) throw new LiveResponseInvalid();
+      if (controller.signal.aborted || this.#stopped || this.#controller !== controller) return;
       const merged = new Map<string, LiveEvent>();
-      for (const event of [...decoded.value.events, ...this.events])
-        merged.set(eventKey(event), event);
+      for (const event of [...this.events, ...decoded.value.events])
+        merged.set(event.eventKey, event);
       this.events = Array.from(merged.values())
-        .toSorted((left, right) => right.createdAt.localeCompare(left.createdAt))
+        .toSorted(
+          (left, right) =>
+            right.createdAt.localeCompare(left.createdAt) ||
+            right.timestamp.localeCompare(left.timestamp) ||
+            right.eventKey.localeCompare(left.eventKey)
+        )
         .slice(0, EVENT_LIMIT);
       this.refreshedAt = decoded.value.refreshedAt;
       this.state = 'current';
     } catch {
-      if (!controller.signal.aborted) this.state = 'unavailable';
+      if (!controller.signal.aborted && !this.#stopped && this.#controller === controller)
+        this.state = 'unavailable';
     } finally {
-      if (this.#controller === controller) this.#controller = null;
-      this.#schedule(POLL_INTERVAL_MS);
+      if (this.#controller === controller) {
+        this.#controller = null;
+        this.#schedule(POLL_INTERVAL_MS);
+      }
     }
   }
 }

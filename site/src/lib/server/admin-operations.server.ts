@@ -40,6 +40,7 @@ const AuditSchema = Schema.Struct({
 const FirehoseSchema = Schema.Struct({
   events: Schema.Array(
     Schema.Struct({
+      id: NonEmptyText,
       event_type: NonEmptyText,
       event_name: NonEmptyText,
       timestamp: NonEmptyText,
@@ -74,7 +75,7 @@ export function parseFirehoseSince(value: string | null): string | null | undefi
 }
 
 type AdminAudit = ReturnType<typeof projectAudit>;
-type AdminFirehose = ReturnType<typeof projectFirehose>;
+type AdminFirehose = Effect.Success<ReturnType<typeof projectFirehose>>;
 
 function projectAudit(payload: Schema.Schema.Type<typeof AuditSchema>) {
   return {
@@ -89,19 +90,30 @@ function projectAudit(payload: Schema.Schema.Type<typeof AuditSchema>) {
 }
 
 function projectFirehose(payload: Schema.Schema.Type<typeof FirehoseSchema>) {
-  return {
-    events: payload.events.map(event => ({
-      eventType: event.event_type,
-      eventName: event.event_name,
-      timestamp: event.timestamp,
-      version: event.version,
-      platform: event.platform,
-      durationMs: event.duration_ms,
-      createdAt: event.created_at,
-    })),
-    count: payload.count,
-    refreshedAt: payload.timestamp,
-  };
+  return Effect.tryPromise({
+    try: async () => ({
+      events: await Promise.all(
+        payload.events.map(async event => {
+          const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(event.id));
+          return {
+            eventKey: Array.from(new Uint8Array(digest), byte =>
+              byte.toString(16).padStart(2, '0')
+            ).join(''),
+            eventType: event.event_type,
+            eventName: event.event_name,
+            timestamp: event.timestamp,
+            version: event.version,
+            platform: event.platform,
+            durationMs: event.duration_ms,
+            createdAt: event.created_at,
+          };
+        })
+      ),
+      count: payload.count,
+      refreshedAt: payload.timestamp,
+    }),
+    catch: cause => new LicensingSummaryInvalidPayload('admin-firehose', cause),
+  });
 }
 
 type AdminOperationsError = LicensingSummaryError | AdminOverviewForbidden;
@@ -146,7 +158,7 @@ export function loadAdminFirehose(
       RESPONSE_LIMIT,
       FirehoseSchema
     );
-    return projectFirehose(payload);
+    return yield* projectFirehose(payload);
   });
 }
 
@@ -165,7 +177,7 @@ export function loadInternalAdminFirehose(
     RESPONSE_LIMIT,
     FirehoseSchema,
     trustedClientIp
-  ).pipe(Effect.map(projectFirehose));
+  ).pipe(Effect.flatMap(projectFirehose));
 }
 
 export const ADMIN_EXPORTS = {

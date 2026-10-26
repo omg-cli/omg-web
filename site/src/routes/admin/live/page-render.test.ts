@@ -5,6 +5,31 @@ import LivePage from './+page.svelte';
 import { decodeLivePayloadResponse } from './admin-live.svelte';
 
 describe('operator live page', () => {
+  it.each(['', 'private-event-id', 'a'.repeat(63)])(
+    'rejects invalid opaque event key %s',
+    async eventKey => {
+      const response = Response.json({
+        events: [
+          {
+            eventKey,
+            eventType: 'command',
+            eventName: 'install',
+            timestamp: '2026-08-30T12:00:00Z',
+            version: '1.4.0',
+            platform: 'linux',
+            durationMs: 120,
+            createdAt: '2026-08-30 12:00:00',
+          },
+        ],
+        count: 1,
+        refreshedAt: '2026-08-30T12:00:01Z',
+      });
+      expect(Exit.isFailure(await Effect.runPromiseExit(decodeLivePayloadResponse(response)))).toBe(
+        true
+      );
+    }
+  );
+
   it('rejects a declared response larger than the browser boundary', async () => {
     const response = new Response('{}', { headers: { 'Content-Length': '524289' } });
 
@@ -23,6 +48,7 @@ describe('operator live page', () => {
 
   it('rejects more events than the retained browser limit', async () => {
     const event = {
+      eventKey: 'a'.repeat(64),
       eventType: 'command',
       eventName: 'install',
       timestamp: '2026-08-30T12:00:00.000Z',
@@ -50,6 +76,7 @@ describe('operator live page', () => {
           live: {
             events: [
               {
+                eventKey: 'a'.repeat(64),
                 eventType: 'command',
                 eventName: 'install',
                 timestamp: '2026-08-30T12:00:00.000Z',

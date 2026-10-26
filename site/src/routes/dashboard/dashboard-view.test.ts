@@ -88,6 +88,20 @@ describe('organization audit labels', () => {
 });
 
 describe('formatTimestamp', () => {
+  it('treats stored SQL timestamps as UTC while preserving explicit ISO offsets', () => {
+    const previous = process.env['TZ'];
+    process.env['TZ'] = 'America/Chicago';
+    try {
+      expect(formatTimestamp('2026-08-28 12:00:00')).toBe('Aug 28, 2026, 12:00 PM UTC');
+      expect(formatTimestamp('2026-08-28T12:00:00')).toBe('Aug 28, 2026, 12:00 PM UTC');
+      expect(formatTimestamp('2026-08-28T12:00:00-05:00')).toBe('Aug 28, 2026, 5:00 PM UTC');
+      expect(formatTimestamp('2026-08-28T12:00:00.000Z')).toBe('Aug 28, 2026, 12:00 PM UTC');
+    } finally {
+      if (previous === undefined) delete process.env['TZ'];
+      else process.env['TZ'] = previous;
+    }
+  });
+
   it('formats an ISO timestamp in UTC', () => {
     expect(formatTimestamp('2026-02-14T09:30:00.000Z')).toBe('Feb 14, 2026, 9:30 AM UTC');
   });
