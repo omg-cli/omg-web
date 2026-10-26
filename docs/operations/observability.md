@@ -251,8 +251,13 @@ Never mutate production bindings or sampling settings during an audit-only task.
 
 `GET /health/scheduled` reads durable D1 task receipts and returns uncached HTTP
 200 only when documentation aggregation completed within twenty minutes and no
-task has a pending or failed attempt. Missing state, future success timestamps,
-stale completion, and unreadable D1 return sanitized HTTP 503. Each task records
+task has a failed or expired pending attempt. A pending task with a previous
+success newer than its last failure remains healthy for at most sixty seconds
+from its latest attempt. This allowance is shorter than the five-minute Cron
+interval; overlapping starts retain the latest-attempt window. Missing state,
+future success or attempt timestamps, stale completion, and unreadable D1 return
+sanitized HTTP 503. Health uses D1 query execution time, so a completion during a
+slow read does not appear to be in the future. Each task records
 a pending UUID before execution. Only that attempt can complete its receipt;
 a failure also records its completion time, so overlapping work cannot hide a
 later failure. If D1 cannot admit an attempt, the task does not run and the

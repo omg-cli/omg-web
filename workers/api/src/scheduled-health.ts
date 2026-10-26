@@ -52,18 +52,22 @@ export async function failScheduledTaskHealth(db: D1Database, task: string): Pro
 
 export async function handleScheduledHealth(env: Pick<Env, 'DB'>): Promise<Response> {
   try {
-    const now = Date.now();
     const row = await env.DB.prepare(
-      `SELECT CASE WHEN EXISTS (
-         SELECT 1 FROM scheduled_task_health
-         WHERE task = 'docs_analytics.aggregate' AND last_attempt_succeeded = 1
-           AND last_success_at >= ? AND last_success_at <= ?
+      `WITH clock AS (SELECT round(unixepoch('subsec') * 1000) AS now)
+       SELECT CASE WHEN EXISTS (
+         SELECT 1 FROM scheduled_task_health, clock
+         WHERE task = 'docs_analytics.aggregate'
+           AND last_success_at BETWEEN clock.now - 20 * 60 * 1000 AND clock.now
        ) AND NOT EXISTS (
-         SELECT 1 FROM scheduled_task_health WHERE last_attempt_succeeded = 0
+         SELECT 1 FROM scheduled_task_health, clock
+         WHERE last_success_at IS NULL OR last_success_at > clock.now
+           OR last_attempt_at > clock.now
+           OR (last_attempt_succeeded = 0 AND (
+             last_failure_at >= last_success_at
+             OR last_attempt_at < clock.now - 60 * 1000
+           ))
        ) THEN 1 ELSE 0 END AS healthy`
-    )
-      .bind(now - 20 * 60_000, now)
-      .first();
+    ).first();
     const { healthy } = Schema.decodeUnknownSync(HealthRow)(row);
     return jsonResponse(
       { status: healthy === 1 ? 'ok' : 'unavailable' },
