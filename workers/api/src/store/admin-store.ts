@@ -467,7 +467,6 @@ export const updateUser = (
   input: UpdateUserInput
 ): Effect.Effect<UpdateUserResult, AdminStoreError> =>
   Effect.gen(function* () {
-    // Enterprise limits are negotiated; same-tier edits preserve custom grants.
     const maxMachines =
       input.tier === undefined || input.tier === 'enterprise'
         ? null

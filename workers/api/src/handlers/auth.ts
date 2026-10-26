@@ -342,7 +342,6 @@ function findOrCreateCustomer(
       );
     }
     const adoptedRow = customer;
-    // Ensure retries repair a customer committed before its license insert failed.
     // Only the winning insert records user.created; losers adopt the same license.
     const insertedLicense = yield* Effect.tryPromise({
       try: () =>

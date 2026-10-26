@@ -101,7 +101,6 @@ function mintSiteSession(
       customer = adopted;
     }
     const customerId = customer.id;
-    // Ensure retries repair a customer committed before its license insert failed.
     const insertedLicense = yield* storeOperation('insertLicense', () =>
       env.DB.prepare(
         `INSERT INTO licenses (id, customer_id, license_key, tier, status, max_seats)
