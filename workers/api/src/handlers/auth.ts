@@ -307,38 +307,42 @@ function findOrCreateCustomer(
             )
       )
     );
-    if (existing !== null) {
-      return existing;
-    }
-    // Unique constraint on email + ON CONFLICT DO NOTHING closes the
-    // find-then-insert race; miniflare/D1 .run() meta may not carry `changes`,
-    // so adoption is detected by re-selecting, never by meta.
-    const customerId = brandGeneratedId(CustomerId, crypto.randomUUID());
-    yield* Effect.tryPromise({
-      try: () =>
-        db
-          .prepare(
-            `INSERT INTO customers (id, email, tier) VALUES (?, ?, 'free')
+    let customer = existing;
+    if (customer === null) {
+      // Unique constraint on email + ON CONFLICT DO NOTHING closes the
+      // find-then-insert race; miniflare/D1 .run() meta may not carry `changes`,
+      // so adoption is detected by re-selecting, never by meta.
+      const customerId = brandGeneratedId(CustomerId, crypto.randomUUID());
+      yield* Effect.tryPromise({
+        try: () =>
+          db
+            .prepare(
+              `INSERT INTO customers (id, email, tier) VALUES (?, ?, 'free')
              ON CONFLICT (email) DO NOTHING`
-          )
-          .bind(customerId, email)
-          .run(),
-      catch: cause => new AuthStoreUnavailable('insertCustomer', cause),
-    });
-    const adoptedRow = yield* Effect.tryPromise({
-      try: () =>
-        db.prepare(`SELECT id, email, company FROM customers WHERE email = ?`).bind(email).first(),
-      catch: cause => new AuthStoreUnavailable('findCustomer', cause),
-    }).pipe(
-      Effect.flatMap(row =>
-        row === null
-          ? Effect.fail(new AuthStoreUnavailable('findCustomer'))
-          : decodeAuthCustomerRow(row).pipe(
-              Effect.mapError(cause => new AuthStoreUnavailable('findCustomer', cause))
             )
-      )
-    );
-    // The unique customer index arbitrates concurrent auth and BFF provisioning.
+            .bind(customerId, email)
+            .run(),
+        catch: cause => new AuthStoreUnavailable('insertCustomer', cause),
+      });
+      customer = yield* Effect.tryPromise({
+        try: () =>
+          db
+            .prepare(`SELECT id, email, company FROM customers WHERE email = ?`)
+            .bind(email)
+            .first(),
+        catch: cause => new AuthStoreUnavailable('findCustomer', cause),
+      }).pipe(
+        Effect.flatMap(row =>
+          row === null
+            ? Effect.fail(new AuthStoreUnavailable('findCustomer'))
+            : decodeAuthCustomerRow(row).pipe(
+                Effect.mapError(cause => new AuthStoreUnavailable('findCustomer', cause))
+              )
+        )
+      );
+    }
+    const adoptedRow = customer;
+    // Ensure retries repair a customer committed before its license insert failed.
     // Only the winning insert records user.created; losers adopt the same license.
     const insertedLicense = yield* Effect.tryPromise({
       try: () =>

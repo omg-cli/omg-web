@@ -15,7 +15,7 @@ import {
   SiteSessionRequestSchema,
   type SiteSessionWorkerResponse,
 } from '../../../../shared/site-session';
-import { AdminUnauthorizedError, requireInternalSecret } from '../admin-secret';
+import { requireInternalSecret } from '../admin-secret';
 import { casesHandled } from '../prelude';
 import { deriveSiteSessionToken, hashSessionToken } from '../session-token';
 
@@ -30,11 +30,25 @@ class CustomerStoreUnavailable extends Error {
       | 'syncRole'
       | 'revokeSessionsOnRoleChange'
       | 'deriveSessionToken'
+      | 'deriveRateLimitKey'
       | 'insertSession',
     override readonly cause?: unknown
   ) {
     super(`Customer store unavailable during ${operation}`);
   }
+}
+
+class SiteSessionRateLimitError extends Error {
+  readonly _tag = 'SiteSessionRateLimitError';
+  constructor(readonly response: Response) {
+    super('Site session rate limit rejected');
+  }
+}
+
+async function enforceSiteSessionRateLimit(env: Env, key: string): Promise<Response | null> {
+  const response = await enforceRateLimit(env.API_RATE_LIMITER, key);
+  if (response?.status === 429) response.headers.set('Retry-After', '60');
+  return response;
 }
 
 function storeOperation<A>(
@@ -59,14 +73,17 @@ function mintSiteSession(
   env: Env
 ): Effect.Effect<
   SiteSessionWorkerResponse,
-  AdminUnauthorizedError | InvalidJsonBodyError | CustomerStoreUnavailable
+  InvalidJsonBodyError | CustomerStoreUnavailable | SiteSessionRateLimitError
 > {
   return Effect.gen(function* () {
-    yield* requireInternalSecret(request.headers.get('X-Admin-Secret'), [
-      env.ADMIN_API_SECRET,
-      env.SVELTE_BFF_SECRET,
-    ]);
     const body = yield* decodeJsonBody(request, SiteSessionRequestSchema);
+    const principal = yield* storeOperation('deriveRateLimitKey', () =>
+      hashSessionToken(body.email)
+    );
+    const limited = yield* Effect.promise(() =>
+      enforceSiteSessionRateLimit(env, `internal_site_session:customer:${principal}`)
+    );
+    if (limited !== null) return yield* Effect.fail(new SiteSessionRateLimitError(limited));
     const customerRow = yield* storeOperation('findByEmail', () =>
       env.DB.prepare(`SELECT id, email, admin FROM customers WHERE email = ?`)
         .bind(body.email)
@@ -104,31 +121,24 @@ function mintSiteSession(
         Effect.mapError(cause => new CustomerStoreUnavailable('findByEmail', cause))
       );
       customer = adopted;
-      // The unique customer index arbitrates concurrent auth and BFF provisioning.
-      const insertedLicense = yield* storeOperation('insertLicense', () =>
-        env.DB.prepare(
-          `INSERT INTO licenses (id, customer_id, license_key, tier, status, max_seats)
+    }
+    const customerId = customer.id;
+    // Ensure retries repair a customer committed before its license insert failed.
+    const insertedLicense = yield* storeOperation('insertLicense', () =>
+      env.DB.prepare(
+        `INSERT INTO licenses (id, customer_id, license_key, tier, status, max_seats)
            VALUES (?, ?, ?, 'free', 'active', 1)
            ON CONFLICT (customer_id) DO NOTHING
            RETURNING id`
-        )
-          .bind(crypto.randomUUID(), adopted.id, crypto.randomUUID())
-          .first()
-      );
-      if (insertedLicense !== null) {
-        yield* logAudit(
-          env.DB,
-          adopted.id,
-          'site.session_created',
-          'customer',
-          adopted.id,
-          request
-        );
-      }
+      )
+        .bind(crypto.randomUUID(), customerId, crypto.randomUUID())
+        .first()
+    );
+    if (insertedLicense !== null) {
+      yield* logAudit(env.DB, customerId, 'site.session_created', 'customer', customerId, request);
     }
 
     if (customer.admin !== admin) {
-      const customerId = customer.id;
       yield* storeOperation('syncRole', () =>
         env.DB.prepare(`UPDATE customers SET admin = ? WHERE id = ?`).bind(admin, customerId).run()
       );
@@ -180,17 +190,23 @@ export async function handleCreateSiteSession(request: Request, env: Env): Promi
   if (request.headers.get('X-Internal-Call') !== 'service-binding') {
     return errorResponse('Not found', 404);
   }
-  const limited = await enforceRateLimit(
-    env.API_RATE_LIMITER,
-    `internal_site_session:${rateLimitClientIp(request)}`
+  const authorization = Effect.runSyncExit(
+    requireInternalSecret(request.headers.get('X-Admin-Secret'), [
+      env.ADMIN_API_SECRET,
+      env.SVELTE_BFF_SECRET,
+    ])
   );
-  if (limited !== null) {
-    return limited;
+  if (authorization._tag === 'Failure') {
+    const limited = await enforceSiteSessionRateLimit(
+      env,
+      `internal_site_session:${rateLimitClientIp(request)}`
+    );
+    return limited ?? errorResponse('Unauthorized', 401);
   }
   return respondFromEffect(mintSiteSession(request, env), error => {
     switch (error._tag) {
-      case 'AdminUnauthorizedError':
-        return errorResponse(error.message, 401);
+      case 'SiteSessionRateLimitError':
+        return error.response;
       case 'InvalidJsonBodyError':
         return errorResponse(error.message, 400);
       case 'CustomerStoreUnavailable':
