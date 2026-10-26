@@ -3,6 +3,9 @@
   import type { PageProps } from './$types';
   let { data }: PageProps = $props();
   const lastPage = $derived(Math.min(40, data.directory.pagination.pages));
+  const pageOutOfRange = $derived(
+    data.directory.pagination.total > 0 && data.directory.pagination.page > lastPage
+  );
 </script>
 
 <svelte:head
@@ -31,9 +34,17 @@
   </form>
 
   <p class="result-count">
-    {data.directory.pagination.total} organizations · page {data.directory.pagination.page}
+    {data.directory.pagination.total} organizations
+    {#if !pageOutOfRange}· page {data.directory.pagination.page}{/if}
   </p>
-  {#if data.directory.organizations.length === 0}
+  {#if pageOutOfRange}
+    <p class="empty-state">
+      This page no longer has results.
+      <a href={`?page=1${data.search ? `&q=${encodeURIComponent(data.search)}` : ''}`}
+        >Return to first page</a
+      >
+    </p>
+  {:else if data.directory.organizations.length === 0}
     <p class="empty-state">No organizations match this search.</p>
   {:else}
     <div class="table-scroll" role="region" aria-label="Organization support directory">
@@ -67,7 +78,7 @@
       </table>
     </div>
   {/if}
-  {#if lastPage > 1}
+  {#if lastPage > 1 && !pageOutOfRange}
     <nav class="pagination" aria-label="Organization directory pages">
       {#if data.directory.pagination.page > 1}
         <a
