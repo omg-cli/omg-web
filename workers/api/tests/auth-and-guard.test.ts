@@ -858,6 +858,49 @@ describe('admin handler authorization', () => {
     expect(response.status).toBe(429);
   });
 
+  it('isolates private admin token budgets and still checks administrator privileges', async () => {
+    const keys: string[] = [];
+    env.ADMIN_RATE_LIMITER = {
+      limit: async ({ key }: RateLimitOptions) => {
+        keys.push(key);
+        return { success: true };
+      },
+    };
+    for (const [token, status] of [
+      [adminToken, 200],
+      [userToken, 403],
+      [adminToken, 200],
+    ] as const) {
+      const context = createExecutionContext();
+      const response = await worker.fetch(getPath('/api/admin/health', token), env, context);
+      await waitOnExecutionContext(context);
+      expect(response.status).toBe(status);
+    }
+    expect(keys).toHaveLength(3);
+    expect(keys[0]).not.toBe(keys[1]);
+    expect(keys[2]).toBe(keys[0]);
+    expect(keys.every(key => key.startsWith('admin_token:sha256:v1:'))).toBe(true);
+    expect(keys.join()).not.toContain(adminToken);
+    expect(keys.join()).not.toContain(userToken);
+  });
+
+  it('retains the public IP budget for admin requests with a connecting address', async () => {
+    const keys: string[] = [];
+    env.ADMIN_RATE_LIMITER = {
+      limit: async ({ key }: RateLimitOptions) => {
+        keys.push(key);
+        return { success: true };
+      },
+    };
+    const request = getPath('/api/admin/health', adminToken);
+    request.headers.set('CF-Connecting-IP', '203.0.113.9');
+    const context = createExecutionContext();
+    const response = await worker.fetch(request, env, context);
+    await waitOnExecutionContext(context);
+    expect(response.status).toBe(200);
+    expect(keys).toEqual(['admin:203.0.113.9']);
+  });
+
   it.each([
     ['free', 1, 'pro', 'cancelled', 'pro', 3],
     ['free', 1, 'team', 'active', 'team', 10],
