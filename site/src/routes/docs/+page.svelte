@@ -34,20 +34,17 @@
 
   const commandGroups = [
     {
-      number: '01',
       title: 'Install and manage system packages',
       description:
         'Search, inspect, install, update, and remove packages through the native backend.',
       commands: ['omg search ripgrep', 'omg info ripgrep', 'omg install ripgrep', 'omg update'],
     },
     {
-      number: '02',
       title: 'Manage Node.js, Python, Go, and Rust versions',
       description: 'Install and select language versions without learning another version manager.',
       commands: ['omg use node 22', 'omg use python 3.12', 'omg use rust stable'],
     },
     {
-      number: '03',
       title: 'Capture and compare project environments',
       description:
         'On Arch, Debian, and Ubuntu, capture supported package and runtime state, check drift, and fetch a shared lockfile for comparison.',
@@ -66,7 +63,6 @@
 <main id="main-content" class="docs-shell">
   <header class="docs-hero">
     <div>
-      <p class="page-kicker">Documentation</p>
       <h1>Learn the parts you need.</h1>
     </div>
     <p class="hero-copy">
@@ -121,7 +117,6 @@
           {#each commandGroups as group (group.title)}
             <section class="command-group">
               <div>
-                <span class="group-number">{group.number}</span>
                 <h3>{group.title}</h3>
                 <p>{group.description}</p>
               </div>
@@ -190,26 +185,25 @@
 
 <style>
   .docs-shell {
-    width: min(100%, 90rem);
+    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
     margin-inline: auto;
-    border-inline: 1px solid var(--rule);
   }
 
   .docs-hero {
     display: grid;
     gap: 2.5rem;
-    padding: clamp(5rem, 10vw, 7rem) clamp(1.25rem, 4vw, 3rem);
+    padding: clamp(3rem, 6vw, 5rem) 0;
     border-bottom: 1px solid var(--rule-strong);
   }
 
   .docs-hero h1 {
-    max-width: 11ch;
-    margin: 2rem 0 0;
+    max-width: 17ch;
+    margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(3.75rem, 9vw, 6rem);
+    font-size: clamp(2.5rem, 5vw, 3.75rem);
     font-weight: 650;
-    letter-spacing: -0.075em;
-    line-height: 0.88;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
     text-wrap: balance;
   }
 
@@ -218,7 +212,7 @@
     margin: 0;
     align-self: end;
     color: var(--ink-muted);
-    font-size: 1.125rem;
+    font-size: 1rem;
     line-height: 1.7;
   }
 
@@ -228,14 +222,13 @@
   }
 
   .docs-aside {
-    padding: 1.25rem;
+    padding: 1.25rem 0;
     border-bottom: 1px solid var(--rule);
   }
 
   .section-nav p,
-  .section-nav a,
-  .group-number {
-    font-family: var(--font-mono);
+  .section-nav a {
+    font-family: var(--font-body);
   }
 
   .section-nav p {
@@ -260,9 +253,9 @@
 
   .section-nav a {
     display: block;
-    padding-block: 0.375rem;
+    padding-block: 0.7rem;
     color: var(--ink-muted);
-    font-size: 0.6875rem;
+    font-size: 0.8125rem;
     text-decoration: none;
   }
 
@@ -285,7 +278,7 @@
     font-family: var(--font-display);
     font-size: clamp(2.25rem, 5vw, 2.5rem);
     font-weight: 650;
-    letter-spacing: -0.05em;
+    letter-spacing: -0.035em;
     line-height: 1;
     text-wrap: balance;
   }
@@ -319,8 +312,7 @@
     white-space: pre-wrap;
   }
 
-  .install-command span,
-  .group-number {
+  .install-command span {
     color: var(--signal);
   }
 
@@ -346,16 +338,12 @@
     border-top: 1px solid var(--rule);
   }
 
-  .group-number {
-    font-size: 0.625rem;
-  }
-
   .command-group h3 {
     margin: 0.75rem 0 0;
     font-family: var(--font-display);
     font-size: 1.5rem;
     font-weight: 650;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.035em;
   }
 
   .command-group p {
@@ -374,7 +362,7 @@
 
   .platform-list {
     display: grid;
-    margin: 2rem 0 0;
+    margin: 0;
   }
 
   .platform-list > div {

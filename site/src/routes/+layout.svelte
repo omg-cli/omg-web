@@ -10,6 +10,7 @@
 
   let { children }: { children: Snippet } = $props();
   let isAdminRoute = $derived(page.url.pathname.startsWith('/admin'));
+  let isWorkspaceRoute = $derived(isAdminRoute || page.url.pathname.startsWith('/dashboard'));
 
   afterNavigate(() => trackAnalyticsNavigation());
   $effect(() => {
@@ -26,11 +27,13 @@
   <link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin="anonymous" />
 </svelte:head>
 
-<a class="skip-link" href="#main-content">Skip to content</a>
-{#if !isAdminRoute}
-  <SiteHeader />
-{/if}
-{@render children()}
-{#if !isAdminRoute}
-  <SiteFooter />
-{/if}
+<div class="site-frame" class:workspace-theme={isWorkspaceRoute}>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  {#if !isAdminRoute}
+    <SiteHeader />
+  {/if}
+  {@render children()}
+  {#if !isAdminRoute}
+    <SiteFooter />
+  {/if}
+</div>

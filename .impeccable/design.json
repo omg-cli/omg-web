@@ -1,0 +1,607 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T21:59:05.318986+00:00",
+  "title": "Design System: OMG",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "oklch(15.00% 0.00408 121.56)",
+          "oklch(26.43% 0.00408 121.56)",
+          "oklch(37.86% 0.00408 121.56)",
+          "oklch(49.29% 0.00408 121.56)",
+          "oklch(60.71% 0.00408 121.56)",
+          "oklch(72.14% 0.00408 121.56)",
+          "oklch(83.57% 0.00408 121.56)",
+          "oklch(95.00% 0.00408 121.56)"
+        ]
+      },
+      "paper-raised": {
+        "role": "neutral",
+        "displayName": "Paper raised",
+        "tonalRamp": [
+          "oklch(15.00% 0.00822 121.63)",
+          "oklch(26.43% 0.00822 121.63)",
+          "oklch(37.86% 0.00822 121.63)",
+          "oklch(49.29% 0.00822 121.63)",
+          "oklch(60.71% 0.00822 121.63)",
+          "oklch(72.14% 0.00822 121.63)",
+          "oklch(83.57% 0.00822 121.63)",
+          "oklch(95.00% 0.00822 121.63)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.01180 128.98)",
+          "oklch(26.43% 0.01180 128.98)",
+          "oklch(37.86% 0.01180 128.98)",
+          "oklch(49.29% 0.01180 128.98)",
+          "oklch(60.71% 0.01180 128.98)",
+          "oklch(72.14% 0.01180 128.98)",
+          "oklch(83.57% 0.01180 128.98)",
+          "oklch(95.00% 0.01180 128.98)"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.01667 128.83)",
+          "oklch(26.43% 0.01667 128.83)",
+          "oklch(37.86% 0.01667 128.83)",
+          "oklch(49.29% 0.01667 128.83)",
+          "oklch(60.71% 0.01667 128.83)",
+          "oklch(72.14% 0.01667 128.83)",
+          "oklch(83.57% 0.01667 128.83)",
+          "oklch(95.00% 0.01667 128.83)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "tonalRamp": [
+          "oklch(15.00% 0.01406 124.57)",
+          "oklch(26.43% 0.01406 124.57)",
+          "oklch(37.86% 0.01406 124.57)",
+          "oklch(49.29% 0.01406 124.57)",
+          "oklch(60.71% 0.01406 124.57)",
+          "oklch(72.14% 0.01406 124.57)",
+          "oklch(83.57% 0.01406 124.57)",
+          "oklch(95.00% 0.01406 124.57)"
+        ]
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Rule strong",
+        "tonalRamp": [
+          "oklch(15.00% 0.02215 127.46)",
+          "oklch(26.43% 0.02215 127.46)",
+          "oklch(37.86% 0.02215 127.46)",
+          "oklch(49.29% 0.02215 127.46)",
+          "oklch(60.71% 0.02215 127.46)",
+          "oklch(72.14% 0.02215 127.46)",
+          "oklch(83.57% 0.02215 127.46)",
+          "oklch(95.00% 0.02215 127.46)"
+        ]
+      },
+      "signal": {
+        "role": "primary",
+        "displayName": "Signal",
+        "tonalRamp": [
+          "oklch(15.00% 0.16826 35.61)",
+          "oklch(26.43% 0.16826 35.61)",
+          "oklch(37.86% 0.16826 35.61)",
+          "oklch(49.29% 0.16826 35.61)",
+          "oklch(60.71% 0.16826 35.61)",
+          "oklch(72.14% 0.16826 35.61)",
+          "oklch(83.57% 0.16826 35.61)",
+          "oklch(95.00% 0.16826 35.61)"
+        ]
+      },
+      "signal-hover": {
+        "role": "primary",
+        "displayName": "Signal hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.15064 34.93)",
+          "oklch(26.43% 0.15064 34.93)",
+          "oklch(37.86% 0.15064 34.93)",
+          "oklch(49.29% 0.15064 34.93)",
+          "oklch(60.71% 0.15064 34.93)",
+          "oklch(72.14% 0.15064 34.93)",
+          "oklch(83.57% 0.15064 34.93)",
+          "oklch(95.00% 0.15064 34.93)"
+        ]
+      },
+      "signal-ink": {
+        "role": "neutral",
+        "displayName": "Signal ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger",
+        "tonalRamp": [
+          "oklch(15.00% 0.16947 18.01)",
+          "oklch(26.43% 0.16947 18.01)",
+          "oklch(37.86% 0.16947 18.01)",
+          "oklch(49.29% 0.16947 18.01)",
+          "oklch(60.71% 0.16947 18.01)",
+          "oklch(72.14% 0.16947 18.01)",
+          "oklch(83.57% 0.16947 18.01)",
+          "oklch(95.00% 0.16947 18.01)"
+        ]
+      },
+      "terminal-bg": {
+        "role": "neutral",
+        "displayName": "Terminal bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.01320 140.45)",
+          "oklch(26.43% 0.01320 140.45)",
+          "oklch(37.86% 0.01320 140.45)",
+          "oklch(49.29% 0.01320 140.45)",
+          "oklch(60.71% 0.01320 140.45)",
+          "oklch(72.14% 0.01320 140.45)",
+          "oklch(83.57% 0.01320 140.45)",
+          "oklch(95.00% 0.01320 140.45)"
+        ]
+      },
+      "terminal-tabs": {
+        "role": "neutral",
+        "displayName": "Terminal tabs",
+        "tonalRamp": [
+          "oklch(15.00% 0.01659 137.87)",
+          "oklch(26.43% 0.01659 137.87)",
+          "oklch(37.86% 0.01659 137.87)",
+          "oklch(49.29% 0.01659 137.87)",
+          "oklch(60.71% 0.01659 137.87)",
+          "oklch(72.14% 0.01659 137.87)",
+          "oklch(83.57% 0.01659 137.87)",
+          "oklch(95.00% 0.01659 137.87)"
+        ]
+      },
+      "terminal-rule": {
+        "role": "neutral",
+        "displayName": "Terminal rule",
+        "tonalRamp": [
+          "oklch(15.00% 0.02058 134.07)",
+          "oklch(26.43% 0.02058 134.07)",
+          "oklch(37.86% 0.02058 134.07)",
+          "oklch(49.29% 0.02058 134.07)",
+          "oklch(60.71% 0.02058 134.07)",
+          "oklch(72.14% 0.02058 134.07)",
+          "oklch(83.57% 0.02058 134.07)",
+          "oklch(95.00% 0.02058 134.07)"
+        ]
+      },
+      "terminal-ink": {
+        "role": "neutral",
+        "displayName": "Terminal ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.01232 121.70)",
+          "oklch(26.43% 0.01232 121.70)",
+          "oklch(37.86% 0.01232 121.70)",
+          "oklch(49.29% 0.01232 121.70)",
+          "oklch(60.71% 0.01232 121.70)",
+          "oklch(72.14% 0.01232 121.70)",
+          "oklch(83.57% 0.01232 121.70)",
+          "oklch(95.00% 0.01232 121.70)"
+        ]
+      },
+      "terminal-muted": {
+        "role": "neutral",
+        "displayName": "Terminal muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.03198 129.86)",
+          "oklch(26.43% 0.03198 129.86)",
+          "oklch(37.86% 0.03198 129.86)",
+          "oklch(49.29% 0.03198 129.86)",
+          "oklch(60.71% 0.03198 129.86)",
+          "oklch(72.14% 0.03198 129.86)",
+          "oklch(83.57% 0.03198 129.86)",
+          "oklch(95.00% 0.03198 129.86)"
+        ]
+      },
+      "terminal-selected": {
+        "role": "neutral",
+        "displayName": "Terminal selected",
+        "tonalRamp": [
+          "oklch(15.00% 0.12613 47.51)",
+          "oklch(26.43% 0.12613 47.51)",
+          "oklch(37.86% 0.12613 47.51)",
+          "oklch(49.29% 0.12613 47.51)",
+          "oklch(60.71% 0.12613 47.51)",
+          "oklch(72.14% 0.12613 47.51)",
+          "oklch(83.57% 0.12613 47.51)",
+          "oklch(95.00% 0.12613 47.51)"
+        ]
+      },
+      "terminal-command": {
+        "role": "neutral",
+        "displayName": "Terminal command",
+        "tonalRamp": [
+          "oklch(15.00% 0.09310 56.34)",
+          "oklch(26.43% 0.09310 56.34)",
+          "oklch(37.86% 0.09310 56.34)",
+          "oklch(49.29% 0.09310 56.34)",
+          "oklch(60.71% 0.09310 56.34)",
+          "oklch(72.14% 0.09310 56.34)",
+          "oklch(83.57% 0.09310 56.34)",
+          "oklch(95.00% 0.09310 56.34)"
+        ]
+      },
+      "terminal-prompt": {
+        "role": "neutral",
+        "displayName": "Terminal prompt",
+        "tonalRamp": [
+          "oklch(15.00% 0.07343 128.84)",
+          "oklch(26.43% 0.07343 128.84)",
+          "oklch(37.86% 0.07343 128.84)",
+          "oklch(49.29% 0.07343 128.84)",
+          "oklch(60.71% 0.07343 128.84)",
+          "oklch(72.14% 0.07343 128.84)",
+          "oklch(83.57% 0.07343 128.84)",
+          "oklch(95.00% 0.07343 128.84)"
+        ]
+      },
+      "workspace-paper": {
+        "role": "neutral",
+        "displayName": "Workspace paper",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "workspace-paper-raised": {
+        "role": "neutral",
+        "displayName": "Workspace paper raised",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "workspace-ink": {
+        "role": "neutral",
+        "displayName": "Workspace ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.00826 91.48)",
+          "oklch(26.43% 0.00826 91.48)",
+          "oklch(37.86% 0.00826 91.48)",
+          "oklch(49.29% 0.00826 91.48)",
+          "oklch(60.71% 0.00826 91.48)",
+          "oklch(72.14% 0.00826 91.48)",
+          "oklch(83.57% 0.00826 91.48)",
+          "oklch(95.00% 0.00826 91.48)"
+        ]
+      },
+      "workspace-ink-muted": {
+        "role": "neutral",
+        "displayName": "Workspace ink muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.00984 78.26)",
+          "oklch(26.43% 0.00984 78.26)",
+          "oklch(37.86% 0.00984 78.26)",
+          "oklch(49.29% 0.00984 78.26)",
+          "oklch(60.71% 0.00984 78.26)",
+          "oklch(72.14% 0.00984 78.26)",
+          "oklch(83.57% 0.00984 78.26)",
+          "oklch(95.00% 0.00984 78.26)"
+        ]
+      },
+      "workspace-rule": {
+        "role": "neutral",
+        "displayName": "Workspace rule",
+        "tonalRamp": [
+          "oklch(15.00% 0.00826 91.48)",
+          "oklch(26.43% 0.00826 91.48)",
+          "oklch(37.86% 0.00826 91.48)",
+          "oklch(49.29% 0.00826 91.48)",
+          "oklch(60.71% 0.00826 91.48)",
+          "oklch(72.14% 0.00826 91.48)",
+          "oklch(83.57% 0.00826 91.48)",
+          "oklch(95.00% 0.00826 91.48)"
+        ]
+      },
+      "workspace-rule-strong": {
+        "role": "neutral",
+        "displayName": "Workspace rule strong",
+        "tonalRamp": [
+          "oklch(15.00% 0.00826 91.48)",
+          "oklch(26.43% 0.00826 91.48)",
+          "oklch(37.86% 0.00826 91.48)",
+          "oklch(49.29% 0.00826 91.48)",
+          "oklch(60.71% 0.00826 91.48)",
+          "oklch(72.14% 0.00826 91.48)",
+          "oklch(83.57% 0.00826 91.48)",
+          "oklch(95.00% 0.00826 91.48)"
+        ]
+      },
+      "workspace-signal": {
+        "role": "primary",
+        "displayName": "Workspace signal",
+        "tonalRamp": [
+          "oklch(15.00% 0.20222 34.82)",
+          "oklch(26.43% 0.20222 34.82)",
+          "oklch(37.86% 0.20222 34.82)",
+          "oklch(49.29% 0.20222 34.82)",
+          "oklch(60.71% 0.20222 34.82)",
+          "oklch(72.14% 0.20222 34.82)",
+          "oklch(83.57% 0.20222 34.82)",
+          "oklch(95.00% 0.20222 34.82)"
+        ]
+      },
+      "workspace-signal-hover": {
+        "role": "primary",
+        "displayName": "Workspace signal hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.17443 34.80)",
+          "oklch(26.43% 0.17443 34.80)",
+          "oklch(37.86% 0.17443 34.80)",
+          "oklch(49.29% 0.17443 34.80)",
+          "oklch(60.71% 0.17443 34.80)",
+          "oklch(72.14% 0.17443 34.80)",
+          "oklch(83.57% 0.17443 34.80)",
+          "oklch(95.00% 0.17443 34.80)"
+        ]
+      },
+      "workspace-signal-ink": {
+        "role": "neutral",
+        "displayName": "Workspace signal ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "workspace-danger": {
+        "role": "neutral",
+        "displayName": "Workspace danger",
+        "tonalRamp": [
+          "oklch(15.00% 0.15445 17.05)",
+          "oklch(26.43% 0.15445 17.05)",
+          "oklch(37.86% 0.15445 17.05)",
+          "oklch(49.29% 0.15445 17.05)",
+          "oklch(60.71% 0.15445 17.05)",
+          "oklch(72.14% 0.15445 17.05)",
+          "oklch(83.57% 0.15445 17.05)",
+          "oklch(95.00% 0.15445 17.05)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Homepage title."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Shared home section headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Workflow titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Workflow descriptions."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase mono page kickers."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Workflow and installer commands."
+      }
+    },
+    "shadows": [
+      {
+        "name": "command-workbench",
+        "value": "0 14px 32px rgb(30 40 20 / 0.12)",
+        "purpose": "Dark command example on light paper."
+      },
+      {
+        "name": "mobile-menu",
+        "value": "0 12px 20px rgb(30 40 20 / 0.08)",
+        "purpose": "Open mobile navigation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "primary-action-hover",
+        "value": "background 160ms ease-out",
+        "purpose": "Homepage install action background transition."
+      },
+      {
+        "name": "anchor-scroll",
+        "value": "scroll-behavior: smooth",
+        "purpose": "Homepage anchors; changes to auto for prefers-reduced-motion: reduce."
+      },
+      {
+        "name": "terminal-playback",
+        "value": "300ms lead-in; 42ms per command character; 150ms per output line; stops after one run",
+        "purpose": "Arch CLI demonstration in HomeTerminal.svelte. Pause/replay, hidden-tab pause, full transcript for reduced motion and no JavaScript."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "workbench-tight",
+        "value": "30rem"
+      },
+      {
+        "name": "footer-stack",
+        "value": "39.99rem"
+      },
+      {
+        "name": "workflow-stack",
+        "value": "44rem"
+      },
+      {
+        "name": "home-split",
+        "value": "48rem"
+      },
+      {
+        "name": "mobile-header",
+        "value": "49.99rem"
+      },
+      {
+        "name": "hero-stack",
+        "value": "55rem"
+      },
+      {
+        "name": "docs-sidebar",
+        "value": "64rem"
+      }
+    ],
+    "themes": {
+      "owner": "site/src/app.css",
+      "bootstrap": "site/static/theme.js",
+      "preferenceKey": "omg-theme",
+      "selector": ":root[data-theme='dark']",
+      "default": "system",
+      "publicDark": {
+        "paper": "{colors.dark-paper}",
+        "paper-raised": "{colors.dark-paper-raised}",
+        "ink": "{colors.dark-ink}",
+        "ink-muted": "{colors.dark-ink-muted}",
+        "rule": "{colors.dark-rule}",
+        "rule-strong": "{colors.dark-rule-strong}",
+        "signal": "{colors.dark-signal}",
+        "signal-hover": "{colors.dark-signal-hover}",
+        "signal-ink": "{colors.dark-signal-ink}",
+        "danger": "{colors.dark-danger}"
+      },
+      "workspace": "Scoped .workspace-theme remains dark independently of the public preference."
+    }
+  },
+  "components": [
+    {
+      "name": "Primary install action",
+      "kind": "button",
+      "description": "Homepage installation action.",
+      "html": "<a class=\"ds-primary\" href=\"#install\">Install OMG <span aria-hidden=\"true\">\u2193</span></a>",
+      "css": ".ds-primary{display:inline-flex;min-height:3rem;align-items:center;justify-content:center;gap:1rem;padding:.75rem 1.25rem;border-radius:6px;background:var(--signal, #bc3e1b);color:var(--signal-ink, #fff);font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif);font-size:.875rem;font-weight:600;text-decoration:none;transition:background 160ms ease-out}.ds-primary:hover{background:var(--signal-hover, #9c2e11)}.ds-primary:focus-visible{outline:2px solid var(--signal, #bc3e1b);outline-offset:4px;}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Outlined install action",
+      "kind": "button",
+      "description": "Compact header action that fills on hover.",
+      "html": "<a class=\"ds-outline\" href=\"#install\">Install OMG <span aria-hidden=\"true\">\u2193</span></a>",
+      "css": ".ds-outline{display:inline-flex;min-height:2.75rem;align-items:center;justify-content:center;gap:.75rem;padding:.65rem 1rem;border:1px solid var(--rule-strong, #b8bfb0);border-radius:6px;color:var(--ink, #22251f);font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif);font-size:.75rem;font-weight:600;text-decoration:none}.ds-outline:hover{border-color:var(--signal, #bc3e1b);background:var(--signal, #bc3e1b);color:var(--signal-ink, #fff)}.ds-outline:focus-visible{outline:2px solid var(--signal, #bc3e1b);outline-offset:4px;}",
+      "refersTo": "button-outline"
+    },
+    {
+      "name": "Copy command action",
+      "kind": "button",
+      "description": "Installer action, including its pending disabled appearance.",
+      "html": "<button class=\"ds-copy\" type=\"button\">Copy install command <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"9\" width=\"13\" height=\"13\" rx=\"2\"/><path d=\"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\"/></svg></button>",
+      "css": ".ds-copy{display:inline-flex;min-height:2.75rem;align-items:center;gap:.75rem;padding:.65rem 1rem;border:0;border-radius:6px;background:var(--ink, #22251f);color:var(--paper, #fafbf8);font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif);font-size:.8125rem;font-weight:500;cursor:pointer}.ds-copy:hover:not(:disabled){background:var(--signal, #bc3e1b);color:var(--signal-ink, #fff)}.ds-copy:focus-visible{outline:2px solid var(--signal, #bc3e1b);outline-offset:4px;}.ds-copy:disabled{opacity:.6;cursor:wait}",
+      "refersTo": "button-copy"
+    },
+    {
+      "name": "Login field",
+      "kind": "input",
+      "description": "Existing square, mono login field.",
+      "html": "<label class=\"ds-label\"><span>Email</span><input class=\"ds-input\" type=\"email\" placeholder=\"you@example.com\" /></label>",
+      "css": ".ds-label{display:block;color:var(--ink-muted, #62675d);font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif);font-size:.875rem}.ds-label span{display:block;margin-bottom:.5rem}.ds-input{width:100%;padding:.8rem 1rem;border:1px solid var(--rule-strong, #b8bfb0);border-radius:0;background:transparent;color:var(--ink, #22251f);font-family:var(--font-mono, 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace);font-size:.875rem;caret-color:var(--signal, #bc3e1b)}.ds-input:focus,.ds-input:focus-visible{border-color:var(--signal, #bc3e1b);outline:none}",
+      "refersTo": "input-login"
+    },
+    {
+      "name": "Primary navigation",
+      "kind": "nav",
+      "description": "Muted desktop links with a signal current-page state.",
+      "html": "<nav aria-label=\"Primary navigation\"><ul class=\"ds-nav\"><li><a href=\"/runtimes/\">Runtimes</a></li><li><a href=\"/guides/\">Guides</a></li><li><a href=\"/docs/\" aria-current=\"page\">Docs</a></li><li><a href=\"/security/\">Security</a></li></ul></nav>",
+      "css": ".ds-nav{display:flex;flex-wrap:wrap;align-items:center;gap:1.5rem;margin:0;padding:0;list-style:none;font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif)}.ds-nav a{display:flex;min-height:2.75rem;align-items:center;color:var(--ink-muted, #62675d);font-size:.8125rem;font-weight:500;text-decoration:none}.ds-nav a:hover,.ds-nav a[aria-current=\"page\"]{color:var(--signal, #bc3e1b)}.ds-nav a:focus-visible{outline:2px solid var(--signal, #bc3e1b);outline-offset:4px;}"
+    },
+    {
+      "name": "Installer container",
+      "kind": "card",
+      "description": "Raised paper groups installation instructions without a shadow.",
+      "html": "<section class=\"ds-install\"><h3>1. Download, review, install</h3><pre><code>curl -fsSL https://getomg.dev/install.sh -o omg-install.sh\nless omg-install.sh &amp;&amp; bash omg-install.sh</code></pre></section>",
+      "css": ".ds-install{padding:clamp(1.25rem,3vw,2rem);border-radius:12px;background:var(--paper-raised, #f0f2ec);color:var(--ink, #22251f);font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif)}.ds-install h3{margin:0 0 1rem;color:var(--ink-muted, #62675d);font-size:.75rem;font-weight:500}.ds-install pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.ds-install code{font-family:var(--font-mono, 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace);font-size:clamp(.75rem,1.3vw,.9375rem);line-height:1.9}.ds-install p{margin:.5rem 0 0;color:var(--ink-muted, #62675d);font-size:.75rem}",
+      "refersTo": "panel-install"
+    },
+    {
+      "name": "Example selector",
+      "kind": "custom",
+      "description": "Dark workbench buttons with the selected peach underline.",
+      "html": "<div class=\"ds-examples\" role=\"group\" aria-label=\"Command examples\"><button type=\"button\" aria-pressed=\"true\">Packages</button><button type=\"button\" aria-pressed=\"false\">Runtimes</button><button type=\"button\" aria-pressed=\"false\">Environments</button></div>",
+      "css": ".ds-examples{display:flex;gap:.25rem;padding:.5rem 1rem 0;background:#272d25;font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif)}.ds-examples button{min-height:2.75rem;padding:.6rem .85rem;border:0;border-bottom:2px solid transparent;background:transparent;color:#b8c2ad;font-family:inherit;font-size:.75rem;cursor:pointer}.ds-examples button:hover{color:#fff;background:#333b2e}.ds-examples button[aria-pressed=\"true\"]{color:#fff;border-bottom-color:#f29768}.ds-examples button:focus-visible{outline:2px solid #f29768;outline-offset:-4px}",
+      "refersTo": "example-selector"
+    },
+    {
+      "name": "Command workbench",
+      "kind": "custom",
+      "description": "Static preview of HomeTerminal.svelte, whose real Arch demo types commands, reveals output, and offers pause/replay.",
+      "html": "<section class=\"ds-terminal\"><div class=\"ds-toolbar\">dev@arch: ~/project</div><div class=\"ds-command-body\"><p class=\"ds-comment\"># Find a package</p><p class=\"ds-command\"><span class=\"ds-prompt\" aria-hidden=\"true\">$</span><code><span>omg</span> search ripgrep</code></p><p class=\"ds-note\">Example output \u00b7 Arch Linux demo</p></div><a class=\"ds-guide\" href=\"/docs/cli/\">Package commands <span aria-hidden=\"true\">\u2192</span></a></section>",
+      "css": ".ds-terminal{overflow:hidden;border-radius:12px;background:#20251f;color:#eff2e9;box-shadow:0 14px 32px rgb(30 40 20 / .12);font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif)}.ds-toolbar{padding:1rem 1.35rem;border-bottom:1px solid #3c4338;color:#c5cdbd;font-size:.75rem}.ds-command-body{padding:1.5rem}.ds-command-body p{margin:0}.ds-comment{min-height:2.5rem;color:#a5b09b;font-family:var(--font-mono, 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace);font-size:.6875rem;line-height:1.7}.ds-command{display:flex;align-items:baseline;gap:.75rem}.ds-command code{font-family:var(--font-mono, 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace);font-size:clamp(.875rem,1.4vw,1.125rem);overflow-wrap:anywhere}.ds-command code>span{color:#efb185}.ds-prompt{color:#a7bf8d;font-family:var(--font-mono, 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace)}.ds-command-body .ds-note{margin-top:1.5rem;color:#a5b09b;font-size:.625rem}.ds-guide{display:flex;min-height:3.25rem;align-items:center;justify-content:space-between;padding:.75rem 1.5rem;border-top:1px solid #3c4338;color:#dce5d2;font-size:.75rem;text-decoration:none}.ds-guide:hover{background:#30392b;color:#fff}.ds-guide:focus-visible{outline:2px solid var(--signal, #bc3e1b);outline-offset:4px;}",
+      "refersTo": "panel-command"
+    }
+  ],
+  "narrative": {
+    "northStar": "The command workbench",
+    "overview": "OMG's public pages put readable CLI examples beside direct explanations. The public site supports light green-tinted paper with burnt-orange actions and a dark green-black palette with peach actions. Both modes keep the same composition and type hierarchy. The existing OMG wordmark stays intact.\n\nUse compact navigation, measured headings, ruled content rows, and generous section spacing. The dark command workbench is the signature component. It shows selectable examples and links to their guides. Authenticated dashboard and admin routes retain their existing dark operational theme through a scoped token override.",
+    "keyCharacteristics": [
+      "Readable commands with clear action and guide links.",
+      "Archivo text paired with IBM Plex Mono for code and technical labels.",
+      "System-aware light and dark public pages, an animated Arch command example, and scoped dark authenticated workspaces.",
+      "Small control corners and larger command-container corners."
+    ],
+    "rules": [
+      {
+        "name": "The Theme Boundary Rule",
+        "body": "Public pages follow the system color scheme until a light or dark choice is saved in localStorage under omg-theme. The header switch is available directly on desktop and inside Menu on mobile. A preloaded, deferred same-origin script owns the root data-theme attribute and delegated toggle clicks, including on prerendered pages without hydration. CSS honors the system preference without JavaScript. Dashboard and admin pages retain their scoped workspace override. The terminal keeps its separate dark palette in both modes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Flat Content Rule",
+        "body": "Use rules and raised paper for ordinary content. Keep the existing shadows attached to the command workbench and mobile navigation.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** use the paired public light/dark tokens and scoped workspace tokens.",
+      "**Do** make commands readable, selectable, and paired with useful guide links.",
+      "**Do** use ruled rows and raised paper for ordinary content grouping.",
+      "**Do** preserve keyboard focus, generous control targets, wrapping code, and reduced-motion scrolling.",
+      "**Do** preserve the existing wordmark, Archivo, and IBM Plex Mono."
+    ],
+    "donts": [
+      "**Don't** replace the public palette with the authenticated workspace palette.",
+      "**Don't** add generic AI-style decoration, raster mockups, or decorative hero imagery.",
+      "**Don't** turn every content row into a rounded, shadowed card.",
+      "**Don't** add oversized poster typography that obscures the commands and installation path.",
+      "**Don't** present historical unequal-work benchmark timings as visual proof of a speedup."
+    ]
+  }
+}

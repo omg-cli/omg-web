@@ -1,0 +1,6 @@
+# Local review captures and generated builds are not design-system sources.
+review/
+screenshots/
+build/
+dist/
+artifacts/

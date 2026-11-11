@@ -1,4 +1,6 @@
-<script lang="ts"></script>
+<script lang="ts">
+  import Icon from '../Icon.svelte';
+</script>
 
 <section
   id="benchmarks"
@@ -6,43 +8,41 @@
   aria-labelledby="benchmark-title"
 >
   <header>
-    <p class="section-label">Performance, with context</p>
-    <h2 id="benchmark-title">Speed deserves a fair test.</h2>
-    <p class="benchmark-intro">
-      OMG can use a warm local package index on Arch. A useful speed comparison must measure
-      equivalent work and account for the state of that index.
+    <h2 id="benchmark-title">Performance you can inspect.</h2>
+    <p>
+      OMG can use a warm local package index on Arch. Useful comparisons must measure equivalent
+      work and account for the state of that index.
     </p>
   </header>
-  <div class="benchmark-results">
-    <p class="benchmark-highlight">
-      <strong>Evidence first.</strong> <span>How we evaluate package operations</span>
-    </p>
-    <table>
-      <caption>What a meaningful comparison includes</caption>
-      <thead><tr><th scope="col">Check</th><th scope="col">Why it matters</th></tr></thead>
-      <tbody>
-        <tr
-          ><th scope="row">Same results</th><td>Match package identities, sources, and limits.</td
-          ></tr
-        >
-        <tr
-          ><th scope="row">Same state</th><td>Account for daemon startup and cache preparation.</td
-          ></tr
-        >
-        <tr
-          ><th scope="row">Full record</th><td>Publish samples, variation, and failed cases.</td
-          ></tr
-        >
-      </tbody>
-    </table>
-    <p class="benchmark-method">
-      A historical Arch development run returned six search lines from OMG and 458 from pacman.
-      Those timings do not establish a search speedup.
-    </p>
+  <div class="benchmark-record">
+    <div class="record-heading">
+      <Icon name="terminal" size={19} />
+      <h3>What a fair comparison includes</h3>
+    </div>
+    <dl>
+      <div>
+        <dt>Same results</dt>
+        <dd>Match package identities, sources, and limits.</dd>
+      </div>
+      <div>
+        <dt>Same state</dt>
+        <dd>Account for daemon startup and cache preparation.</dd>
+      </div>
+      <div>
+        <dt>Full record</dt>
+        <dd>Publish samples, variation, and failed cases.</dd>
+      </div>
+    </dl>
+    <details>
+      <summary>About the historical search result</summary>
+      <p>
+        A historical Arch development run returned six search lines from OMG and 458 from pacman.
+        Those timings do not establish a search speedup.
+      </p>
+    </details>
     <a
-      class="text-link"
       href="https://github.com/omg-cli/omg/tree/fe72b92b6e61c13a19f00627d22f3d1bc5713347/benchmarks/records/20260903_015949-5c43ddcc"
-      >Inspect the benchmark record <span aria-hidden="true">↗</span></a
+      >Inspect the benchmark record<Icon name="external" size={16} /></a
     >
   </div>
 </section>
@@ -50,88 +50,93 @@
 <style>
   .benchmarks {
     display: grid;
-    gap: 3rem;
-    border-top: 1px solid var(--rule);
-  }
-  .section-label {
-    color: var(--ink-muted);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
+    grid-template-columns: 0.8fr 1fr;
+    gap: 2rem 5rem;
   }
   h2 {
-    max-width: 12ch;
-    margin-block: 1.5rem;
-    font-family: var(--font-display);
-    font-size: clamp(2.5rem, 5.7vw, 5.5rem);
-    letter-spacing: -0.06em;
-    font-weight: 550;
-    line-height: 1;
+    max-width: 17ch;
+    font-size: clamp(2rem, 3.4vw, 2.75rem);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
   }
-  .benchmark-intro {
-    max-width: 35ch;
+  header > p {
+    max-width: 40ch;
+    margin-top: 1.25rem;
     color: var(--ink-muted);
-    line-height: 1.7;
+    font-size: 0.875rem;
+    line-height: 1.8;
   }
-  .benchmark-results {
+  .benchmark-record {
     min-width: 0;
   }
-  .benchmark-highlight {
-    display: grid;
+  .record-heading {
+    display: flex;
     gap: 0.75rem;
-    margin-bottom: 2.5rem;
+    align-items: center;
+    padding-bottom: 1rem;
   }
-  .benchmark-highlight strong {
+  h3 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+  dl {
+    margin: 0;
+  }
+  dl > div {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: 1rem;
+    padding-block: 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.8125rem;
+  }
+  dt {
+    font-weight: 600;
+  }
+  dd {
+    margin: 0;
+    color: var(--ink-muted);
+  }
+  details {
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  summary {
+    padding-block: 1rem;
+    min-height: 2.75rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: var(--ink-muted);
+  }
+  summary:hover {
     color: var(--signal);
-    font-family: var(--font-display);
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 550;
-    letter-spacing: -0.07em;
-    line-height: 1.05;
   }
-  .benchmark-highlight > span,
-  caption,
-  .benchmark-method {
+  details p {
+    padding-bottom: 1rem;
     color: var(--ink-muted);
     font-size: 0.75rem;
-    line-height: 1.7;
+    line-height: 1.8;
   }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: clamp(0.75rem, 1.2vw, 0.875rem);
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    margin-top: 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-decoration: none;
   }
-  caption {
-    text-align: left;
-    padding-bottom: 0.75rem;
+  a:hover {
+    color: var(--signal);
   }
-  th,
-  td {
-    padding: 1rem 0.5rem;
-    border-top: 1px solid var(--rule);
-    text-align: left;
-    font-weight: 400;
-  }
-  th:first-child {
-    padding-left: 0;
-    text-align: left;
-  }
-  td {
-    line-height: 1.5;
-  }
-  thead th {
-    color: var(--ink-muted);
-  }
-  .benchmark-method {
-    margin-block: 1rem;
-    max-width: 58ch;
-  }
-  .text-link {
-    justify-content: flex-start;
-  }
-  @media (min-width: 60rem) {
+  @media (max-width: 44rem) {
     .benchmarks {
-      grid-template-columns: 1fr 1.15fr;
-      gap: 5rem;
+      grid-template-columns: 1fr;
+    }
+    dl > div {
+      grid-template-columns: 6rem 1fr;
     }
   }
 </style>

@@ -1,143 +1,136 @@
 <script lang="ts">
+  import Icon from '../Icon.svelte';
   const workflows = [
     {
-      number: '01',
-      title: 'Packages, without the context switch.',
+      title: 'System packages, handled.',
       detail:
-        'Find and install software through your system package manager using the same command shape.',
+        'Search, inspect, and install software through your native package backend. The command stays the same across supported systems.',
       command: 'omg install ripgrep',
       href: '/docs/cli/',
       link: 'Package commands',
     },
     {
-      number: '02',
       title: 'The right runtime for the project.',
       detail:
-        'Choose a Node.js, Python, or Rust version without juggling a different interface for each language.',
+        'Choose Node.js, Python, Go, Rust, or Bun versions. Keep using npm and pnpm for your JavaScript dependencies.',
       command: 'omg use node 22',
       href: '/docs/runtimes/',
       link: 'Runtime guide',
     },
     {
-      number: '03',
-      title: 'An environment record you can share.',
+      title: 'A setup you can check.',
       detail:
-        'On Arch, Debian, and Ubuntu, capture a working setup in omg.lock and check another machine against it.',
+        'On Arch, Debian, and Ubuntu, capture a working setup in omg.lock and check another machine for drift.',
       command: 'omg env capture',
       href: '/docs/cli/',
       link: 'Environment commands',
     },
-  ] as const;
+  ];
 </script>
 
 <section id="workflow" class="workflow home-shell home-section" aria-labelledby="workflow-title">
-  <header class="workflow-header">
-    <p class="section-label">The everyday workflow</p>
-    <h2 id="workflow-title">One interface.<br />Three jobs.</h2>
-    <a class="text-link" href="/docs/"
-      >Read the full documentation <span aria-hidden="true">↗</span></a
-    >
+  <header>
+    <h2 id="workflow-title">Less tool-switching.<br />More getting things done.</h2>
+    <p>One familiar interface for the work around your code.</p>
   </header>
-  <ol class="workflow-list">
-    {#each workflows as workflow (workflow.number)}
-      <li>
-        <span class="workflow-number" aria-hidden="true">{workflow.number}</span>
+  <div class="workflow-list">
+    {#each workflows as workflow (workflow.title)}
+      <article>
         <div class="workflow-copy">
           <h3>{workflow.title}</h3>
           <p>{workflow.detail}</p>
-          <a href={workflow.href}>{workflow.link} <span aria-hidden="true">↗</span></a>
+          <a href={workflow.href}>{workflow.link}<Icon name="right" size={16} /></a>
         </div>
-        <code>{workflow.command}</code>
-      </li>
+        <div class="workflow-command">
+          <Icon name="terminal" size={20} /><code>{workflow.command}</code>
+        </div>
+      </article>
     {/each}
-  </ol>
+  </div>
+  <a class="workflow-docs" href="/docs/"
+    >Read the full documentation<Icon name="right" size={17} /></a
+  >
 </section>
 
 <style>
-  .workflow-header {
-    display: grid;
-    gap: 1.5rem;
-    margin-bottom: clamp(2.5rem, 5vw, 4rem);
-  }
-  .section-label,
-  .workflow-number {
-    margin: 0;
-    color: var(--ink-muted);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 1.5rem 3rem;
+    margin-bottom: 2.5rem;
   }
   h2 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(2.5rem, 5.7vw, 5.5rem);
-    font-weight: 550;
-    letter-spacing: -0.06em;
-    line-height: 1;
-  }
-  .workflow-header > a {
-    justify-self: start;
-  }
-  .workflow-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .workflow-list > li {
-    display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr);
-    gap: 1.5rem 1rem;
-    padding-block: clamp(2rem, 4vw, 3.5rem);
-    border-top: 1px solid var(--rule);
-  }
-  .workflow-number {
-    padding-top: 0.4rem;
-  }
-  h3 {
-    max-width: 26ch;
-    margin: 0;
-    font-size: clamp(1.4rem, 2.5vw, 2rem);
-    font-weight: 550;
+    font-size: clamp(2rem, 3.4vw, 2.75rem);
+    font-weight: 600;
     letter-spacing: -0.035em;
     line-height: 1.15;
   }
-  .workflow-copy p {
-    max-width: 44ch;
-    margin-block: 1rem;
+  header > p {
+    max-width: 28ch;
     color: var(--ink-muted);
+    font-size: 0.9375rem;
     line-height: 1.7;
   }
-  .workflow-copy a {
-    color: var(--ink);
-    text-underline-offset: 0.3em;
-    text-decoration-color: var(--signal);
-    font-size: 0.875rem;
+  article {
+    display: grid;
+    grid-template-columns: 1fr 0.9fr;
+    gap: 2rem 4rem;
+    align-items: center;
+    padding-block: 2rem;
+    border-top: 1px solid var(--rule);
   }
-  .workflow-list code {
-    grid-column: 2;
-    align-self: center;
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.3;
+  }
+  .workflow-copy p {
+    max-width: 52ch;
+    margin-block: 0.75rem;
+    color: var(--ink-muted);
+    font-size: 0.875rem;
+    line-height: 1.75;
+  }
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  a:hover {
     color: var(--signal);
+  }
+  .workflow-command {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.75rem;
+    border-radius: 6px;
+    background: var(--paper-raised);
+    color: var(--ink-muted);
+  }
+  code {
     font-family: var(--font-mono);
-    font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+    font-size: clamp(0.75rem, 1.3vw, 0.9375rem);
+    color: var(--ink);
     overflow-wrap: anywhere;
   }
-  @media (min-width: 60rem) {
-    .workflow-header {
-      grid-template-columns: 1fr 1fr;
-      align-items: end;
+  .workflow-docs {
+    margin-top: 1rem;
+  }
+  @media (max-width: 44rem) {
+    article {
+      grid-template-columns: 1fr;
+      gap: 1rem;
     }
-    .section-label {
-      grid-column: 1 / -1;
-    }
-    .workflow-header > a {
-      justify-self: end;
-    }
-    .workflow-list > li {
-      grid-template-columns: 3rem minmax(0, 1.2fr) minmax(0, 1fr);
-      gap: 2rem;
-    }
-    .workflow-list code {
-      grid-column: 3;
-      justify-self: end;
+    .workflow-command {
+      padding: 1.25rem;
     }
   }
 </style>
