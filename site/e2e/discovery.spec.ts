@@ -81,7 +81,12 @@ test('mobile navigation reaches a runtime guide and updates canonical metadata',
     'content',
     'https://getomg.dev/runtimes/node/'
   );
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(
+    page.getByRole('heading', { name: 'Manage Node.js versions with OMG', exact: true })
+  ).toBeInViewport();
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true);
   await page.screenshot({ path: testInfo.outputPath('node-mobile.png') });
   await page
     .getByRole('link', { name: 'Use Node.js, npm, and pnpm with OMG', exact: true })
