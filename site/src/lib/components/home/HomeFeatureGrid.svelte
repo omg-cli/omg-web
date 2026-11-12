@@ -33,8 +33,8 @@
   <div class="runtimes">
     <h2>Right project.<br />Right runtime.</h2>
     <p>
-      Switch Node.js, Python, Go, Rust, and Bun versions. Keep npm and pnpm for your JavaScript
-      dependencies.
+      Manage the language versions your projects need. For JavaScript, choose Node.js, Bun, or Deno.
+      OMG also manages .NET SDK versions. Keep npm and pnpm for your JavaScript dependencies.
     </p>
     <pre><code
         ><span># Switch the active runtime</span>

@@ -20,11 +20,18 @@
   </div>
   <HomeTerminal />
   <div class="runtime-strip">
-    <p>One CLI. Five language runtimes.</p>
-    <nav aria-label="Supported runtime guides">
-      <a href="/runtimes/node/">Node.js</a><a href="/runtimes/python/">Python</a><a
-        href="/runtimes/go/">Go</a
-      ><a href="/runtimes/rust/">Rust</a><a href="/runtimes/bun/">Bun</a>
+    <p>Language versions, managed together.</p>
+    <nav aria-label="Supported language guides">
+      <a href="/runtimes/node/">JavaScript</a>
+      <a href="/runtimes/python/">Python</a>
+      <a href="/runtimes/go/">Go</a>
+      <a href="/runtimes/rust/">Rust</a>
+      <a href="/docs/runtimes/#supported">Ruby</a>
+      <a href="/docs/runtimes/#supported">Java</a>
+      <a href="/docs/runtimes/#supported">Zig</a>
+      <a href="/docs/runtimes/#supported">Erlang</a>
+      <a href="/docs/runtimes/#supported">PHP</a>
+      <a href="/docs/runtimes/#supported">Swift</a>
     </nav>
     <a class="all-runtimes" href="/runtimes/"
       >Browse runtime guides <Icon name="right" size={16} /></a
