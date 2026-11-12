@@ -12,7 +12,7 @@
       type="search"
       value={query}
       maxlength="160"
-      placeholder="Command, option, or task"
+      placeholder="e.g. install"
     />
     <button type="submit">Search</button>
   </div>
