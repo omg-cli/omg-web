@@ -1,0 +1,791 @@
+{
+  "schemaVersion": 2,
+  "repository": "omg-cli/omg",
+  "scope": "source-review",
+  "execution": "not-run",
+  "release": {
+    "version": "v0.1.224",
+    "commit": "f0d8cb5d8a95dbbc6cae50460178702ac0263ebb",
+    "publishedAt": "2026-09-23"
+  },
+  "reviewedAt": "2026-11-11",
+  "topics": [
+    {
+      "slug": "installation",
+      "documentationPath": "docs/installation.md",
+      "implementationPaths": [
+        "install.sh",
+        "src/cli/self_update.rs",
+        "src/cli/update_notice.rs",
+        "Cargo.toml",
+        ".github/workflows/release.yml"
+      ]
+    },
+    {
+      "slug": "cli",
+      "documentationPath": "docs/cli.md",
+      "implementationPaths": [
+        "src/cli/args.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/config.rs",
+        "src/cli/container.rs",
+        "src/cli/env.rs",
+        "src/cli/run.rs",
+        "src/cli/security.rs",
+        "src/cli/snapshot.rs",
+        "src/cli/team.rs",
+        "src/cli/tool.rs",
+        "src/cli/ci.rs",
+        "src/cli/self_update.rs"
+      ]
+    },
+    {
+      "slug": "configuration",
+      "documentationPath": "docs/configuration.md",
+      "implementationPaths": [
+        "src/config/settings.rs",
+        "src/cli/config.rs",
+        "src/core/paths.rs",
+        "src/core/security/policy.rs",
+        "src/hooks/mod.rs",
+        "src/core/telemetry.rs",
+        "src/cli/update_notice.rs"
+      ]
+    },
+    {
+      "slug": "runtimes",
+      "documentationPath": "docs/runtimes.md",
+      "implementationPaths": [
+        "src/runtimes/mod.rs",
+        "src/runtimes/common.rs",
+        "src/runtimes/node.rs",
+        "src/runtimes/python.rs",
+        "src/runtimes/python/catalog.rs",
+        "src/runtimes/go.rs",
+        "src/runtimes/rust.rs",
+        "src/runtimes/bun.rs",
+        "src/runtimes/ruby.rs",
+        "src/runtimes/java.rs",
+        "src/runtimes/deno.rs",
+        "src/runtimes/pi.rs",
+        "src/runtimes/zig.rs",
+        "src/runtimes/dotnet.rs",
+        "src/runtimes/erlang.rs",
+        "src/runtimes/php.rs",
+        "src/runtimes/swift.rs",
+        "src/runtimes/tool_registry.rs",
+        "src/core/runtime_resolver.rs",
+        "src/hooks/mod.rs"
+      ]
+    },
+    {
+      "slug": "workflows",
+      "documentationPath": "docs/workflows.md",
+      "implementationPaths": [
+        "src/cli/env.rs",
+        "src/core/env/fingerprint.rs",
+        "src/core/env/mod.rs",
+        "src/core/env/portable.rs",
+        "src/core/env/team.rs",
+        "src/cli/team.rs",
+        "src/cli/ci.rs",
+        "src/core/task_runner.rs",
+        "src/cli/security.rs"
+      ]
+    },
+    {
+      "slug": "security",
+      "documentationPath": "docs/security.md",
+      "implementationPaths": [
+        "src/cli/security.rs",
+        "src/core/security/scan.rs",
+        "src/core/security/vulnerability.rs",
+        "src/core/security/sbom.rs",
+        "src/core/security/sbom_shared.rs",
+        "src/core/security/policy.rs",
+        "src/core/security/audit.rs",
+        "src/core/security/secrets.rs",
+        "src/core/security/slsa.rs",
+        "src/core/security/pgp.rs",
+        "src/core/http.rs",
+        "src/core/telemetry.rs"
+      ]
+    },
+    {
+      "slug": "troubleshooting",
+      "documentationPath": "docs/troubleshooting.md",
+      "implementationPaths": [
+        "src/core/history.rs",
+        "src/cli/doctor.rs",
+        "src/core/paths.rs",
+        "src/daemon/mod.rs",
+        "src/daemon/cache.rs",
+        "src/daemon/server.rs",
+        "src/cli/snapshot.rs",
+        "src/cli/packages/clean.rs"
+      ]
+    },
+    {
+      "slug": "architecture",
+      "documentationPath": "docs/architecture.md",
+      "implementationPaths": [
+        "src/daemon/mod.rs",
+        "src/daemon/cache.rs",
+        "src/daemon/db.rs",
+        "src/daemon/index.rs",
+        "src/daemon/protocol.rs",
+        "src/daemon/handlers.rs",
+        "src/daemon/server.rs",
+        "src/daemon/status_policy.rs",
+        "src/core/client.rs",
+        "src/core/fast_status.rs",
+        "src/core/paths.rs",
+        "src/hooks/mod.rs"
+      ]
+    }
+  ],
+  "guides": [
+    {
+      "href": "/docs/containers/",
+      "metadataPath": "src/routes/docs/containers/+page.md",
+      "documentationPath": "docs/containers.md",
+      "implementationPaths": ["src/cli/container.rs", "src/core/container.rs", "src/cli/args.rs"]
+    },
+    {
+      "href": "/docs/daemon/",
+      "metadataPath": "src/routes/docs/daemon/+page.md",
+      "documentationPath": "docs/daemon.md",
+      "implementationPaths": [
+        "src/daemon/server.rs",
+        "src/cli/commands.rs",
+        "src/cli/daemon_status.rs",
+        "src/core/paths.rs",
+        "src/cli/args.rs"
+      ]
+    },
+    {
+      "href": "/docs/environments/",
+      "metadataPath": "src/routes/docs/environments/+page.md",
+      "documentationPath": "docs/environment-portability.md",
+      "implementationPaths": [
+        "src/cli/env.rs",
+        "src/core/env/fingerprint.rs",
+        "src/core/env/portable.rs",
+        "src/cli/args.rs"
+      ]
+    },
+    {
+      "href": "/docs/getting-started/",
+      "metadataPath": "src/routes/docs/getting-started/+page.md",
+      "documentationPath": "docs/getting-started.md",
+      "implementationPaths": [
+        "install.sh",
+        "src/cli/args.rs",
+        "src/cli/doctor.rs",
+        "src/hooks/mod.rs"
+      ]
+    },
+    {
+      "href": "/docs/packages/",
+      "metadataPath": "src/routes/docs/packages/+page.md",
+      "documentationPath": "docs/packages.md",
+      "implementationPaths": [
+        "src/cli/args.rs",
+        "src/cli/packages/mod.rs",
+        "src/cli/packages/update/arch.rs",
+        "src/config/settings.rs"
+      ]
+    },
+    {
+      "href": "/docs/shell/",
+      "metadataPath": "src/routes/docs/shell/+page.md",
+      "documentationPath": "docs/shell-integration.md",
+      "implementationPaths": ["src/hooks/mod.rs", "src/hooks/completions.rs", "src/cli/args.rs"]
+    },
+    {
+      "href": "/docs/tasks/",
+      "metadataPath": "src/routes/docs/tasks/+page.md",
+      "documentationPath": "docs/task-runner.md",
+      "implementationPaths": [
+        "src/core/task_runner.rs",
+        "src/config/mise_env.rs",
+        "src/cli/args.rs"
+      ]
+    },
+    {
+      "href": "/docs/tools/",
+      "metadataPath": "src/routes/docs/tools/+page.md",
+      "documentationPath": "docs/cli.md",
+      "implementationPaths": ["src/cli/tool.rs", "src/cli/args.rs", "src/core/paths.rs"]
+    },
+    {
+      "href": "/docs/updates/",
+      "metadataPath": "src/routes/docs/updates/+page.md",
+      "documentationPath": "docs/update-notices.md",
+      "implementationPaths": [
+        "src/cli/self_update.rs",
+        "src/cli/update_notice.rs",
+        "src/core/paths.rs",
+        "install.sh"
+      ]
+    },
+    {
+      "href": "/runtimes/deno/",
+      "metadataPath": "src/routes/runtimes/deno/+page.md",
+      "documentationPath": "docs/runtimes.md",
+      "implementationPaths": [
+        "src/runtimes/deno.rs",
+        "src/runtimes/common.rs",
+        "src/cli/runtimes.rs",
+        "src/hooks/mod.rs"
+      ]
+    },
+    {
+      "href": "/runtimes/dotnet/",
+      "metadataPath": "src/routes/runtimes/dotnet/+page.md",
+      "documentationPath": "docs/runtimes.md",
+      "implementationPaths": [
+        "src/runtimes/dotnet.rs",
+        "src/runtimes/common.rs",
+        "src/cli/runtimes.rs",
+        "src/hooks/mod.rs"
+      ]
+    },
+    {
+      "href": "/runtimes/erlang/",
+      "metadataPath": "src/routes/runtimes/erlang/+page.md",
+      "documentationPath": "docs/runtimes.md",
+      "implementationPaths": [
+        "src/runtimes/erlang.rs",
+        "src/runtimes/common.rs",
+        "src/cli/runtimes.rs",
+        "src/hooks/mod.rs"
+      ]
+    },
+    {
+      "href": "/runtimes/java/",
+      "metadataPath": "src/routes/runtimes/java/+page.md",
+      "documentationPath": "docs/runtimes.md",
+      "implementationPaths": [
+        "src/runtimes/java.rs",
+        "src/runtimes/common.rs",
+        "src/cli/runtimes.rs",
+        "src/hooks/mod.rs"
+      ]
+    },
+    {
+      "href": "/runtimes/php/",
+      "metadataPath": "src/routes/runtimes/php/+page.md",
+      "documentationPath": "docs/runtimes.md",
+      "implementationPaths": [
+        "src/runtimes/php.rs",
+        "src/runtimes/common.rs",
+        "src/cli/runtimes.rs",
+        "src/hooks/mod.rs"
+      ]
+    },
+    {
+      "href": "/runtimes/pi/",
+      "metadataPath": "src/routes/runtimes/pi/+page.md",
+      "documentationPath": "docs/runtimes.md",
+      "implementationPaths": [
+        "src/runtimes/pi.rs",
+        "src/runtimes/common.rs",
+        "src/cli/runtimes.rs",
+        "src/hooks/mod.rs"
+      ]
+    },
+    {
+      "href": "/runtimes/ruby/",
+      "metadataPath": "src/routes/runtimes/ruby/+page.md",
+      "documentationPath": "docs/runtimes.md",
+      "implementationPaths": [
+        "src/runtimes/ruby.rs",
+        "src/runtimes/common.rs",
+        "src/cli/runtimes.rs",
+        "src/hooks/mod.rs"
+      ]
+    },
+    {
+      "href": "/runtimes/swift/",
+      "metadataPath": "src/routes/runtimes/swift/+page.md",
+      "documentationPath": "docs/runtimes.md",
+      "implementationPaths": [
+        "src/runtimes/swift.rs",
+        "src/runtimes/common.rs",
+        "src/cli/runtimes.rs",
+        "src/hooks/mod.rs",
+        "src/core/security/pgp.rs"
+      ]
+    },
+    {
+      "href": "/runtimes/zig/",
+      "metadataPath": "src/routes/runtimes/zig/+page.md",
+      "documentationPath": "docs/runtimes.md",
+      "implementationPaths": [
+        "src/runtimes/zig.rs",
+        "src/runtimes/common.rs",
+        "src/cli/runtimes.rs",
+        "src/hooks/mod.rs"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "path": ".github/workflows/release.yml",
+      "gitBlob": "f0ce6d058bea7d93befaab8c95b7596354d2fe40",
+      "sha256": "62f9574b6f9b266ee437882c7df024537bba6e4c15d276e04d5f5438d18579d3"
+    },
+    {
+      "path": "Cargo.toml",
+      "gitBlob": "76a7fddf4231812e4e4b686a737e6a0e0f52d262",
+      "sha256": "1f0ec8ff186a828fce4aba89cb2917d19e76bb3e2e8e425493e30b9162ddc115"
+    },
+    {
+      "path": "docs/architecture.md",
+      "gitBlob": "42ef699a7fc18a40604199b0990ed5f5b789dd0d",
+      "sha256": "d07eba8ef1d71ed832c55bfd93f03ce8b0289fc329d8de983cdfe01c0f16663e"
+    },
+    {
+      "path": "docs/cli.md",
+      "gitBlob": "8ab75e454ba41de0093d0457c3d6037a4902e99b",
+      "sha256": "22c5e37dd1ac3980f3a1e0f0d6d996fd4b2061844f0cc413e66e77b66f980134"
+    },
+    {
+      "path": "docs/configuration.md",
+      "gitBlob": "52a056270ef4e71ec8be82a6e874c1e3b551c7ac",
+      "sha256": "c654cd7ac03d9762adf55778c360bd8fd0a3c576f887de8510840d0692d17311"
+    },
+    {
+      "path": "docs/containers.md",
+      "gitBlob": "7e007c31d311ba3873b4f80486b68ac51e836b77",
+      "sha256": "6d72b838b6ed2fa9c2c7bb34673a2c7fa256f14ba1edd874df1601560cf577ba"
+    },
+    {
+      "path": "docs/daemon.md",
+      "gitBlob": "2c46e3273ef0c55845059eabe89715d319fa71b3",
+      "sha256": "6933b12b26a7134f30dd921f5ce6b8295f68c5d2dcdd77fb1283e6b0a92b086c"
+    },
+    {
+      "path": "docs/environment-portability.md",
+      "gitBlob": "3db297e336b7a67348aaa0245c5fa7ae3bd8bf31",
+      "sha256": "638bd48755a01af6ad31539d8b4a9124e8f46241e729806c7cf83c33a5d1edab"
+    },
+    {
+      "path": "docs/getting-started.md",
+      "gitBlob": "6123a25e8cd17c94dfaaf09491ccfd280e18dde4",
+      "sha256": "d1c4f5e6786fd3c608adf75a8a5b76c6ead4af356826f14e1592d56efe639284"
+    },
+    {
+      "path": "docs/installation.md",
+      "gitBlob": "3f148f2facf17abe4c8a5f35170a3454e57c3d18",
+      "sha256": "0b3b7dd501a071887c08a7e6209b38520c3f1ea038e58e72e9adad3099cc90d2"
+    },
+    {
+      "path": "docs/packages.md",
+      "gitBlob": "4b795e91040177f7974444a170207683dcaec58e",
+      "sha256": "9142426943bcdad231b1cebada9178e87a85b73ebc0418cc596641d68a06fdf3"
+    },
+    {
+      "path": "docs/runtimes.md",
+      "gitBlob": "fa2cd0bf71f6fc943c32c35cd36860f448daa804",
+      "sha256": "87f0216b4ca9c45695ca80903bf5a312a0907721d88beea4577dd93935dc91a2"
+    },
+    {
+      "path": "docs/security.md",
+      "gitBlob": "e70774777fb3a1fc9fba127262d6a02801cff98e",
+      "sha256": "68c13f713a52afa2091ccbce9cb64d956b83162e8afa927d4b7ff05dfb2aaf54"
+    },
+    {
+      "path": "docs/shell-integration.md",
+      "gitBlob": "90cb18254f1c82c1f198768ec5249b2f852fb490",
+      "sha256": "d57e5523b51b60b0d432055b4fae6e484cda94d8eb51ef327bbc7fb0f23359ef"
+    },
+    {
+      "path": "docs/task-runner.md",
+      "gitBlob": "732fb181b59950fc24654050aaed3a458f85cafe",
+      "sha256": "5d2532936119231e01bc5783b2f4482d4ea78919f604904535281f7ff743fb91"
+    },
+    {
+      "path": "docs/troubleshooting.md",
+      "gitBlob": "177de2b929afe639ee7c0b86eee41de36deef45b",
+      "sha256": "1309c59422bb3f618135a0aef562be6c1a7db7e41cb3e638f8e88d5f690edc2c"
+    },
+    {
+      "path": "docs/update-notices.md",
+      "gitBlob": "7a32317d12913e732e7dddcb8b2cb07b0234efdf",
+      "sha256": "9b7dff6deddead38950a07a5a1a139254365debfa5d637f4cecf5ddeb67a3662"
+    },
+    {
+      "path": "docs/workflows.md",
+      "gitBlob": "675ccfcdcf1553e8b94ae6cdd21746fd1d4952e9",
+      "sha256": "a7b232c371c547eb009140bbbc08f77b7b49bd12b35bf58c3e0a4f132a722dd2"
+    },
+    {
+      "path": "install.sh",
+      "gitBlob": "d8ee8e3bc4ae3990cf8df21dcd555a592eb89c23",
+      "sha256": "26549a96b5e32501a64d110e25c7339dd34265ae277032c4111caa0e49910614"
+    },
+    {
+      "path": "src/cli/args.rs",
+      "gitBlob": "1bc35e1be02f8a8c909395e2c1906af8e8cb95fc",
+      "sha256": "5b4722a93d83cc951c706855b14fc470301a06016aa627e383a00342b601bfa6"
+    },
+    {
+      "path": "src/cli/ci.rs",
+      "gitBlob": "6a7f416f027e9f99283a96e7073ffec3681027b7",
+      "sha256": "5e5a2e8ba744675d0c0553e9f4e08b322ee0f2ef6f283c1c3541bd39f5a82466"
+    },
+    {
+      "path": "src/cli/commands.rs",
+      "gitBlob": "f900f7f6aee0d81ac5c3eb38c4961bf14e386009",
+      "sha256": "ca78f78097b58e6eeb0f88e99c8feb2da1578bb49d5a6d230db088109e857a68"
+    },
+    {
+      "path": "src/cli/config.rs",
+      "gitBlob": "91accb2e21096f761843734a332dd969530ea334",
+      "sha256": "907bd671a5ed3eb3fff07f4a206d33ce346b1d868ae7da7e6ef934b46b6438e9"
+    },
+    {
+      "path": "src/cli/container.rs",
+      "gitBlob": "2f4c763cca46cf2ba61dc42cb45c2e4274f0ff94",
+      "sha256": "42b409287643de60720fa4e558b1240b53ecc0ac226db0c86aff700784380853"
+    },
+    {
+      "path": "src/cli/daemon_status.rs",
+      "gitBlob": "3b5f986d3d442436992a6112947e313086e20077",
+      "sha256": "040af50736e15153a606958287c0e828dcb5ea24a98a94a52823fb419e7597e7"
+    },
+    {
+      "path": "src/cli/doctor.rs",
+      "gitBlob": "5918bded806eb3a13ad96490735cdb23e033b171",
+      "sha256": "cd30a73ffe24625208880e55ecbbad3d4ee9cd1512ff2142de840cc19315b8d9"
+    },
+    {
+      "path": "src/cli/env.rs",
+      "gitBlob": "7e2fda31d8d6f284cf62a5f0a181cb728c129930",
+      "sha256": "3de68f4cb5037d546dfb56b1acf84b81f55651b77c90956889710a5f5216e798"
+    },
+    {
+      "path": "src/cli/mod.rs",
+      "gitBlob": "dff3ea6f524f8660eeb890b9647b4cd8a420a1a9",
+      "sha256": "9674d3d6d2d35115ee239bbb12f04dc6941df5752868aced0f9de1bd28417319"
+    },
+    {
+      "path": "src/cli/packages/clean.rs",
+      "gitBlob": "e8490ab483e52292f98f7dd2dcc77f50765bcd88",
+      "sha256": "36e1b791a2aaf14533cc32f97f50fdf869d554dd5cd0a032f67f963331f93646"
+    },
+    {
+      "path": "src/cli/packages/mod.rs",
+      "gitBlob": "afde2721fc83b5cfdd7c4e49371bd217ae5ebb60",
+      "sha256": "45c8fe1898d57ade65cd2f178f4b041bd6e0c14178b04cb48aec3493a4d1ab3e"
+    },
+    {
+      "path": "src/cli/packages/update/arch.rs",
+      "gitBlob": "8ee4887b52b9b9f09541c37c054ba76fc3932374",
+      "sha256": "887bfe5f112a2082e7ff1da837f4607586735427f221cec8bc800c0e2b9f08a2"
+    },
+    {
+      "path": "src/cli/run.rs",
+      "gitBlob": "fcb7633e5a36666611030226122e547377ed30f8",
+      "sha256": "cc388a60328a697561de8ad7e42c5c80e5a8811ad74eeadad7785d75d88e9952"
+    },
+    {
+      "path": "src/cli/runtimes.rs",
+      "gitBlob": "947c8e5d2bfdca871b4eab8979522f1fe0280a9a",
+      "sha256": "687008157bc856ba282b151ff1beaab01d22ce013ca9f27ab6d84c4c47f0287f"
+    },
+    {
+      "path": "src/cli/security.rs",
+      "gitBlob": "877539f4a6ef9c75ed04d527f047545214206959",
+      "sha256": "8616b20c14e226c68ab5ba872b218814466add6ae737bbeaf0bc17ce237e5d07"
+    },
+    {
+      "path": "src/cli/self_update.rs",
+      "gitBlob": "48701ce9119b4ea267fa6b31d95988c7c91ad8aa",
+      "sha256": "4dae1ec056bf3c95678e95636b24a4a8f68d6c51019235b033a5a6d831d67ba9"
+    },
+    {
+      "path": "src/cli/snapshot.rs",
+      "gitBlob": "0e5ef42372ec0ad6ad7365136c52e8c2bbb478a2",
+      "sha256": "9bb2bdb6b48f10aeb17dd10c10c357aa6190cb679913abb42ff8076d985c1359"
+    },
+    {
+      "path": "src/cli/team.rs",
+      "gitBlob": "4d7ec2342721bbd12890a75fa5db6f3223206d93",
+      "sha256": "28dcd0be48e1d296fe02bdc1a97a2675d558524a18ff04fee95baf28b10100c5"
+    },
+    {
+      "path": "src/cli/tool.rs",
+      "gitBlob": "df7072080c44040995b71f37704d5daa822d544d",
+      "sha256": "f3c8f3a3720bc970fd596cd0511579557e50067e8e6bc6a3384e4cdbcc429632"
+    },
+    {
+      "path": "src/cli/update_notice.rs",
+      "gitBlob": "fe9665940de074df2a3e2159a345d079f43ffbb7",
+      "sha256": "5d88fca6e1570e4b5fdb39933787fd75c7b0fac8afbbab9584d143f407d56cf6"
+    },
+    {
+      "path": "src/config/mise_env.rs",
+      "gitBlob": "162eeacf9a94a4e35f76df32b1bb56165dff99e9",
+      "sha256": "e9f64adcee4da6dcb5a94f6f12f1717801894de137ec08f307bc53816f469dfc"
+    },
+    {
+      "path": "src/config/settings.rs",
+      "gitBlob": "daac62bc17ed5672031fb44262482448e1348551",
+      "sha256": "5ef51f78fa17c1974d29e7f90ac0f7e053d0448b0b10939b10ce7906b262e137"
+    },
+    {
+      "path": "src/core/client.rs",
+      "gitBlob": "11d739417bed07a888bb2e00c73cefb7508bbc94",
+      "sha256": "fd3314fcc856cdc1104bffb2c589b5b0549a213912ff11d51c59d5d5a6812a91"
+    },
+    {
+      "path": "src/core/container.rs",
+      "gitBlob": "832fa11efa15f5feeef103ed1a17b985feaae47e",
+      "sha256": "fc2cedd39df7d50f59a7db0a1cc7a6300f55fab2f83ed76d60222cb9f83c9443"
+    },
+    {
+      "path": "src/core/env/fingerprint.rs",
+      "gitBlob": "1c89a571e61bbf67e39e9be3fe4697abc2d95956",
+      "sha256": "e65818befc8c727df38d7c5a64e725257002640adc0922b921b0282d77d79ad6"
+    },
+    {
+      "path": "src/core/env/mod.rs",
+      "gitBlob": "77cede2cccff24f2315a8d76f55c8d80a0371fdc",
+      "sha256": "1d1525b78507633b5b4b8427a25d9a51576d3d274c6e66918555b6497af8abb5"
+    },
+    {
+      "path": "src/core/env/portable.rs",
+      "gitBlob": "64817d7908580d42384e178701250d08c90de094",
+      "sha256": "40c466b136a06efcf60ec2db4aa8f1c0784993f02e2e6ac5f6ac856ebf40f33d"
+    },
+    {
+      "path": "src/core/env/team.rs",
+      "gitBlob": "7390a63e2da7c4f5d036bc08abe9aa15da0fd863",
+      "sha256": "6ec3d26310706b468121311193519ceebbc2192389f2523c9a21dceb1520bf83"
+    },
+    {
+      "path": "src/core/fast_status.rs",
+      "gitBlob": "de0da92371485a15e622807dcae2719cbc61d539",
+      "sha256": "aa311e923bb216c94ff0cf0c232b03ad800761cc9745257d2509a80ae62272be"
+    },
+    {
+      "path": "src/core/history.rs",
+      "gitBlob": "02a48b217d252ef10e7b625e424333604489c7e0",
+      "sha256": "f86d8ab24a83c3a6602378a17388c2743658a6e29b9bf37f939cc76c76bfc7e8"
+    },
+    {
+      "path": "src/core/http.rs",
+      "gitBlob": "705c1c9e5cec4e81472123429405b6e6d9ad9040",
+      "sha256": "277deb9f93de9bb606d079f93a2bf87e98555d8cf2330a2548ba9e23881aa145"
+    },
+    {
+      "path": "src/core/paths.rs",
+      "gitBlob": "f6475167930fb28c5e89dcfe26d6bed381627915",
+      "sha256": "e078618e0650f03ec983143216da068a37519a33927d43ed6e197e430c8a27ec"
+    },
+    {
+      "path": "src/core/runtime_resolver.rs",
+      "gitBlob": "d49abdf84bb9a15690b0a0cbea6d78e769120603",
+      "sha256": "6a777180c41910558c35d70d1f3ae33c3c89a9a2723b8bc3b9ad336a36e97591"
+    },
+    {
+      "path": "src/core/security/audit.rs",
+      "gitBlob": "de89b58a65d64fa1930a7940743a258fc6102197",
+      "sha256": "44b631cd0b82e312444d911ad4fe1406c6d76c767373c55093aa82f22dde137d"
+    },
+    {
+      "path": "src/core/security/pgp.rs",
+      "gitBlob": "0ad9b52c9ccf57f7880d748f7157fa3449d603e2",
+      "sha256": "ac04e68d20a93772ab92833e9fbca5b648d1081f1675f9b30f3214308345df05"
+    },
+    {
+      "path": "src/core/security/policy.rs",
+      "gitBlob": "689ae2a57928b47105ab557ec43f3379be2546fa",
+      "sha256": "ca0916368da7da740c86048d2ddae090effad85018f4d32dedab176aaa651da8"
+    },
+    {
+      "path": "src/core/security/sbom_shared.rs",
+      "gitBlob": "3b8b848ce79bfc148812179ef779b1d3c1bcbc73",
+      "sha256": "fc6dd10b2aa613771af8559594ea449b085a7b5afba8ba80d3876497d830fec9"
+    },
+    {
+      "path": "src/core/security/sbom.rs",
+      "gitBlob": "ce745a4762094dbc009befa57a89aed7fb1f59be",
+      "sha256": "28944902cde88d284e5d4d7221d4d699e73f06a77fb7042016c32b2c0e5dadc8"
+    },
+    {
+      "path": "src/core/security/scan.rs",
+      "gitBlob": "d3b95f053c1c11fdb0ac732cabde72160195e9b0",
+      "sha256": "9db62f073d7b34b6aed74f8f66638bae4cf20ff64600fbf23b463df6d496ba50"
+    },
+    {
+      "path": "src/core/security/secrets.rs",
+      "gitBlob": "7d4990140e12dffa417a6ec2767988a82bfe80d9",
+      "sha256": "c1b979541700b79655ad14d498315b839f0e4b89368aff13932c89c13f9457a6"
+    },
+    {
+      "path": "src/core/security/slsa.rs",
+      "gitBlob": "90e24ff1f2f5f19b520424e50e1ca9be2b27f8b4",
+      "sha256": "2867d1a6e25a22b40cfbbfbdab5c0d6475316fca9502ec6ade01a1cfb7cd8e3c"
+    },
+    {
+      "path": "src/core/security/vulnerability.rs",
+      "gitBlob": "e24fe1bc61d9d2892e7ec59610cefc5f194cda64",
+      "sha256": "896adb7e10301de61107c2aad83e33fd81168170ecb74ae39833d1f4fc071b48"
+    },
+    {
+      "path": "src/core/task_runner.rs",
+      "gitBlob": "33655de6e203b5785ee345303ec4e718e9ccb6e9",
+      "sha256": "8bcc83fddb2009f47ccddb473b1b8b829366c8134c21daf5ea532aaa797b9647"
+    },
+    {
+      "path": "src/core/telemetry.rs",
+      "gitBlob": "6ed0dcfc1e9ef5771aba0336d161bf6869b9a388",
+      "sha256": "14c20e541f504be5775eea0a640a0a71e53753242e433471612d624b0d6a851b"
+    },
+    {
+      "path": "src/daemon/cache.rs",
+      "gitBlob": "3d3b31646b3d51726a368cdacc1f753e9e5fea98",
+      "sha256": "d1ccae965ee7c2cb76fb6978c3b46e253b677317e10297ce267c29bb1d23b924"
+    },
+    {
+      "path": "src/daemon/db.rs",
+      "gitBlob": "bfe5f41a655f5dceed4cd2b41dfc52c1e9ec7b49",
+      "sha256": "d5449d82721fba99cc821afb68d72b52bcf1f94e06f4390842527b95fd3d3ffc"
+    },
+    {
+      "path": "src/daemon/handlers.rs",
+      "gitBlob": "f6188e152aed3b8ddd3d0b06a48c211e3c327ed3",
+      "sha256": "50c14541b91b75b1d0eff9cfc195328c133a4e0911c630cc77ffb4157176bc77"
+    },
+    {
+      "path": "src/daemon/index.rs",
+      "gitBlob": "815d2416930b80c5306db0507614b3080f8eec0e",
+      "sha256": "cb8aaf8162a419abb24e9e73e46e31c8b63e09c4d53d2887b947f5a08d3adb51"
+    },
+    {
+      "path": "src/daemon/mod.rs",
+      "gitBlob": "1ff6a151a51521b183df5238183adb2e41aeff6b",
+      "sha256": "2f24cba03f14e4a4ae8bdca50ca6e5b3bf54d9d8ceb72950e6078df208a2737c"
+    },
+    {
+      "path": "src/daemon/protocol.rs",
+      "gitBlob": "0f3546b35ff4382542d71cdc2e79da39024cf448",
+      "sha256": "743cbed8c06b5b7ed6c8eca49210fc4a7832e0ad9ed52a5940228ce4e8f8eb1c"
+    },
+    {
+      "path": "src/daemon/server.rs",
+      "gitBlob": "911b049d3ba5c9dd56321c73e14a8c60226928b9",
+      "sha256": "5072224d66c361478858967a7e536c40c9f501864797144eafb914a13ce3e5cd"
+    },
+    {
+      "path": "src/daemon/status_policy.rs",
+      "gitBlob": "93d8d043f26d36edf6129cded351bce45198da7f",
+      "sha256": "966d8787bd7529356455671167bf7d663598d6340d45d7904b966ebf73481b97"
+    },
+    {
+      "path": "src/hooks/completions.rs",
+      "gitBlob": "7f1a671a3a4dd3c6d5b05382bfdc163b7d06126a",
+      "sha256": "7bc1277b95232554b21038b946bc16ea8cdbf4a7d4bc6399a6f15746e86c78ec"
+    },
+    {
+      "path": "src/hooks/mod.rs",
+      "gitBlob": "129233e7ffd8e97a6d89d05e8022b7a60053be37",
+      "sha256": "189c2f88d2e207168adc7a6ff6cecf73e9ad49c4f6501c9bc49fbdc5e745f605"
+    },
+    {
+      "path": "src/runtimes/bun.rs",
+      "gitBlob": "28552362d41d8d6de3f5b9708ea6b5ded0e8e1ae",
+      "sha256": "70d646c849dbe3e375fe9c9ff55d640df1d99a38342a58b4bbdc39e5667af292"
+    },
+    {
+      "path": "src/runtimes/common.rs",
+      "gitBlob": "9e4eed1d2d5bc56fbac68d10d1fde407f2ece685",
+      "sha256": "5e8f2bf6538e25338660e76b9a56d862a9106e70b528c130b9aea7ad12708fd6"
+    },
+    {
+      "path": "src/runtimes/deno.rs",
+      "gitBlob": "8dedb49846dfc23d8ea267b97a3ec82c64f1033f",
+      "sha256": "de0b2e7203a9de209bd78773af0ea0aac65c71c79446dc2d1b2aebd2e4952e47"
+    },
+    {
+      "path": "src/runtimes/dotnet.rs",
+      "gitBlob": "cbf6bf4362b8266d1b62d872e3d117a6bb109b01",
+      "sha256": "c7cb6575b2e9b6ed78b840d9c46d2fa1962a4adcda90059a6e17f3e2268f183d"
+    },
+    {
+      "path": "src/runtimes/erlang.rs",
+      "gitBlob": "1e8073794102936af7f121fa75a989442580cba2",
+      "sha256": "6c58ed18ed4d798f2c595017ceb224c339dc59b36b42d698a31b07cb74c12314"
+    },
+    {
+      "path": "src/runtimes/go.rs",
+      "gitBlob": "ad5f3843b55bb2e6def983270c0551b6c2700d78",
+      "sha256": "134ed4140e03d98d6b8ffb6dc5b43abb6b6529addeb2e64021f61a8d93880255"
+    },
+    {
+      "path": "src/runtimes/java.rs",
+      "gitBlob": "a3f753ab521580e268b74240016c3d4bbb443bf3",
+      "sha256": "5e436ccff1a9b5f6e329cc2f9e7514202a86b11c1b43f3d78323445ae2d19ca4"
+    },
+    {
+      "path": "src/runtimes/mod.rs",
+      "gitBlob": "3af0e22a92481ae157d4c358e963a50269b85b7b",
+      "sha256": "75f43a73d0d70eea64735f6ac1283a47e399474fdb6cb817f44f56c96cc56a80"
+    },
+    {
+      "path": "src/runtimes/node.rs",
+      "gitBlob": "6e6cc60dc7b9c82ff981aad3c5d56983498e61b5",
+      "sha256": "22d0681662f166f87b11c72e96bb81850eb450e71d5e63a0a32308cb93c3fdf9"
+    },
+    {
+      "path": "src/runtimes/php.rs",
+      "gitBlob": "a78976b9bfa3a591554b0f33d46654ff700ac779",
+      "sha256": "3a254d083c178143a6d83dae1040063b352b6a6c494154c9a1883a71e3882fae"
+    },
+    {
+      "path": "src/runtimes/pi.rs",
+      "gitBlob": "a8ee0504930c5873ceac90150715d3d3233f1310",
+      "sha256": "446c5a26d55074da9f721b5dc745d5075fd3d68a87d31de2ca7cafb9c4162b5a"
+    },
+    {
+      "path": "src/runtimes/python.rs",
+      "gitBlob": "3de9944210850acc3f4810c2ddb98ff34745dde2",
+      "sha256": "9f24e6d1d80dec344b5011adebe8ecfc71071f5f81aa699dc3022557d02c9cda"
+    },
+    {
+      "path": "src/runtimes/python/catalog.rs",
+      "gitBlob": "e6e1d15275a99db78e8965f3809f26081bfaf10f",
+      "sha256": "24fe1801e2bbb0d673750d17558844d416f052007d4c08f91e04c20505b4f84d"
+    },
+    {
+      "path": "src/runtimes/ruby.rs",
+      "gitBlob": "7b16dfb5b3450c3a50db72903e2538bb649d2bf9",
+      "sha256": "87c9e8f7c988dd514161ea129802bac3f873d4ce6cbbe1a7d2b464159e949869"
+    },
+    {
+      "path": "src/runtimes/rust.rs",
+      "gitBlob": "404f7656249ca731bdb00fa2d90986bf97f49b96",
+      "sha256": "d95fb5b7734aae68e9a9e67660ad182a0b6b48653e7cc069ba5deb2bdb43c881"
+    },
+    {
+      "path": "src/runtimes/swift.rs",
+      "gitBlob": "defb57541d00325df503f814e35ccf9466de8438",
+      "sha256": "cc34f8363d5dac94942f4f56fb0b55ea7ed7b1d3ca6f3cdf3fc699d97d14cc9a"
+    },
+    {
+      "path": "src/runtimes/tool_registry.rs",
+      "gitBlob": "1ec02da4c99b1611996f7f4ccaf5870e327c76b3",
+      "sha256": "3790581522f141fab8c58437ef497ecaf516a969718f50005217fa9264ab0e90"
+    },
+    {
+      "path": "src/runtimes/zig.rs",
+      "gitBlob": "002e5ed1bd48de4a4d16a713d81f96a60a7719f7",
+      "sha256": "15e67381ee98beb8948293db32ec7d6d2d4184f0ecba47640609b1057461a826"
+    }
+  ]
+}

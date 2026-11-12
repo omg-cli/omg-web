@@ -18,7 +18,7 @@ export const workflowsTopic: DocsTopic = {
             { text: 'Start the day with a system check.', command: 'omg status' },
             { text: 'Apply available updates when you are ready.', command: 'omg update' },
             {
-              text: 'Change into a project. The shell hook reads version files and switches runtimes automatically.',
+              text: 'Change into a project. The shell hook reads version files and selects matching installed runtimes automatically; it does not install missing versions.',
             },
             {
               text: 'Run project tasks without knowing the ecosystem tool.',
@@ -57,7 +57,7 @@ export const workflowsTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'On Arch, Debian, and Ubuntu, omg env capture writes supported package names and selected runtime versions to omg.lock. Commit that file with your project and run omg env check to inspect drift. It does not record system package versions or all application dependencies. Fedora and macOS do not support this capture path.',
+            'On Arch, Debian, and Ubuntu, omg env capture writes explicit package names and probed OMG runtime and registry-tool versions to omg.lock. Commit that file with your project and run omg env check to inspect drift. It does not record system package versions or all application dependencies. Fedora and macOS do not support this capture path.',
           ],
         },
       ],
@@ -128,7 +128,7 @@ export const workflowsTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'In Docker images, install OMG in a RUN step, copy the project including omg.lock, and run omg env check before building. For non-interactive shells, pass --yes to commands that would prompt.',
+            'In Docker images, install a chosen OMG release in a RUN step, copy the project including omg.lock and version files, and install the required runtimes before checking the inventory. omg env check compares state; it does not install anything. Use --yes only on commands that accept it. Required source reviews and attended AUR security gates can still prevent non-interactive installation.',
           ],
         },
       ],
@@ -150,7 +150,7 @@ export const workflowsTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'In v0.1.223, run the full routine on Arch and start omgd for the audit step; Debian and Ubuntu SBOM generation fails because required vulnerability matching is unavailable there. The newer checkout supports SBOMs on Arch, Debian, Ubuntu, and Fedora and can audit without a daemon. Findings alone do not make the vulnerability command exit with a failure status. The secret scan covers your project directory. The SBOM records installed packages and matched findings when inventory and advisory data are available. audit verify checks the retained log for local consistency; filesystem access can still delete, truncate, or rewrite it. Review the results before changing packages.',
+            'In v0.1.224, SBOM generation supports Arch, Debian, Ubuntu, and Fedora when inventory and advisory data are available, and vulnerability scans can run without a daemon. Ordinary scans report findings; use omg audit scan --fail-on-findings when CI must fail on vulnerabilities. Inventory-only SBOMs explicitly omit advisory matching and are not clean scan results. The secret scan covers your project directory. audit verify checks the retained log for local consistency; filesystem access can still delete, truncate, or rewrite it. Review the results before changing packages.',
           ],
         },
       ],

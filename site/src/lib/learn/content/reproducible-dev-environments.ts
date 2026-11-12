@@ -10,7 +10,7 @@ export const content: LearningContent = {
           kind: 'paragraphs',
           paragraphs: [
             'Most developer environments drift because developers use different tools for each layer: OS packages are installed ad-hoc (`apt-get`, `pacman`, `brew`), language runtimes are managed by separate version tools, and project libraries are pinned in application lockfiles.',
-            'OMG’s environment subsystem (`src/cli/env.rs` and `src/core/env/fingerprint.rs`) records explicitly installed system package names and selected OMG runtime versions in `omg.lock`. The published CLI captures seven runtimes (Node.js, Python, Rust, Go, Ruby, Java, and Bun). It does not record system package versions or application dependencies.',
+            'OMG’s environment subsystem (`src/cli/env.rs` and `src/core/env/fingerprint.rs`) records explicitly installed system package names and selected OMG runtime versions in `omg.lock`. The v0.1.224 capture probes every supported OMG runtime and registry tool and records the versions it finds. It does not record system package versions or application dependencies.',
           ],
         },
       ],
@@ -22,8 +22,8 @@ export const content: LearningContent = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            '`omg env capture` supports the Arch ALPM and Debian/Ubuntu APT backends. It records explicit package names and selected runtime versions, then writes a full SHA-256 hash of that inventory to `omg.lock`. The CLI displays the first 16 characters as a short identifier.',
-            'Run `omg env check` to compare `omg.lock` with the live system without installing packages. It reports missing or extra package names and runtime version differences. System package version changes under the same name are outside this check.',
+            '`omg env capture` supports the Arch ALPM and Debian/Ubuntu APT backends. It records explicit package names and probed runtime and registry-tool versions, then writes a full SHA-256 hash of that inventory to `omg.lock`. The CLI displays the first 16 characters as a short identifier.',
+            'Run `omg env check` to compare `omg.lock` with the live system without installing packages. It reports missing or extra package names and runtime version differences. System package version changes under the same name are outside this check. Detected drift or a missing lockfile exits nonzero, so CI can use the command as an inventory gate.',
           ],
         },
         {
@@ -58,7 +58,7 @@ export const content: LearningContent = {
     },
     {
       id: 'team-workflow',
-      heading: 'A verified team onboarding workflow',
+      heading: 'A team onboarding workflow',
       blocks: [
         {
           kind: 'steps',
@@ -74,7 +74,11 @@ export const content: LearningContent = {
             },
             {
               text: 'If drift or missing runtimes are reported, inspect the differences and install the required versions.',
-              command: 'omg use node lts && npm ci',
+              command: 'omg use node',
+            },
+            {
+              text: 'At a fresh prompt with the shell hook enabled, verify the project-selected Node.js and install the committed application dependencies.',
+              command: 'node --version && npm ci',
             },
             {
               text: 'Run the project tasks using OMG’s polyglot task runner.',
@@ -86,10 +90,13 @@ export const content: LearningContent = {
     },
   ],
   sources: [
-    { title: 'OMG environment CLI implementation (src/cli/env.rs)', href: '/docs/cli/' },
+    {
+      title: 'OMG v0.1.224 environment commands',
+      href: 'https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/env.rs',
+    },
     {
       title: 'OMG environment fingerprinting (src/core/env/fingerprint.rs)',
-      href: '/docs/architecture/',
+      href: 'https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/core/env/fingerprint.rs',
     },
     { title: 'OMG daily workflows guide', href: '/docs/workflows/' },
   ],

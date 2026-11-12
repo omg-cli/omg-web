@@ -1,6 +1,9 @@
 <script lang="ts">
   import SeoHead from '../../lib/components/SeoHead.svelte';
   import { serializeJsonLd, SITE_ORIGIN } from '../../../../shared/public-site';
+  import DocsSearchForm from '../../lib/components/docs/DocsSearchForm.svelte';
+  import type { PageData } from './$types';
+  let { data }: { data: PageData } = $props();
   import { DOCS_TOPICS, docsTopicHref } from '../../lib/docs/topics';
 
   const canonicalUrl = `${SITE_ORIGIN}/docs/`;
@@ -66,9 +69,8 @@
       <h1>Learn the parts you need.</h1>
     </div>
     <p class="hero-copy">
-      Start with four commands. Open a handbook topic when your workflow needs more control. Browse <a
-        href="/runtimes/">runtime setup guides</a
-      >
+      Start with a task, search for a command, or open the reference when you need exact behavior.
+      Browse <a href="/runtimes/">runtime setup guides</a>
       or learn to
       <a href="/guides/node-npm-pnpm/">use Node.js, npm, and pnpm together</a>.
       <a href="/updates/">Read release notes and updates.</a>
@@ -78,11 +80,12 @@
   <div class="docs-layout">
     <aside class="docs-aside">
       <nav class="section-nav" aria-label="Documentation sections">
-        <p>On this page</p>
+        <DocsSearchForm />
         <ul>
           <li><a href="#install">Install</a></li>
           <li><a href="#quick-start">Quick start</a></li>
           <li><a href="#platforms">Platforms</a></li>
+          <li><a href="#guides">Guides by task</a></li>
           <li><a href="#reference">Handbook</a></li>
         </ul>
       </nav>
@@ -103,8 +106,8 @@
           >.
         </p>
         <p class="install-note">
-          The installer downloads the latest published release. This handbook calls out behavior
-          added in the newer main checkout where it differs from that release.
+          The handbook and operational guides describe release v0.1.224. Newer development-only
+          behavior is labeled separately. Check the source and review date on each page.
         </p>
       </section>
 
@@ -156,6 +159,31 @@
         </dl>
       </section>
 
+      <section id="guides" class="docs-section reference-section">
+        <h2>Guides by task</h2>
+        <p class="section-copy">
+          Start with an outcome. Each guide states the release, prerequisites, supported backends,
+          and recovery steps.
+        </p>
+        <ul class="reference-list">
+          {#each data.documentationNavigation.filter(entry => entry.section !== 'Reference') as entry (entry.href)}
+            <li>
+              <a href={entry.href}
+                ><span class="reference-label">{entry.label}</span><span class="reference-summary"
+                  >{entry.title}</span
+                ></a
+              >
+            </li>
+          {/each}
+        </ul>
+        <p class="section-copy">
+          For tools and agents: <a href="/llms.txt">Documentation index</a>,
+          <a href="/llms-full.txt">complete text</a>,
+          <a href="/docs/manifest.json">structured manifest</a>, and
+          <a href="/docs/search.json?q=env%20capture">JSON search</a>. Every handbook and guide has
+          a Markdown representation.
+        </p>
+      </section>
       <section id="reference" class="docs-section reference-section">
         <h2>Handbook</h2>
         <p class="section-copy">
@@ -226,16 +254,8 @@
     border-bottom: 1px solid var(--rule);
   }
 
-  .section-nav p,
   .section-nav a {
     font-family: var(--font-body);
-  }
-
-  .section-nav p {
-    margin: 0;
-    color: var(--ink-muted);
-    font-size: 0.625rem;
-    text-transform: uppercase;
   }
 
   .section-nav ul,

@@ -321,7 +321,7 @@ test.describe('Svelte public surfaces', () => {
     expect(sitemapText).not.toContain('<changefreq>');
     expect(sitemapText).not.toContain('<priority>');
     expect(sitemapText).not.toContain(`${SITE_ORIGIN}/dashboard`);
-    expect(sitemapText).not.toContain('/docs/getting-started');
+    expect(sitemapText).toContain(`<loc>${SITE_ORIGIN}/docs/getting-started/</loc>`);
     await expect
       .poll(() =>
         page.evaluate(
@@ -346,6 +346,7 @@ test.describe('Svelte public surfaces', () => {
       'content',
       'CLI reference - OMG Package Manager'
     );
+    await page.locator('.mobile-topics summary').click();
     await expect(
       page.getByRole('navigation', { name: 'Documentation topics' }).locator('a[href="/docs/cli/"]')
     ).toHaveAttribute('aria-current', 'page');

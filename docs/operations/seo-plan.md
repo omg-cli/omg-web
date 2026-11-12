@@ -85,16 +85,13 @@ The 2026-09-01 shadow sample used managed Chrome without throttling. It recorded
 
 ### Slice 6. Documentation architecture
 
-21. [x] Publish eight native `/docs/<topic>/` pages with internal links, per-page metadata,
-        a sidebar, and breadcrumbs. The Svelte site ships a curated, typed handbook under
-        `src/lib/docs` instead of mirroring upstream Markdown. Each topic pins an upstream reference
-        file and reviewed commit (`PyRo1121/omg` at `2bb9103`, reviewed 2026-09-03). Pages are static
-        route directories prerendered through `src/routes/docs/+layout.ts`. Svelte escapes all
-        authored content. There is no raw HTML, Markdown parser, or runtime GitHub request.
-        `tools/check-docs-freshness.mjs` keeps registry slugs, content modules, and static route
-        directories aligned. With `--clone`, it requires the selected upstream revision to equal the
-        reviewed commit. Any CLI code or documentation commit
-        therefore requires human review before the provenance pin advances.
+21. [x] Publish the native handbook with per-page metadata, navigation and immutable source references.
+        The November 2026 upgrade adds SveltePress Markdown pages alongside the typed handbook and learning modules.
+        HTML, Markdown, search and agent indexes derive from the same authored sources.
+        Normal CI validates inventory and recorded source evidence offline. Intentional upstream-drift checks compare
+        the reviewed release files with a selected clone revision; they require substantive re-review before advancing dates.
+        See [documentation maintenance](documentation-maintenance.md) and the
+        [platform decision](../decisions/2026-11-11-documentation-platform.md) for current scope and commands.
 22. Comparison page: "Version managers compared: nvm, pyenv, asdf, mise, omg" — factual table only.
 
 ### Slice 7. Distribution work

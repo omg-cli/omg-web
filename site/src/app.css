@@ -461,3 +461,57 @@ h3 {
     scrollbar-color: auto;
   }
 }
+
+button[data-copy-code],
+button[data-copy-page] {
+  display: none;
+}
+:root[data-doc-copy='ready'] button[data-copy-code],
+:root[data-doc-copy='ready'] button[data-copy-page] {
+  display: inline-flex;
+}
+.docs-code {
+  margin-block: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper-raised);
+}
+.docs-code .code-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 2.75rem;
+  gap: 0.75rem;
+  padding: 0.25rem 0.75rem;
+}
+.docs-code button {
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.docs-code button:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+.docs-code button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.docs-code [data-copy-status] {
+  min-height: 1.5em;
+  color: var(--ink-muted);
+  font-size: 0.6875rem;
+}
+.docs-code pre {
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}

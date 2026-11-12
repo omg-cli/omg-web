@@ -15,10 +15,13 @@ const consumerSourceDirectories = [
   ...runtimeSourceDirectories,
   'site/e2e',
   'site/tests',
+  'site/tools',
   'workers/api/tests',
 ];
 const frameworkEntryPoints = new Set([
   'site/worker.js',
+  // SveltePress resolves its custom page layout from the Vite theme configuration.
+  'site/src/lib/components/docs/SveltePressPage.svelte',
   'site/src/hooks.server.ts',
   'site/src/params.ts',
   'workers/api/src/worker.ts',
@@ -351,6 +354,8 @@ const knownRepositoryFiles = new Set([
   ...(await allFiles('site/src')),
   ...(await allFiles('site/e2e')),
   ...(await allFiles('site/tests')),
+  ...(await allFiles('site/tools')),
+  ...(await allFiles('docs/operations')),
   'site/alchemy.run.ts',
   ...(await allFiles('workers/api/migrations')),
   ...(await allFiles('workers/api/src')),

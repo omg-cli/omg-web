@@ -1,42 +1,40 @@
 import { SITE_ORIGIN } from '../../../../shared/public-site';
-import { DOCS_TOPICS, docsTopicHref } from '../../lib/docs/topics';
-import { LEARNING_PAGES, learningHref } from '../../lib/learn/catalog';
+import { agentResponse, documentationEntries } from '../../lib/docs/documentation.server';
 import type { RequestHandler } from './$types';
 
-// Preserve the endpoint's response headers through the production adapter.
 export const prerender = false;
-
-export const GET: RequestHandler = () =>
-  new Response(
+export const GET: RequestHandler = async () => {
+  const entries = await documentationEntries();
+  return agentResponse(
     [
       '# OMG Package Manager',
       '',
-      '> OMG is an open-source CLI for system packages and multi-language runtimes (Node.js, Python, Go, Rust, Bun) on supported x86_64 Linux distributions and Apple Silicon macOS, including Linux inside WSL2. It provides direct PATH shell switching for .nvmrc and .tool-versions without wrapper shims and automatic version-file detection. Environment capture and drift checks are available on Arch and Debian/Ubuntu backends.',
+      '> OMG manages system packages and language versions on supported x86_64 Linux and Apple Silicon macOS, including Linux inside WSL2. Native Windows is not supported.',
       '',
-      'The latest published release predates beta. Follow the versioned source references in the handbook. npm, pnpm, and Bun retain ownership of their dependency installation and lockfiles. Native Windows is not supported.',
+      'The handbook and new operational guides describe released v0.1.224. Development-only changes are labeled. Each page provides its reviewed sources and date. Source review does not certify execution on every host. Compare a guide’s own sources before assuming version-specific behavior.',
       '',
-      '## Guides',
-      ...LEARNING_PAGES.map(
-        page =>
-          `- [${page.title}](${SITE_ORIGIN}/markdown/${page.category}/${page.slug}/): ${page.description} HTML: ${SITE_ORIGIN}${learningHref(page)}`
-      ),
+      'npm, pnpm, and Bun retain ownership of JavaScript dependency installation and lockfiles. Environment capture and drift checks are available on Arch, Debian, and Ubuntu and do not capture application dependency graphs or system package versions.',
       '',
-      '## Reference',
-      ...DOCS_TOPICS.map(
-        topic => `- [${topic.title}](${SITE_ORIGIN}${docsTopicHref(topic.slug)}): ${topic.summary}`
-      ),
+      '## Machine-readable entry points',
+      `- [Documentation manifest](${SITE_ORIGIN}/docs/manifest.json): Page URLs, Markdown URLs, release scope, dates, sources, and section anchors.`,
+      `- [Complete documentation](${SITE_ORIGIN}/llms-full.txt): Full text of all published handbook and guide pages.`,
+      `- [Search](${SITE_ORIGIN}/docs/search.json?q=env%20capture): Public JSON search. Use q with 2–160 characters. Results link directly to matching sections.`,
       '',
+      ...['Handbook', 'Guides', 'Runtime guides', 'Comparisons'].flatMap(category => [
+        `## ${category}`,
+        ...entries
+          .filter(entry => entry.category === category)
+          .map(
+            entry =>
+              `- [${entry.title}](${SITE_ORIGIN}${entry.markdownHref}): ${entry.description} HTML: ${SITE_ORIGIN}${entry.href}`
+          ),
+        '',
+      ]),
       '## Source',
-      `- [Complete OMG documentation](https://github.com/omg-cli/omg/tree/${DOCS_TOPICS[0].source.reviewedCommit}/docs)`,
-      '- [OMG source and releases](https://github.com/omg-cli/omg)',
+      '- [Released source](https://github.com/omg-cli/omg/tree/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb)',
+      '- [Releases](https://github.com/omg-cli/omg/releases)',
       '',
     ].join('\n'),
-    {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'public, max-age=0, must-revalidate',
-        'X-Robots-Tag': 'noindex',
-        'Content-Signal': 'search=yes, ai-train=no',
-      },
-    }
+    'text/plain; charset=utf-8'
   );
+};

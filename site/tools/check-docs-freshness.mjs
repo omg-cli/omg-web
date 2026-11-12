@@ -180,6 +180,12 @@ async function collectRouteSlugs() {
   const entries = await readdir(routesDirectory, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
+    if (['search', 'manifest.json', 'search.json'].includes(entry.name)) continue;
+    const isMarkdown = await access(`${routesDirectory}${entry.name}/+page.md`).then(
+      () => true,
+      () => false
+    );
+    if (isMarkdown) continue;
     const pagePath = `${routesDirectory}${entry.name}/+page.svelte`;
     try {
       await access(pagePath);

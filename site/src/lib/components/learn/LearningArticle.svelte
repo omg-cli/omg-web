@@ -11,6 +11,7 @@
   import { LatestReleaseView } from '../../latest-release.svelte';
   import DocsBlocks from '../docs/DocsBlocks.svelte';
   import SeoHead from '../SeoHead.svelte';
+  import DocActions from '../docs/DocActions.svelte';
 
   let { meta, content }: { meta: LearningPageMeta; content: LearningContent } = $props();
   const latestRelease = new LatestReleaseView();
@@ -64,6 +65,8 @@
   );
 </script>
 
+<svelte:head><script src="/docs.js" defer></script></svelte:head>
+
 <SeoHead
   title={`${meta.title} - OMG`}
   description={meta.description}
@@ -71,8 +74,9 @@
   type="article"
   modifiedTime={meta.modified}
   {structuredData}
+  markdownPath={`/markdown/${meta.category}/${meta.slug}/`}
 />
-<main id="main-content" class="learning-article">
+<main id="main-content" class="learning-article" data-doc-content>
   <nav aria-label="Breadcrumb">
     <a href="/">Home</a><span aria-hidden="true"> / </span><a href={`/${meta.category}/`}
       >{section.title}</a
@@ -85,6 +89,7 @@
       OMG maintainers · Updated <time datetime={meta.modified}>{meta.modified}</time> · Source-reviewed
       guide
     </p>
+    <DocActions markdownHref={`/markdown/${meta.category}/${meta.slug}/`} />
     {#if meta.slug === 'omg-vs-mise' && latestRelease.version}
       <p class="byline">
         Current download: {latestRelease.version} ·

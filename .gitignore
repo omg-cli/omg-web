@@ -31,3 +31,4 @@ tasks/
 *.cpuprofile
 npm-debug.log*
 workers/api/.wrangler/
+site/.wrangler/

@@ -37,7 +37,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'In the published v0.1.223 release, omg audit scan requires a running omgd. It queries OSV.dev for installed packages. The release maps macOS packages to the Homebrew ecosystem, although effective finding coverage has not been verified; Fedora has no OSV mapping. Current main can scan without a daemon and uses Arch Linux advisories on Arch, native DNF advisories on Fedora, and OSV on Debian and Ubuntu. A scan that finds no advisories is not proof that every package is safe. Finding vulnerabilities is reported but does not, by itself, make the command fail.',
+            'In v0.1.224, omg audit scan prefers a running omgd and falls back to direct package-backend scanning when the daemon is unavailable. It uses Arch Linux advisories on Arch, native DNF advisories on Fedora, and OSV on Debian and Ubuntu. Effective Homebrew finding coverage has not been verified. A scan with no findings is not proof that every package is safe. Findings are reported without failing by default; use omg audit scan --fail-on-findings for a nonzero exit when vulnerabilities are found.',
           ],
         },
         {
@@ -45,7 +45,7 @@ export const securityTopic: DocsTopic = {
           title: 'Scan and report',
           commands: [
             'omg audit',
-            'omg audit scan',
+            'omg audit scan --fail-on-findings',
             'omg audit log --severity error',
             'omg audit eol',
           ],
@@ -58,7 +58,7 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'info',
-          text: 'The newer CLI checkout adds omg audit scan --fail-on-findings for an opt-in nonzero exit when findings are present. The ordinary scan remains a report. This option is not in v0.1.223.',
+          text: 'For CI, distinguish a completed scan with findings from a scanner failure. --fail-on-findings makes findings fail the command; inventory or advisory errors also fail rather than becoming an empty successful scan. Review the reported coverage and advisory source.',
         },
       ],
     },
@@ -107,7 +107,7 @@ export const securityTopic: DocsTopic = {
             'Runtime installers and self-update compare downloaded bytes with the expected SHA-256 digest when that digest is available.',
             'AUR key preparation invokes gpg to inspect and import keys required by a build.',
             'omg audit slsa verifies a Sigstore hashedrekord artifact signature and Rekor signed entry timestamp (SET) against the pinned log key. It does not independently verify a Merkle inclusion proof or checkpoint.',
-            'Supply an expected publisher email or OIDC URI with `--certificate-identity`. In v0.1.223, the parser accepts omission but the verifier rejects it; the newer CLI checkout requires the option at parsing.',
+            'Supply an independently trusted publisher email or OIDC URI with `--certificate-identity`. The v0.1.224 parser requires this option; choosing an identity from the untrusted artifact itself does not establish trust.',
             'The current hashedrekord check does not establish build provenance or assign a SLSA level. It is a standalone audit and does not gate installation.',
           ],
         },
@@ -154,18 +154,18 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'In v0.1.223, the CLI writes a CycloneDX 1.5 system-package SBOM on Arch. Debian and Ubuntu have an inventory path, but required vulnerability matching fails there in that release. Current main supports Arch, Debian, Ubuntu, and Fedora when inventory and advisory data are available; Homebrew is unsupported. The SBOM contains installed package identities and matched findings, not application dependency graphs. An inventory or advisory failure stops generation.',
+            'In v0.1.224, the CLI writes a CycloneDX 1.5 system-package SBOM on Arch, Debian, Ubuntu, and Fedora when inventory and advisory data are available; Homebrew is unsupported. The SBOM contains installed package identities and matched findings, not application dependency graphs. An inventory or advisory failure stops default generation. If the installed inventory changes during collection, generation also fails rather than combining inconsistent snapshots.',
           ],
         },
         {
           kind: 'note',
           tone: 'warning',
-          text: 'omg audit export --framework soc2 writes an audit log, vulnerability scan, SBOM, and policy snapshot on a supported backend. In v0.1.223, Debian and Ubuntu fail at the required SBOM step. Other accepted framework names return an unimplemented error. --period is metadata, not a time-range filter. The separate enterprise audit-export writes a generic inventory bundle for its accepted framework labels. These plaintext files are evidence to review, not compliance certification.',
+          text: 'omg audit export --framework soc2 writes an audit log, vulnerability scan, SBOM, and policy snapshot on a supported backend. Failure to collect a required component stops the export. Other accepted framework names return an unimplemented error. --period is metadata, not a time-range filter. The separate enterprise audit-export writes a generic inventory bundle for its accepted framework labels. These plaintext files are evidence to review, not compliance certification.',
         },
         {
           kind: 'note',
           tone: 'info',
-          text: 'The newer CLI checkout adds omg audit sbom --inventory-only. It skips advisory matching, labels that omission in the SBOM, and cannot be read as a clean vulnerability scan. The default still requires advisory matching. This option is not in v0.1.223.',
+          text: 'Use omg audit sbom --inventory-only -o inventory.json when you need package inventory without advisory matching. v0.1.224 labels that omission in the SBOM; the result cannot be read as a clean vulnerability scan. Inventory failures still stop generation. The default command requires advisory matching.',
         },
       ],
     },
@@ -185,13 +185,13 @@ export const securityTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The installed-package license report and automatic vulnerability fix currently require the Arch backend. On Debian, Ubuntu, Fedora, and macOS they return an unsupported-backend error rather than a clean bill of health. In v0.1.223, --check-policy prints violations but does not fail solely because it found them; --filter also narrows the packages it checks. Inspect the complete report before treating it as a policy gate. omg audit fix upgrades affected Arch packages only when updates are available; review the dry run first.',
+            'The installed-package license report and automatic vulnerability fix require the Arch backend. On Debian, Ubuntu, Fedora, and macOS they return an unsupported-backend error. In v0.1.224, --check-policy evaluates the complete installed Arch inventory and exits nonzero on violations, even when --filter narrows the displayed report. A successful check only establishes that the configured local license restrictions were satisfied. omg audit fix upgrades affected Arch packages when updates are available; review the dry run first.',
           ],
         },
         {
           kind: 'note',
           tone: 'info',
-          text: 'The newer CLI checkout changes --check-policy to check the full installed Arch inventory even when display output is filtered, then exit nonzero on violations. This stricter gate is not in v0.1.223.',
+          text: 'For machine-readable license output, use omg audit licenses --format json or --format csv. Add --check-policy when the command must also enforce the configured allowed-license list. Review the full policy before relying on the exit status.',
         },
       ],
     },

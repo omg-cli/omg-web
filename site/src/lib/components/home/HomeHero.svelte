@@ -26,12 +26,12 @@
       <a href="/runtimes/python/">Python</a>
       <a href="/runtimes/go/">Go</a>
       <a href="/runtimes/rust/">Rust</a>
-      <a href="/docs/runtimes/#supported">Ruby</a>
-      <a href="/docs/runtimes/#supported">Java</a>
-      <a href="/docs/runtimes/#supported">Zig</a>
-      <a href="/docs/runtimes/#supported">Erlang</a>
-      <a href="/docs/runtimes/#supported">PHP</a>
-      <a href="/docs/runtimes/#supported">Swift</a>
+      <a href="/runtimes/ruby/">Ruby</a>
+      <a href="/runtimes/java/">Java</a>
+      <a href="/runtimes/zig/">Zig</a>
+      <a href="/runtimes/erlang/">Erlang</a>
+      <a href="/runtimes/php/">PHP</a>
+      <a href="/runtimes/swift/">Swift</a>
     </nav>
     <a class="all-runtimes" href="/runtimes/"
       >Browse runtime guides <Icon name="right" size={16} /></a

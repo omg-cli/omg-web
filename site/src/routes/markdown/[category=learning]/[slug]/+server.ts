@@ -1,6 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { loadLearningPage } from '../../../../lib/learn/content.server';
-import { learningMarkdown } from '../../../../lib/learn/markdown';
+import { agentResponse, documentationEntries } from '../../../../lib/docs/documentation.server';
 import type { RequestHandler } from './$types';
 
 // The adapter discards custom headers on prerendered text endpoints. Keep the
@@ -8,14 +7,8 @@ import type { RequestHandler } from './$types';
 export const prerender = false;
 
 export const GET: RequestHandler = async ({ params }) => {
-  const page = await loadLearningPage(params.category, params.slug);
-  if (!page) error(404, 'Guide not found');
-  return new Response(learningMarkdown(page.meta, page.content), {
-    headers: {
-      'Content-Type': 'text/markdown; charset=utf-8',
-      'Cache-Control': 'public, max-age=0, must-revalidate',
-      'X-Robots-Tag': 'noindex',
-      'Content-Signal': 'search=yes, ai-train=no',
-    },
-  });
+  const entries = await documentationEntries();
+  const entry = entries.find(item => item.href === `/${params.category}/${params.slug}/`);
+  if (entry === undefined) error(404, 'Guide not found');
+  return agentResponse(entry.markdown);
 };

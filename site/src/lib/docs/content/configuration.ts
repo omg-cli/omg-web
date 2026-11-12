@@ -61,12 +61,12 @@ export const configurationTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'info',
-          text: 'The daemon keeps its socket and the omg.status prompt snapshot in the session runtime directory (XDG_RUNTIME_DIR) rather than in your home folder. A root session uses /var/lib/omg and /var/cache/omg instead.',
+          text: 'For ordinary Linux users, the daemon normally keeps its socket and omg.status prompt snapshot in the session runtime directory, with validated fallbacks when needed. Root uses /var/lib/omg for data and daemon state and /var/cache/omg for caches. It ignores caller-supplied OMG storage, configuration, daemon, and socket overrides; existing user state is not imported automatically.',
         },
         {
           kind: 'note',
           tone: 'info',
-          text: 'The table shows Linux and WSL defaults. On macOS, data and configuration default to ~/Library/Application Support/omg. XDG data and config variables apply on Linux. OMG_DATA_DIR, OMG_CONFIG_DIR, and OMG_SOCKET_PATH override paths on every platform.',
+          text: 'The table shows unprivileged Linux and WSL defaults. On macOS, data and configuration default to ~/Library/Application Support/omg. XDG data and config variables apply on Linux. Unprivileged OMG path overrides apply across supported platforms. Use omg config path and omg config get data_dir to inspect the active locations before changing files.',
         },
       ],
     },
@@ -77,6 +77,7 @@ export const configurationTopic: DocsTopic = {
         {
           kind: 'commands',
           title: 'Developer workstation example',
+          language: 'toml',
           commands: [
             'telemetry_enabled = false',
             '',
@@ -102,7 +103,21 @@ export const configurationTopic: DocsTopic = {
             ],
             ['secure_makepkg', 'true by default; uses stricter makepkg flags'],
             ['allow_unsafe_builds', 'false by default; permits native builds without sandboxing'],
+            [
+              'allow_network',
+              'false by default; opt in to expose host networking to sandboxed build code',
+            ],
             ['use_metadata_archive', 'true by default; bulk AUR metadata for fast update checks'],
+            [
+              'metadata_cache_ttl_secs',
+              '300 seconds by default; freshness window for AUR metadata',
+            ],
+            ['makeflags', 'Unset by default; optional make flags, validated before use'],
+            [
+              'pkgdest / srcdest',
+              'Unset by default; optional shared package and source cache paths',
+            ],
+            ['ccache_dir / sccache_dir', 'Unset by default; optional compiler-cache paths'],
             ['cache_builds', 'true by default; reuses built packages'],
             ['enable_ccache', 'false by default; speeds up C and C++ builds'],
             ['enable_sccache', 'false by default; speeds up Rust builds'],
@@ -118,6 +133,13 @@ export const configurationTopic: DocsTopic = {
             'omg config set aur.build_concurrency 8',
             'omg config set telemetry.enabled false',
             'omg config validate',
+          ],
+        },
+        {
+          kind: 'paragraphs',
+          paragraphs: [
+            'The TOML telemetry key is telemetry_enabled, while config get and config set use telemetry.enabled. In v0.1.224, writable CLI keys are telemetry.enabled, aur.build_concurrency, aur.enable_ccache, aur.enable_sccache, aur.secure_makepkg, and aur.makeflags. The data_dir and socket keys are read-only. Edit the file printed by omg config path for other supported TOML settings.',
+            'Inspect validation output: v0.1.224 can print configuration issues and still return exit status 0. Do not use that status alone as a CI policy gate. Unknown current-schema keys and invalid values can also fail settings loading in commands that consume them. Configuration files larger than 1 MiB are rejected.',
           ],
         },
       ],
@@ -156,6 +178,7 @@ export const configurationTopic: DocsTopic = {
         {
           kind: 'commands',
           title: 'Corporate style policy',
+          language: 'toml',
           commands: [
             'minimum_grade = "Verified"',
             'allow_aur = false',
@@ -198,6 +221,7 @@ export const configurationTopic: DocsTopic = {
         {
           kind: 'commands',
           title: 'Rust toolchain file format',
+          language: 'toml',
           commands: [
             '[toolchain]',
             'channel = "stable"',
@@ -216,20 +240,55 @@ export const configurationTopic: DocsTopic = {
           title: 'Variables OMG respects',
           columns: ['Variable', 'Purpose'],
           rows: [
-            ['OMG_SOCKET_PATH', 'Override the daemon socket path'],
-            ['OMG_DATA_DIR', 'Override the data directory'],
-            ['OMG_CONFIG_DIR', 'Override the configuration directory'],
+            ['OMG_SOCKET_PATH', 'Unprivileged override for the daemon socket path'],
+            ['OMG_DATA_DIR', 'Unprivileged override for runtime, tool, history, and audit data'],
+            ['OMG_CACHE_DIR', 'Unprivileged override for derived cache and update-notice state'],
+            [
+              'OMG_DAEMON_DATA_DIR',
+              'Unprivileged daemon data override; set consistently for a separately configured service',
+            ],
+            [
+              'OMG_CONFIG_DIR',
+              'Unprivileged configuration-directory override; must be absolute, otherwise it is ignored with a warning',
+            ],
+            ['OMG_TELEMETRY=0', 'Disable runtime telemetry; false, off, and no are also accepted'],
+            [
+              'OMG_DISABLE_TELEMETRY=1',
+              'Disable runtime telemetry; true, on, and yes are also accepted',
+            ],
+            [
+              'OMG_NO_UPDATE_CHECK=1',
+              'Suppress built-in update notices and checks; presence of the variable is sufficient',
+            ],
+            [
+              'OMG_NO_TELEMETRY=1',
+              'Installer-only consent opt-out; use runtime controls for installed OMG',
+            ],
+            ['OMG_SKIP_SHELL=1', 'Installer-only control to skip shell integration'],
+            [
+              'OMG_VERSION=v0.1.224',
+              'Installer-only release selection; unset defaults to its latest release marker',
+            ],
             [
               'RUST_LOG',
               'Logging filter. The CLI defaults to warn and the daemon defaults to info',
             ],
-            ['GITHUB_TOKEN', 'Required by omg env share'],
+            ['GITHUB_TOKEN', 'Credential required by omg env share; supply through a secret store'],
+            [
+              'OMG_DASHBOARD_TOKEN',
+              'Optional dashboard-link credential; omg account link --token-stdin accepts stdin instead',
+            ],
             [
               'XDG_RUNTIME_DIR',
               'Linux socket directory. Falls back to /run/user/$UID or a private /tmp/omg-$UID directory',
             ],
             ['XDG_DATA_HOME', 'Linux data directory. The default is ~/.local/share'],
             ['XDG_CONFIG_HOME', 'Linux configuration directory. The default is ~/.config'],
+            ['XDG_CACHE_HOME', 'Linux cache directory. The default is ~/.cache'],
+            [
+              'MISE_ENV',
+              'Select supported mise environment configuration layers during project detection',
+            ],
           ],
         },
       ],

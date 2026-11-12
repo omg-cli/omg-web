@@ -15,7 +15,14 @@
 {:else if block.kind === 'commands'}
   <section class="commands-block">
     <h3>{block.title}</h3>
-    <pre><code>{block.commands.join('\n')}</code></pre>
+    <div class="docs-code" data-copy-container>
+      <div class="code-actions">
+        <span data-copy-status role="status"></span><button type="button" data-copy-code
+          >Copy code</button
+        >
+      </div>
+      <pre><code>{block.commands.join('\n')}</code></pre>
+    </div>
   </section>
 {:else if block.kind === 'steps'}
   <ol class="steps-block">
@@ -23,7 +30,14 @@
       <li>
         <p>{step.text}</p>
         {#if step.command}
-          <pre><code>{step.command}</code></pre>
+          <div class="docs-code" data-copy-container>
+            <div class="code-actions">
+              <span data-copy-status role="status"></span><button type="button" data-copy-code
+                >Copy code</button
+              >
+            </div>
+            <pre><code>{step.command}</code></pre>
+          </div>
         {/if}
       </li>
     {/each}

@@ -1,7 +1,6 @@
 <script lang="ts">
   import Icon from '../../lib/components/Icon.svelte';
   import SeoHead from '../../lib/components/SeoHead.svelte';
-  import { learningHref } from '../../lib/learn/catalog';
   import { SITE_ORIGIN, serializeJsonLd } from '../../../../shared/public-site';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
@@ -41,7 +40,7 @@
               position: index + 1,
               name: page.title,
               description: page.description,
-              url: `${SITE_ORIGIN}${learningHref(page)}`,
+              url: `${SITE_ORIGIN}${page.href}`,
             })),
           },
         },
@@ -84,7 +83,7 @@
   <ul>
     {#each data.pages as entry (entry.slug)}
       <li>
-        <a href={learningHref(entry)}
+        <a href={entry.href}
           ><h2>{entry.title}</h2>
           <p>{entry.description}</p>
           <span>Read the guide <Icon name="right" size={16} /></span></a

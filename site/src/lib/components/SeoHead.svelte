@@ -15,6 +15,8 @@
     structuredData,
     publishedTime,
     modifiedTime,
+    robots = 'index, follow, max-image-preview:large',
+    markdownPath,
   }: {
     title: string;
     description: string;
@@ -26,6 +28,8 @@
     publishedTime?: string | undefined;
     /** ISO 8601 date for `article:modified_time`, when the build can prove it. */
     modifiedTime?: string | undefined;
+    robots?: string;
+    markdownPath?: string;
   } = $props();
 
   const canonical = $derived(`${SITE_ORIGIN}${path}`);
@@ -37,7 +41,12 @@
 <svelte:head>
   <title>{title}</title>
   <meta name="description" content={description} />
-  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="robots" content={robots} />
+  {#if markdownPath}<link
+      rel="alternate"
+      type="text/markdown"
+      href={`${SITE_ORIGIN}${markdownPath}`}
+    />{/if}
   <link rel="canonical" href={canonical} />
   <meta property="og:type" content={type} />
   <meta property="og:title" content={title} />

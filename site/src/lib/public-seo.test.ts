@@ -26,7 +26,12 @@ describe('public discovery contracts', () => {
   });
 
   it('advertises the 1200x630 card as the default social image', () => {
-    const { head } = render(DocsTopicPage, { props: { topic: cliTopic } });
+    const { head } = render(DocsTopicPage, {
+      props: { topic: cliTopic },
+      context: new Map([
+        ['__request__', { page: { data: {}, url: new URL('https://getomg.dev/docs/cli/') } }],
+      ]),
+    });
     expect(head).toContain('property="og:image" content="https://getomg.dev/og/omg-og.png"');
     expect(head).toContain('property="article:modified_time"');
   });

@@ -5,8 +5,14 @@
   import type { DocsTopic } from '../../docs/topic';
   import { DOCS_TOPICS, docsTopicHref, docsSourceHref } from '../../docs/topics';
   import DocsBlocks from './DocsBlocks.svelte';
+  import DocsReader from './DocsReader.svelte';
+  import DocActions from './DocActions.svelte';
 
   let { topic }: { topic: DocsTopic } = $props();
+
+  const position = $derived(DOCS_TOPICS.findIndex(entry => entry.slug === topic.slug));
+  const previous = $derived(position > 0 ? DOCS_TOPICS[position - 1] : undefined);
+  const next = $derived(DOCS_TOPICS[position + 1]);
 
   const canonical = $derived(`${SITE_ORIGIN}/docs/${topic.slug}/`);
   const pageTitle = $derived(`${topic.title} - OMG Package Manager`);
@@ -52,254 +58,166 @@
   type="article"
   modifiedTime={topic.source.reviewedAt}
   {structuredData}
+  markdownPath={`/markdown/docs/${topic.slug}/`}
 />
 
-<main id="main-content" class="docs-topic">
-  <div class="topic-layout">
-    <aside class="topic-aside">
-      <nav class="topic-nav" aria-label="Documentation topics">
-        <p>Documentation</p>
-        <ul>
-          {#each DOCS_TOPICS as entry (entry.slug)}
-            <li>
-              <a
-                href={docsTopicHref(entry.slug)}
-                aria-current={entry.slug === topic.slug ? 'page' : undefined}
-              >
-                {entry.navLabel}
-              </a>
-            </li>
-          {/each}
-        </ul>
-      </nav>
-    </aside>
-
-    <article>
-      <nav class="breadcrumbs" aria-label="Breadcrumb">
-        <ol>
-          <li><a href="/">Home</a></li>
-          <li><a href="/docs/">Docs</a></li>
-          <li><span aria-current="page">{topic.navLabel}</span></li>
-        </ol>
-      </nav>
-
-      <header class="topic-header">
-        <h1>{topic.title}</h1>
-        <p class="topic-summary">{topic.summary}</p>
-      </header>
-
-      {#each topic.sections as section (section.id)}
-        <section id={section.id} class="topic-section">
-          <h2>{section.heading}</h2>
-          {#each section.blocks as block}
-            <DocsBlocks {block} />
-          {/each}
-        </section>
-      {/each}
-
-      <footer class="topic-provenance">
-        <p>
-          Reviewed against
-          <a href={sourceHref} target="_blank" rel="noopener noreferrer">
-            {topic.source.repo}/{topic.source.path}
-          </a>
-          at commit {shortCommit} on {topic.source.reviewedAt}. This page was checked against the
-          CLI code and documentation at that commit.
-        </p>
-      </footer>
-    </article>
-  </div>
-</main>
+<DocsReader>
+  <article class="topic-article" data-doc-content>
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Home</a></li>
+        <li><a href="/docs/">Docs</a></li>
+        <li><span aria-current="page">{topic.navLabel}</span></li>
+      </ol>
+    </nav>
+    <header class="topic-header">
+      <h1>{topic.title}</h1>
+      <p class="topic-summary">{topic.summary}</p>
+      <p class="applicability">
+        Release v0.1.224 · Reviewed <time datetime={topic.source.reviewedAt}
+          >{topic.source.reviewedAt}</time
+        >
+      </p>
+      <DocActions markdownHref={`/markdown/docs/${topic.slug}/`} {sourceHref} />
+    </header>
+    <details class="page-outline">
+      <summary>On this page</summary>
+      <ul>
+        {#each topic.sections as section (section.id)}<li>
+            <a href={`#${section.id}`}>{section.heading}</a>
+          </li>{/each}
+      </ul>
+    </details>
+    {#each topic.sections as section (section.id)}
+      <section id={section.id} class="topic-section">
+        <h2>{section.heading}</h2>
+        {#each section.blocks as block}<DocsBlocks {block} />{/each}
+      </section>
+    {/each}
+    <footer class="topic-provenance">
+      <p>
+        Reviewed against <a href={sourceHref} target="_blank" rel="noopener noreferrer"
+          >{topic.source.repo}/{topic.source.path}</a
+        >
+        at commit {shortCommit} on {topic.source.reviewedAt}. This page was checked against the CLI
+        code and documentation at that commit. Source review is not a claim of execution on every
+        supported host.
+      </p>
+    </footer>
+    <nav class="continue-reading" aria-label="Continue reading">
+      {#if previous}<a href={docsTopicHref(previous.slug)}>Previous: {previous.navLabel}</a
+        >{/if}{#if next}<a href={docsTopicHref(next.slug)}>Next: {next.navLabel}</a>{/if}
+    </nav>
+  </article>
+</DocsReader>
 
 <style>
-  .docs-topic {
-    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
-    margin-inline: auto;
-  }
-
-  .topic-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    min-width: 0;
-  }
-
-  .topic-aside {
-    padding: 1.25rem;
-    border-bottom: 1px solid var(--rule);
-  }
-
-  .topic-nav p {
-    margin: 0;
-    color: var(--ink-muted);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-  }
-
-  .topic-nav ul {
-    display: flex;
-    gap: 1.25rem;
-    margin: 0.75rem 0 0;
-    padding: 0;
-    list-style: none;
-    overflow-x: auto;
-  }
-
-  .topic-nav li {
-    flex: 0 0 auto;
-  }
-
-  .topic-nav a {
-    display: block;
-    padding-block: 0.75rem;
-    color: var(--ink-muted);
-    font-size: 0.8125rem;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  .topic-nav a:hover {
-    color: var(--signal);
-  }
-
-  .topic-nav a[aria-current='page'] {
-    color: var(--ink);
-    font-weight: 600;
-  }
-
-  article {
-    max-width: 55rem;
-    min-width: 0;
-    padding-inline: clamp(1rem, 4vw, 3rem);
-  }
-
-  .breadcrumbs {
-    padding-top: 1.5rem;
-  }
-
   .breadcrumbs ol {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.375rem;
+    gap: 0.5rem;
     margin: 0;
     padding: 0;
     list-style: none;
     color: var(--ink-muted);
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
   }
-
   .breadcrumbs li + li::before {
     content: '/';
-    margin-right: 0.375rem;
-    color: var(--signal);
+    margin-right: 0.5rem;
   }
-
   .breadcrumbs a {
-    color: var(--ink-muted);
     text-decoration: none;
   }
-
-  .breadcrumbs a:hover {
-    color: var(--signal);
-  }
-
-  .breadcrumbs [aria-current='page'] {
-    color: var(--ink);
-  }
-
   .topic-header {
-    padding-top: 2.5rem;
+    padding-top: 1.75rem;
   }
-
   h1 {
     margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(2.25rem, 7vw, 4.25rem);
-    font-weight: 650;
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-weight: 680;
     letter-spacing: -0.035em;
     line-height: 1.1;
     text-wrap: balance;
   }
-
   .topic-summary {
-    max-width: 40rem;
-    margin: 1.25rem 0 0;
+    max-width: 65ch;
+    margin: 1rem 0;
     color: var(--ink-muted);
-    font-size: 1.0625rem;
-    line-height: 1.7;
+    font-size: 1rem;
+    line-height: 1.75;
     overflow-wrap: anywhere;
   }
-
+  .applicability {
+    color: var(--ink-muted);
+    font-size: 0.75rem;
+  }
+  .page-outline {
+    margin-block: 1.5rem 2.5rem;
+    padding-block: 0.75rem;
+    border-block: 1px solid var(--rule);
+  }
+  summary {
+    min-height: 2.75rem;
+    padding-block: 0.65rem;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+  .page-outline ul {
+    columns: 2;
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+  }
+  .page-outline a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-block: 0.4rem;
+    font-size: 0.8125rem;
+    text-decoration: none;
+  }
   .topic-section {
     margin-top: 3rem;
-    padding-top: 3rem;
-    border-top: 1px solid var(--rule);
+    padding-top: 1rem;
     scroll-margin-top: 2rem;
   }
-
   .topic-section h2 {
     margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-size: clamp(1.5rem, 3vw, 2rem);
     font-weight: 650;
-    letter-spacing: -0.035em;
-    line-height: 1.05;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
     text-wrap: balance;
   }
-
   .topic-provenance {
     margin-top: 3rem;
-    padding: 1.5rem 0 3rem;
+    padding-top: 1.5rem;
     border-top: 1px solid var(--rule);
-  }
-
-  .topic-provenance p {
-    max-width: 46rem;
-    margin: 0;
     color: var(--ink-muted);
-    font-size: 0.8125rem;
-    line-height: 1.7;
+    font-size: 0.75rem;
+    line-height: 1.8;
     overflow-wrap: anywhere;
   }
-
-  .topic-provenance a {
-    color: var(--ink);
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
+  .continue-reading {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 2rem;
   }
-
-  .topic-provenance a:hover {
+  .continue-reading a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    font-size: 0.8125rem;
+  }
+  a:hover {
     color: var(--signal);
   }
-
-  @media (min-width: 64rem) {
-    .topic-layout {
-      grid-template-columns: 16rem minmax(0, 1fr);
-    }
-
-    .topic-aside {
-      padding: 2rem 1.5rem 2rem 0;
-      border-right: 1px solid var(--rule);
-      border-bottom: 0;
-    }
-
-    .topic-nav ul {
-      display: grid;
-      gap: 0.0625rem;
-    }
-
-    .topic-nav li {
-      flex: none;
-    }
-
-    .topic-nav a {
-      font-size: 0.8125rem;
-    }
-
-    .topic-nav {
-      position: sticky;
-      top: 2rem;
+  @media (max-width: 35rem) {
+    .page-outline ul {
+      columns: 1;
     }
   }
 </style>

@@ -30,7 +30,7 @@ export const architectureTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Current Linux and macOS release archives include both binaries. Archives from v0.1.222 and earlier omit omgd on non-Arch targets. The CLI talks to the daemon over a Unix socket when omgd is running. Bash and Zsh hooks provide prompt count helpers that read the fixed-size omg.status snapshot beside the socket. Separate omg ec/tc/oc/uc commands were added after v0.1.223.',
+            'Current Linux and macOS release archives include both binaries. Archives from v0.1.222 and earlier omit omgd on non-Arch targets. The CLI talks to the daemon over a Unix socket when omgd is running. Bash and Zsh hooks provide prompt count helpers that read the fixed-size omg.status snapshot beside the socket. The v0.1.224 CLI also provides omg ec, omg tc, omg oc, and omg uc with daemon and backend fallbacks.',
           ],
         },
       ],
@@ -168,14 +168,14 @@ export const architectureTopic: DocsTopic = {
             ],
             [
               'Binary status file',
-              'Fixed-size omg.status counts read by Bash and Zsh hook helpers; separate CLI count commands with daemon and backend fallbacks were added after v0.1.223',
+              'Fixed-size omg.status counts read by Bash and Zsh hook helpers; CLI count commands can also use daemon and backend fallbacks',
             ],
           ],
         },
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Search indexes are rebuilt from the native package-manager databases rather than treated as durable authority, so deleting the persistent cache is always safe. Transaction history, audit logs, and runtime artifacts remain separate from status snapshots. Snapshots are written with a same-directory temporary file, fsync, and atomic rename.',
+            'Search indexes are rebuilt from native package-manager databases rather than treated as durable authority. The status-cache.json snapshot is derived state; transaction history, audit logs, installed runtimes, and package archives have separate purposes and must not be treated as disposable status caches. Status snapshots use a same-directory temporary file, fsync, and atomic rename.',
           ],
         },
         {
@@ -227,7 +227,7 @@ export const architectureTopic: DocsTopic = {
             '# 3. the daemon writes one response frame',
             '# 4. a decode error fails the call; it is never reported as an empty success',
             '',
-            '# The socket path resolves from OMG_SOCKET_PATH, then $XDG_RUNTIME_DIR/omg.sock.',
+            '# For unprivileged users: OMG_SOCKET_PATH, then $XDG_RUNTIME_DIR/omg.sock.',
             '# Without XDG_RUNTIME_DIR, Unix uses /run/user/$UID/omg.sock when available,',
             '# otherwise a validated private /tmp/omg-$UID directory or home fallback.',
             "# It will not use another user's socket when ownership checks fail.",
@@ -254,7 +254,7 @@ export const architectureTopic: DocsTopic = {
               text: 'omg audit slsa verifies a Sigstore hashedrekord artifact signature and Rekor signed entry timestamp. It does not verify a Merkle inclusion proof or establish build provenance.',
             },
             {
-              text: 'In v0.1.223, omg audit needs omgd and queries supported OSV ecosystems. Current main has a direct fallback and native Arch and Fedora advisory paths.',
+              text: 'In v0.1.224, omg audit prefers omgd and can fall back to a direct scan. Arch and Fedora use native advisory paths; Debian and Ubuntu use OSV.',
             },
             {
               text: 'Arch installs and updates check policy.toml against prepared transactions. Native APT, DNF, and Homebrew mutations refuse explicit policy.',
@@ -284,7 +284,7 @@ export const architectureTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Because workers only maintain derived state, killing the daemon never corrupts package operations. Restart it with omg daemon and the caches repopulate on demand.',
+            'The daemon maintains derived query and status state rather than owning native package transactions. Prefer a graceful shutdown and restart it with omg daemon when needed; its caches repopulate on demand. Package-manager locks and transaction recovery remain the responsibility of the active backend.',
           ],
         },
       ],

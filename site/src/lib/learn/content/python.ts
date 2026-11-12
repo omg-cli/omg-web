@@ -10,7 +10,7 @@ export const content: LearningContent = {
           kind: 'paragraphs',
           paragraphs: [
             'Compiling Python from source on every new machine requires C build toolchains, header files, and system development packages (like zlib, openssl, and libffi). OMG avoids this overhead by downloading validated, precompiled CPython distributions from the `python-build-standalone` project (`src/runtimes/python.rs` and `src/runtimes/python/catalog.rs`).',
-            'The published OMG release queries python-build-standalone releases on GitHub to select a binary matching the host platform target. It downloads the archive, validates its SHA-256 digest, and performs a pure-Rust `.tar.gz` extraction into a staged directory. Once extracted, the interpreter is published atomically to `~/.local/share/omg/versions/python/<version>`.',
+            'In v0.1.224, OMG selects standard CPython builds from a validated Astral uv download catalog, including the host target, archive URL, and SHA-256 digest. Exact historical versions absent from that catalog can use a python-build-standalone GitHub release fallback. OMG verifies the archive and stages extraction before publishing the interpreter to its versions tree. On Linux the default path is `~/.local/share/omg/versions/python/<version>`; macOS uses `~/Library/Application Support/omg/versions/python/<version>`.',
           ],
         },
         {
@@ -78,7 +78,7 @@ export const content: LearningContent = {
           commands: [
             'python3 -m venv .venv',
             '.venv/bin/python --version',
-            '.venv/bin/pip install -r requirements.txt',
+            '.venv/bin/python -m pip install -r requirements.txt',
           ],
         },
         {
@@ -95,7 +95,7 @@ export const content: LearningContent = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Most Linux distributions and macOS ship a system-managed Python for operating-system utilities. OMG does not overwrite or mutate system Python packages in `/usr/bin/python3`. Instead, OMG manages user-space versions under `~/.local/share/omg/versions/python` and prepends the active symlink to your PATH.',
+            'Most Linux distributions and macOS ship a system-managed Python for operating-system utilities. OMG does not overwrite or mutate system Python packages in `/usr/bin/python3`. Instead, OMG manages user-space versions in its data directory. With shell integration enabled, a project pin selects the concrete installed version directory on PATH. Verify python3 at a fresh prompt before creating a virtual environment; the v0.1.224 Bash and Zsh hooks can undo ordinary virtual-environment PATH activation, so explicit .venv/bin/python commands are useful.',
           ],
         },
         {
@@ -109,7 +109,7 @@ export const content: LearningContent = {
   sources: [
     {
       title: 'OMG Python manager implementation (src/runtimes/python.rs)',
-      href: '/docs/runtimes/',
+      href: 'https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/python.rs',
     },
     {
       title: 'python-build-standalone GitHub releases',
