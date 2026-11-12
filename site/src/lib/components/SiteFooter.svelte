@@ -1,18 +1,17 @@
 <script lang="ts">
   import BrandMark from './BrandMark.svelte';
+  import Icon from './Icon.svelte';
 </script>
 
 <footer class="site-footer">
   <section class="footer-callout" aria-labelledby="footer-callout-title">
     <div>
-      <p class="callout-label">OMG Package Manager</p>
-      <h2 id="footer-callout-title">One command. Your whole machine.</h2>
-      <p class="callout-copy">Free and open source under the MIT license. No account required.</p>
+      <h2 id="footer-callout-title">Built in the open.</h2>
+      <p>Free under the MIT license. No account needed to use the CLI.</p>
     </div>
-    <a class="footer-action" href="/#install">
-      Install OMG
-      <span aria-hidden="true">↓</span>
-    </a>
+    <a class="source-link" href="https://github.com/omg-cli/omg"
+      >Explore the source<Icon name="external" size={18} /></a
+    >
   </section>
 
   <div class="footer-bar">
@@ -47,128 +46,80 @@
 
 <style>
   .site-footer {
-    width: min(100%, 90rem);
+    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
     margin: 0 auto;
-    padding-inline: clamp(1rem, 4vw, 3rem);
     border-top: 1px solid var(--rule);
   }
-
   .footer-callout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 3rem;
-    align-items: end;
-    padding-block: clamp(4.5rem, 10vw, 8rem);
-  }
-
-  .callout-label {
-    margin: 0 0 1.25rem;
-    color: var(--signal);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  h2 {
-    max-width: 12ch;
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(2.75rem, 7vw, 5rem);
-    font-weight: 650;
-    letter-spacing: -0.065em;
-    line-height: 0.9;
-  }
-
-  .callout-copy {
-    max-width: 34rem;
-    margin: 1.75rem 0 0;
-    color: var(--ink-muted);
-    font-size: clamp(1rem, 2vw, 1.125rem);
-    line-height: 1.7;
-  }
-
-  .footer-action {
-    display: inline-flex;
-    min-height: 3.5rem;
-    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
-    gap: 2rem;
-    padding-inline: 1.5rem;
-    border: 1px solid var(--signal);
-    background: var(--signal);
-    color: var(--signal-ink);
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    align-items: center;
+    gap: 1.5rem 3rem;
+    padding-block: 2.5rem;
+  }
+  h2 {
+    margin: 0;
+    font-size: 1.375rem;
     font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  .footer-callout p {
+    margin: 0.5rem 0 0;
+    color: var(--ink-muted);
+    font-size: 0.8125rem;
+  }
+  .source-link {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
     text-decoration: none;
   }
-
-  .footer-action:hover {
-    border-color: var(--signal-hover);
-    background: var(--signal-hover);
+  .source-link:hover {
+    color: var(--signal);
   }
-
-  .footer-action span {
-    font-size: 1.125rem;
-  }
-
   .footer-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.5rem 3rem;
+    gap: 1rem 2rem;
     align-items: center;
     justify-content: space-between;
-    padding-block: 1.5rem;
+    padding-block: 1.25rem;
     border-top: 1px solid var(--rule);
   }
-
   .footer-brand {
     color: var(--ink);
     text-decoration: none;
   }
-
   .footer-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem clamp(1.25rem, 3vw, 2rem);
+    gap: 0.25rem 1.25rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   .footer-links a {
     display: inline-flex;
     min-height: 2.75rem;
     align-items: center;
     color: var(--ink-muted);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     text-decoration: none;
   }
-
   .footer-links a:hover {
-    color: var(--ink);
+    color: var(--signal);
   }
-
   @media (max-width: 39.99rem) {
-    .footer-callout {
-      grid-template-columns: 1fr;
-      gap: 2rem;
-    }
-
-    .footer-action {
-      width: 100%;
-    }
-
-    .footer-bar,
-    .footer-links {
-      align-items: flex-start;
-    }
-
     .footer-bar {
+      align-items: flex-start;
       flex-direction: column;
+    }
+    .footer-links {
+      gap: 0.25rem 1.25rem;
     }
   }
 </style>

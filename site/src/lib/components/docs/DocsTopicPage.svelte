@@ -113,9 +113,8 @@
 
 <style>
   .docs-topic {
-    width: min(100%, 90rem);
+    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
     margin-inline: auto;
-    border-inline: 1px solid var(--rule);
   }
 
   .topic-layout {
@@ -133,7 +132,7 @@
     margin: 0;
     color: var(--ink-muted);
     font-family: var(--font-mono);
-    font-size: 0.625rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
   }
 
@@ -152,7 +151,7 @@
 
   .topic-nav a {
     display: block;
-    padding-block: 0.25rem;
+    padding-block: 0.75rem;
     color: var(--ink-muted);
     font-size: 0.8125rem;
     text-decoration: none;
@@ -169,6 +168,7 @@
   }
 
   article {
+    max-width: 55rem;
     min-width: 0;
     padding-inline: clamp(1rem, 4vw, 3rem);
   }
@@ -186,7 +186,7 @@
     list-style: none;
     color: var(--ink-muted);
     font-family: var(--font-mono);
-    font-size: 0.6875rem;
+    font-size: 0.8125rem;
   }
 
   .breadcrumbs li + li::before {
@@ -217,8 +217,8 @@
     font-family: var(--font-display);
     font-size: clamp(2.25rem, 7vw, 4.25rem);
     font-weight: 650;
-    letter-spacing: -0.055em;
-    line-height: 0.95;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
     text-wrap: balance;
   }
 
@@ -243,7 +243,7 @@
     font-family: var(--font-display);
     font-size: clamp(1.75rem, 4vw, 2.25rem);
     font-weight: 650;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.035em;
     line-height: 1.05;
     text-wrap: balance;
   }
@@ -279,7 +279,7 @@
     }
 
     .topic-aside {
-      padding: 2rem;
+      padding: 2rem 1.5rem 2rem 0;
       border-right: 1px solid var(--rule);
       border-bottom: 0;
     }
@@ -294,7 +294,7 @@
     }
 
     .topic-nav a {
-      font-size: 0.6875rem;
+      font-size: 0.8125rem;
     }
 
     .topic-nav {

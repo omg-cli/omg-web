@@ -13,6 +13,8 @@ All dependency versions and overrides are exact. Renovate must not automerge cha
 - `effect` `4.0.2` is the application boundary and expected-failure runtime. Changes require strict Svelte diagnostics, TypeScript checks, focused boundary tests, browser verification, and a successful shadow deployment.
 - `@sveltejs/kit` under `better-auth` is a package-scoped peer override for the exact-tested SvelteKit 3 prerelease. Remove it when Better Auth declares compatibility with the installed SvelteKit release.
 - `@hono/node-server`, `hono`, `lodash`, and `valibot` are security floors for Alchemy's non-optional Prisma development dependency chain. Remove them when Alchemy makes that chain optional or resolves audited versions itself.
+- `@hono/node-server` is pinned to `2.1.3`, the patched release for [GHSA-rmxm-3fg6-px4f](https://github.com/advisories/GHSA-rmxm-3fg6-px4f).
+- `deepmerge` resolves to the API-compatible `@shivammathur/deepmerge` fork at exact version `4.3.2`. Upstream `deepmerge` has no patched release for [GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4). The [fork patch](https://github.com/shivammathur/deepmerge) excludes `__proto__` while copying both target and source keys. `site/src/lib/build-config-merge.test.ts` checks prototype protection and the custom array-replacement behavior used by the Svelte build plugin. Remove this alias when upstream ships a verified fix or the plugin removes this dependency.
 
 ## `workers/api/package.json`
 

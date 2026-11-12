@@ -138,7 +138,7 @@
 
 <style>
   .learning-article {
-    width: min(calc(100% - 2.5rem), 80rem);
+    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
     margin-inline: auto;
     padding-block: clamp(2rem, 6vw, 5rem);
   }
@@ -148,20 +148,19 @@
   }
   h1 {
     max-width: 22ch;
-    font-size: clamp(2.25rem, 5vw, 4.5rem);
+    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
     line-height: 1.08;
-    letter-spacing: -0.05em;
+    letter-spacing: -0.035em;
     overflow-wrap: anywhere;
   }
   .summary {
     max-width: 48rem;
     color: var(--ink-muted);
-    font-size: 1.2rem;
+    font-size: 1.0625rem;
     line-height: 1.7;
   }
   .byline {
     color: var(--ink-muted);
-    font-family: var(--font-mono);
     font-size: 0.75rem;
     line-height: 1.8;
   }
@@ -183,9 +182,10 @@
   }
   aside a {
     display: inline-block;
-    padding-block: 0.4rem;
+    padding-block: 0.65rem;
   }
   article {
+    max-width: 48rem;
     min-width: 0;
     line-height: 1.8;
   }

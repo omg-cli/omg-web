@@ -1,143 +1,194 @@
 <script lang="ts">
-  const workflows = [
-    {
-      number: '01',
-      title: 'Packages, without the context switch.',
-      detail:
-        'Find and install software through your system package manager using the same command shape.',
-      command: 'omg install ripgrep',
-      href: '/docs/cli/',
-      link: 'Package commands',
-    },
-    {
-      number: '02',
-      title: 'The right runtime for the project.',
-      detail:
-        'Choose a Node.js, Python, or Rust version without juggling a different interface for each language.',
-      command: 'omg use node 22',
-      href: '/docs/runtimes/',
-      link: 'Runtime guide',
-    },
-    {
-      number: '03',
-      title: 'An environment record you can share.',
-      detail:
-        'On Arch, Debian, and Ubuntu, capture a working setup in omg.lock and check another machine against it.',
-      command: 'omg env capture',
-      href: '/docs/cli/',
-      link: 'Environment commands',
-    },
-  ] as const;
+  import Icon from '../Icon.svelte';
 </script>
 
 <section id="workflow" class="workflow home-shell home-section" aria-labelledby="workflow-title">
-  <header class="workflow-header">
-    <p class="section-label">The everyday workflow</p>
-    <h2 id="workflow-title">One interface.<br />Three jobs.</h2>
-    <a class="text-link" href="/docs/"
-      >Read the full documentation <span aria-hidden="true">↗</span></a
-    >
-  </header>
-  <ol class="workflow-list">
-    {#each workflows as workflow (workflow.number)}
-      <li>
-        <span class="workflow-number" aria-hidden="true">{workflow.number}</span>
-        <div class="workflow-copy">
-          <h3>{workflow.title}</h3>
-          <p>{workflow.detail}</p>
-          <a href={workflow.href}>{workflow.link} <span aria-hidden="true">↗</span></a>
-        </div>
-        <code>{workflow.command}</code>
-      </li>
-    {/each}
-  </ol>
+  <div class="packages">
+    <h2 id="workflow-title">Your system packages.<br />A consistent interface.</h2>
+    <p>
+      Search, inspect, and install with the same commands. OMG works with your native package
+      backend.
+    </p>
+    <div class="package-example"><code><span>$</span> omg install ripgrep</code></div>
+    <dl class="backends">
+      <div>
+        <dt>Arch Linux</dt>
+        <dd>pacman + AUR</dd>
+      </div>
+      <div>
+        <dt>Debian / Ubuntu</dt>
+        <dd>apt</dd>
+      </div>
+      <div>
+        <dt>Fedora</dt>
+        <dd>dnf</dd>
+      </div>
+      <div>
+        <dt>macOS</dt>
+        <dd>Homebrew</dd>
+      </div>
+    </dl>
+    <a href="/docs/cli/">Package commands <Icon name="right" size={16} /></a>
+  </div>
+  <div class="runtimes">
+    <h2>Right project.<br />Right runtime.</h2>
+    <p>
+      Switch Node.js, Python, Go, Rust, and Bun versions. Keep npm and pnpm for your JavaScript
+      dependencies.
+    </p>
+    <pre><code
+        ><span># Switch the active runtime</span>
+$ omg use node 22
+
+<span># Or choose a Python version</span>
+$ omg use python 3.12</code
+      ></pre>
+    <p class="version-files">
+      Already have a version file? OMG detects <code>.nvmrc</code>, <code>.node-version</code>,
+      <code>.python-version</code>, and <code>.tool-versions</code>.
+    </p>
+    <a href="/docs/runtimes/">Runtime guide <Icon name="right" size={16} /></a>
+  </div>
+  <div class="environment">
+    <div>
+      <h3>Keep a record of your environment.</h3>
+      <p>
+        Capture a working setup in <code>omg.lock</code> and check another machine for drift. Available
+        on Arch, Debian, and Ubuntu.
+      </p>
+      <a href="/docs/cli/">Environment commands <Icon name="right" size={16} /></a>
+    </div>
+    <pre><code
+        ><span>$</span> omg env capture
+<span>$</span> omg env check</code
+      ></pre>
+  </div>
 </section>
 
 <style>
-  .workflow-header {
+  .workflow {
     display: grid;
-    gap: 1.5rem;
-    margin-bottom: clamp(2.5rem, 5vw, 4rem);
-  }
-  .section-label,
-  .workflow-number {
-    margin: 0;
-    color: var(--ink-muted);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem 5rem;
   }
   h2 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(2.5rem, 5.7vw, 5.5rem);
-    font-weight: 550;
-    letter-spacing: -0.06em;
-    line-height: 1;
-  }
-  .workflow-header > a {
-    justify-self: start;
-  }
-  .workflow-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .workflow-list > li {
-    display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr);
-    gap: 1.5rem 1rem;
-    padding-block: clamp(2rem, 4vw, 3.5rem);
-    border-top: 1px solid var(--rule);
-  }
-  .workflow-number {
-    padding-top: 0.4rem;
-  }
-  h3 {
-    max-width: 26ch;
-    margin: 0;
-    font-size: clamp(1.4rem, 2.5vw, 2rem);
-    font-weight: 550;
-    letter-spacing: -0.035em;
+    font-size: clamp(1.75rem, 2.7vw, 2.4rem);
+    font-weight: 680;
+    letter-spacing: -0.03em;
     line-height: 1.15;
   }
-  .workflow-copy p {
-    max-width: 44ch;
-    margin-block: 1rem;
+  .workflow p {
+    max-width: 49ch;
+    margin-top: 1.25rem;
     color: var(--ink-muted);
-    line-height: 1.7;
+    font-size: 0.9375rem;
+    line-height: 1.75;
   }
-  .workflow-copy a {
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--signal);
+  }
+  code {
+    font-family: var(--font-mono);
+  }
+  .package-example {
+    margin-top: 1.75rem;
+    padding-block: 1rem;
+    font-size: 0.9375rem;
+  }
+  .package-example span,
+  .environment pre span {
+    color: var(--signal);
+  }
+  .backends {
+    margin: 0;
+  }
+  .backends > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.75rem;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.8125rem;
+  }
+  dt {
+    font-weight: 600;
+  }
+  dd {
+    margin: 0;
+    color: var(--ink-muted);
+  }
+  .runtimes {
+    padding: 2rem;
+    border-radius: 12px;
+    background: var(--paper-raised);
+  }
+  .runtimes pre {
+    margin: 1.75rem 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 0.8125rem;
+    line-height: 1.8;
+  }
+  .runtimes pre span {
+    color: var(--ink-muted);
+  }
+  .workflow .version-files {
+    margin: 0;
+    font-size: 0.8125rem;
+  }
+  .version-files code {
+    font-size: 0.75rem;
     color: var(--ink);
-    text-underline-offset: 0.3em;
-    text-decoration-color: var(--signal);
+  }
+  .environment {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 2rem 4rem;
+    padding-top: 2.5rem;
+  }
+  h3 {
+    font-size: 1.375rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+  .environment p {
+    max-width: 67ch;
+    margin-top: 0.75rem;
     font-size: 0.875rem;
   }
-  .workflow-list code {
-    grid-column: 2;
-    align-self: center;
-    color: var(--signal);
-    font-family: var(--font-mono);
-    font-size: clamp(0.8rem, 1.5vw, 1.1rem);
-    overflow-wrap: anywhere;
+  .environment pre {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 2.2;
   }
-  @media (min-width: 60rem) {
-    .workflow-header {
-      grid-template-columns: 1fr 1fr;
-      align-items: end;
-    }
-    .section-label {
-      grid-column: 1 / -1;
-    }
-    .workflow-header > a {
-      justify-self: end;
-    }
-    .workflow-list > li {
-      grid-template-columns: 3rem minmax(0, 1.2fr) minmax(0, 1fr);
+  @media (max-width: 50rem) {
+    .workflow {
       gap: 2rem;
     }
-    .workflow-list code {
-      grid-column: 3;
-      justify-self: end;
+    .runtimes {
+      padding: 1.5rem;
+    }
+  }
+  @media (max-width: 40rem) {
+    .workflow {
+      grid-template-columns: 1fr;
+    }
+    .environment {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      padding-top: 1rem;
     }
   }
 </style>

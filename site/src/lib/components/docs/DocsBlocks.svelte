@@ -190,7 +190,7 @@
     max-width: 46rem;
     margin: 1.5rem 0 0;
     padding: 1rem 1.25rem;
-    border-left: 2px solid var(--signal);
+    border-left: 1px solid var(--signal);
     background: var(--paper-raised);
   }
 

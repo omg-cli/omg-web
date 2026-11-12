@@ -80,11 +80,9 @@
   }
 
   .home {
-    --content-width: 88rem;
-    overflow: hidden;
-    background:
-      linear-gradient(var(--rule), var(--rule)) top / 100% 1px no-repeat,
-      var(--paper);
+    --content-width: 75rem;
+    overflow: clip;
+    background: var(--paper);
   }
 
   @media (prefers-reduced-motion: reduce) {

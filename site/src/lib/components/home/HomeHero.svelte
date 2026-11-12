@@ -1,159 +1,159 @@
+<script lang="ts">
+  import Icon from '../Icon.svelte';
+  import HomeTerminal from './HomeTerminal.svelte';
+</script>
+
 <section class="hero home-shell" aria-labelledby="hero-title">
-  <p class="hero-eyebrow">Free and open source. Built in Rust. No account required.</p>
-  <h1 id="hero-title">Packages &amp; runtimes.<br /><span>One command.</span></h1>
-  <div class="hero-introduction">
-    <p>
-      Manage system packages and <a href="/runtimes/node/">Node.js</a>,
-      <a href="/runtimes/python/">Python</a>, <a href="/runtimes/go/">Go</a>,
-      <a href="/runtimes/rust/">Rust</a>, and <a href="/runtimes/bun/">Bun</a> versions with one
-      free CLI for supported x86_64 Linux distributions and Apple Silicon macOS, including Linux
-      inside WSL2. Keep your <a href="/guides/node-npm-pnpm/">npm and pnpm workflows</a>.
-    </p>
-    <nav class="hero-actions" aria-label="Homepage introduction">
-      <a class="primary-link" href="#install">Install OMG <span aria-hidden="true">↓</span></a>
-      <a class="text-link" href="#workflow">Explore workflows <span aria-hidden="true">→</span></a>
-    </nav>
+  <div class="introduction">
+    <h1 id="hero-title">A simpler way to manage packages and runtimes.</h1>
+    <div class="hero-copy">
+      <p>
+        Meet OMG. Search and install system packages, switch language versions, and check your
+        environment from one open-source CLI.
+      </p>
+      <nav class="hero-actions" aria-label="Homepage introduction">
+        <a class="primary-link" href="#install">Install OMG <Icon name="down" size={17} /></a>
+        <a class="docs-link" href="/docs/">Read the docs <Icon name="right" size={17} /></a>
+      </nav>
+      <p class="platforms">Linux x86_64 · macOS Apple Silicon · WSL2</p>
+    </div>
   </div>
-  <div class="command-examples" aria-label="Example OMG commands">
-    <a class="command-example" href="/docs/cli/">
-      <span class="command-label">System packages</span>
-      <code><span aria-hidden="true">$ </span>omg install ripgrep</code>
-      <span class="command-destination"
-        >Explore package commands <span aria-hidden="true">↗</span></span
-      >
-    </a>
-    <a class="command-example" href="/docs/runtimes/">
-      <span class="command-label">Project runtimes</span>
-      <code><span aria-hidden="true">$ </span>omg use node 22</code>
-      <span class="command-destination"
-        >Explore runtime commands <span aria-hidden="true">↗</span></span
-      >
-    </a>
+  <HomeTerminal />
+  <div class="runtime-strip">
+    <p>One CLI. Five language runtimes.</p>
+    <nav aria-label="Supported runtime guides">
+      <a href="/runtimes/node/">Node.js</a><a href="/runtimes/python/">Python</a><a
+        href="/runtimes/go/">Go</a
+      ><a href="/runtimes/rust/">Rust</a><a href="/runtimes/bun/">Bun</a>
+    </nav>
+    <a class="all-runtimes" href="/runtimes/"
+      >Browse runtime guides <Icon name="right" size={16} /></a
+    >
   </div>
 </section>
 
 <style>
   .hero {
-    padding-block: clamp(2.5rem, 6vw, 5rem) 0;
+    padding-top: clamp(2.5rem, 5vw, 4.5rem);
   }
-
-  .hero-eyebrow {
-    margin: 0 0 clamp(1.75rem, 3vw, 2.75rem);
-    color: var(--ink-muted);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    line-height: 1.7;
-  }
-
-  h1 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(2.5rem, 7.8vw, 7rem);
-    font-weight: 650;
-    letter-spacing: -0.075em;
-    line-height: 0.95;
-  }
-
-  h1 > span {
-    color: var(--signal);
-  }
-
-  .hero-introduction {
+  .introduction {
     display: grid;
-    gap: 2rem;
-    margin-block: clamp(2rem, 4vw, 3rem) clamp(2.5rem, 4vw, 3.5rem);
+    grid-template-columns: 1.22fr 1fr;
+    align-items: center;
+    gap: 2rem 5rem;
+    margin-bottom: 2.75rem;
   }
-
-  .hero-introduction > p {
-    max-width: 38rem;
+  h1 {
+    max-width: 17ch;
     margin: 0;
-    color: var(--ink-muted);
-    font-size: clamp(1rem, 1.5vw, 1.25rem);
-    line-height: 1.7;
-    text-wrap: pretty;
+    font-size: clamp(2.5rem, 4.3vw, 3.75rem);
+    font-weight: 720;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    text-wrap: balance;
   }
-
+  .hero-copy > p:first-child {
+    max-width: 47ch;
+    margin: 0 0 1.5rem;
+    color: var(--ink-muted);
+    font-size: 1rem;
+    line-height: 1.75;
+  }
   .hero-actions {
     display: flex;
-    align-items: center;
     flex-wrap: wrap;
-    gap: 1.25rem 2rem;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
   }
-
-  .primary-link {
+  .primary-link,
+  .docs-link {
     display: inline-flex;
-    min-height: 3.5rem;
+    min-height: 3rem;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
-    padding-inline: 1.5rem;
-    background: var(--signal);
-    color: var(--signal-ink);
+    gap: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 600;
     text-decoration: none;
   }
-
+  .primary-link {
+    padding: 0.75rem 1.1rem;
+    border-radius: 6px;
+    background: var(--signal);
+    color: var(--signal-ink);
+  }
   .primary-link:hover {
     background: var(--signal-hover);
   }
-
-  .command-examples {
-    display: grid;
-    border-block: 1px solid var(--rule);
-  }
-
-  .command-example {
-    display: grid;
-    align-content: center;
-    gap: 0.45rem;
-    min-width: 0;
-    padding-block: 1.35rem;
-    text-decoration: none;
-  }
-
-  .command-example + .command-example {
-    border-top: 1px solid var(--rule);
-  }
-
-  .command-example:hover .command-destination {
+  .docs-link:hover {
     color: var(--signal);
   }
-
-  .command-label,
-  .command-destination {
+  .platforms {
+    margin: 1rem 0 0;
     color: var(--ink-muted);
-    font-family: var(--font-mono);
     font-size: 0.75rem;
   }
-
-  .command-example code {
-    font-family: var(--font-mono);
-    font-size: clamp(1rem, 1.7vw, 1.25rem);
-    overflow-wrap: anywhere;
+  .runtime-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 2rem;
+    padding-block: 1.25rem;
   }
-
-  .command-example code span {
+  .runtime-strip p {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+  }
+  .runtime-strip nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.75rem;
+  }
+  .runtime-strip a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .runtime-strip a:hover {
     color: var(--signal);
   }
-
-  @media (min-width: 42rem) {
-    .command-examples {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+  .runtime-strip .all-runtimes {
+    gap: 0.6rem;
+    margin-left: auto;
+    color: var(--ink-muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+  }
+  @media (max-width: 55rem) {
+    .introduction {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      margin-bottom: 2rem;
     }
-    .command-example + .command-example {
-      padding-left: clamp(1.5rem, 4vw, 4rem);
-      border-top: 0;
-      border-left: 1px solid var(--rule);
+    h1 {
+      max-width: 23ch;
+    }
+    .hero-copy > p:first-child {
+      max-width: 60ch;
     }
   }
-
-  @media (min-width: 60rem) {
-    .hero-introduction {
-      grid-template-columns: 1.15fr 1fr;
-      align-items: center;
+  @media (max-width: 35rem) {
+    h1 {
+      font-size: 2.5rem;
     }
-    .hero-actions {
-      justify-content: flex-end;
+    .runtime-strip {
+      gap: 0.25rem;
+    }
+    .runtime-strip nav {
+      width: 100%;
+      gap: 0.5rem 1.5rem;
+    }
+    .runtime-strip .all-runtimes {
+      margin-left: 0;
     }
   }
 </style>

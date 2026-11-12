@@ -81,7 +81,12 @@ test('mobile navigation reaches a runtime guide and updates canonical metadata',
     'content',
     'https://getomg.dev/runtimes/node/'
   );
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(
+    page.getByRole('heading', { name: 'Manage Node.js versions with OMG', exact: true })
+  ).toBeInViewport();
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true);
   await page.screenshot({ path: testInfo.outputPath('node-mobile.png') });
   await page
     .getByRole('link', { name: 'Use Node.js, npm, and pnpm with OMG', exact: true })
@@ -144,4 +149,131 @@ test('public sitemap, raw HTML and Markdown agree on published guides', async ({
   const missing = await request.get('/runtimes/not-a-runtime/');
   expect(missing.status()).toBe(404);
   expect((await request.get('/guides/node/')).status()).toBe(404);
+});
+
+test('command explorer changes examples and their documentation destination', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/', { waitUntil: 'networkidle' });
+  const choices = page.getByRole('group', { name: 'Choose a command example' });
+  await expect(page.locator('.command code')).toHaveText('omg search ripgrep --no-aur');
+  const runtime = choices.getByRole('button', { name: 'Runtimes', exact: true });
+  await runtime.focus();
+  await runtime.press('Enter');
+  await expect(runtime).toHaveAttribute('aria-pressed', 'true');
+  await expect(choices.getByRole('button', { name: 'Packages', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'false'
+  );
+  await expect(page.locator('.command code')).toHaveText('omg use node 22.0.0');
+  await expect(page.locator('.terminal-guide')).toHaveAttribute('href', '/docs/runtimes/');
+  await choices.getByRole('button', { name: 'Environments', exact: true }).click();
+  await expect(page.locator('.command code')).toHaveText('omg env check');
+  await expect(page.locator('.terminal-guide')).toHaveAttribute('href', '/docs/cli/');
+  await page.locator('.terminal-guide').click();
+  await expect(page).toHaveURL(/\/docs\/cli\/$/);
+});
+
+test('dark mode follows the system and remembers a manual choice across pages', async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(16, 16, 16)');
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await page
+    .getByRole('navigation', { name: 'Primary navigation' })
+    .getByRole('link', { name: 'Docs', exact: true })
+    .click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+});
+
+test('theme switching works when browser storage is blocked', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', {
+      get() {
+        throw new DOMException('Blocked', 'SecurityError');
+      },
+    });
+  });
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+});
+
+test('terminal types, reveals Arch output, pauses, and replays', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.clock.install({ time: new Date('2026-11-11T18:00:00Z') });
+  await page.clock.pauseAt(new Date('2026-11-11T18:00:01Z'));
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: 'Replay terminal demo' }).click();
+  await expect(page.locator('.command code')).toHaveText('');
+  await page.clock.runFor(600);
+  const partial = await page.locator('.command code').innerText();
+  expect(partial.length).toBeGreaterThan(0);
+  expect(partial.length).toBeLessThan('omg search ripgrep --no-aur'.length);
+  await page.getByRole('button', { name: 'Pause terminal demo' }).click();
+  await page.clock.runFor(2_000);
+  await expect(page.locator('.command code')).toHaveText(partial);
+  await page.getByRole('button', { name: 'Resume terminal demo' }).click();
+  await page.clock.runFor(5_000);
+  await expect(page.locator('.terminal-output')).toContainText('ripgrep 15.2.0-1');
+  await expect(page.locator('.terminal-output')).toContainText('Official');
+  await expect(page.getByText('Arch Linux · x86_64', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Replay terminal demo' }).click();
+  await expect(page.locator('.command code')).toHaveText('');
+});
+
+test('reduced motion shows the complete terminal transcript without typing', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await expect(page.locator('.command code')).toHaveText('omg search ripgrep --no-aur');
+  await expect(page.locator('.terminal-output')).toContainText('ripgrep 15.2.0-1');
+  await expect(page.getByRole('button', { name: 'Pause terminal demo' })).toHaveCount(0);
+  await page
+    .getByRole('group', { name: 'Choose a command example' })
+    .getByRole('button', { name: 'Environments', exact: true })
+    .click();
+  await expect(page.locator('.terminal-output')).toContainText('Environment is in sync');
+});
+
+test('dark mode remains reachable from the compact mobile menu', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.locator('.mobile-menu summary').click();
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(16, 16, 16)');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test.describe('dark mode without JavaScript', () => {
+  test.use({
+    javaScriptEnabled: false,
+    colorScheme: 'dark',
+    viewport: { width: 320, height: 700 },
+  });
+  test('keeps the complete Arch demo readable', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(16, 16, 16)');
+    await expect(page.locator('.command code')).toHaveText('omg search ripgrep --no-aur');
+    await expect(page.locator('.terminal-output')).toContainText('ripgrep 15.2.0-1');
+    await expect(page.getByRole('button', { name: 'Replay terminal demo' })).toBeDisabled();
+  });
+});
+
+test('theme control works on a directly loaded prerendered documentation page', async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/docs/', { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
 });
