@@ -1,101 +1,98 @@
 ---
 name: OMG
-description: A direct developer-tool website built around commands people can read and use.
+description: Neutral developer-tool surfaces, readable commands, and direct installation paths.
 colors:
-  paper: '#fafbf8'
-  paper-raised: '#f0f2ec'
-  ink: '#22251f'
-  ink-muted: '#62675d'
-  rule: '#dfe3d9'
-  rule-strong: '#b8bfb0'
-  signal: '#bc3e1b'
-  signal-hover: '#9c2e11'
+  paper: '#ffffff'
+  paper-raised: '#f5f5f5'
+  ink: '#171717'
+  ink-muted: '#626262'
+  rule: '#e3e3e3'
+  rule-strong: '#b5b5b5'
+  signal: '#c23b15'
+  signal-hover: '#a52d0c'
   signal-ink: '#ffffff'
   danger: '#b32d40'
-  terminal-bg: '#20251f'
-  terminal-tabs: '#272d25'
-  terminal-rule: '#3c4338'
-  terminal-ink: '#eff2e9'
-  terminal-muted: '#a5b09b'
-  terminal-selected: '#f29768'
-  terminal-command: '#efb185'
-  terminal-prompt: '#a7bf8d'
+  dark-paper: '#101010'
+  dark-paper-raised: '#1b1b1b'
+  dark-ink: '#f4f4f4'
+  dark-ink-muted: '#adadad'
+  dark-rule: '#303030'
+  dark-rule-strong: '#666666'
+  dark-signal: '#ff936e'
+  dark-signal-hover: '#ffb49a'
+  dark-signal-ink: '#171717'
+  dark-danger: '#f08b95'
   workspace-paper: '#090909'
   workspace-paper-raised: '#111111'
   workspace-ink: '#f2f0ea'
   workspace-ink-muted: '#9f9b95'
-  workspace-rule: 'rgb(242 240 234 / 0.13)'
-  workspace-rule-strong: 'rgb(242 240 234 / 0.28)'
+  workspace-rule: rgb(242 240 234 / 0.13)
+  workspace-rule-strong: rgb(242 240 234 / 0.28)
   workspace-signal: '#ff5f38'
   workspace-signal-hover: '#ff7655'
   workspace-signal-ink: '#090909'
   workspace-danger: '#ed707a'
-  dark-paper: '#141712'
-  dark-paper-raised: '#20251d'
-  dark-ink: '#eef1e9'
-  dark-ink-muted: '#b0b9a7'
-  dark-rule: '#343d2e'
-  dark-rule-strong: '#606d56'
-  dark-signal: '#f29873'
-  dark-signal-hover: '#ffb291'
-  dark-signal-ink: '#21170f'
-  dark-danger: '#f08b95'
+  terminal-bg: '#171717'
+  terminal-ink: '#ededed'
+  terminal-muted: '#ababab'
+  terminal-rule: '#383838'
+  terminal-output: '#d6d6d6'
+  terminal-selected: '#ff936e'
+  terminal-output-highlight: '#a9cfff'
 typography:
   display:
     fontFamily: "'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif"
-    fontSize: 'clamp(3rem, 5.25vw, 4.75rem)'
-    fontWeight: 630
-    lineHeight: 1.04
-    letterSpacing: '-0.04em'
+    fontSize: clamp(2.5rem, 4.3vw, 3.75rem)
+    fontWeight: 720
+    lineHeight: 1.08
+    letterSpacing: -0.035em
   headline:
     fontFamily: "'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif"
-    fontSize: 'clamp(2.25rem, 4vw, 3.25rem)'
-    fontWeight: 650
-    lineHeight: 1.1
-    letterSpacing: '-0.035em'
+    fontSize: clamp(1.75rem, 2.7vw, 2.4rem)
+    fontWeight: 680
+    lineHeight: 1.15
+    letterSpacing: -0.03em
   title:
     fontFamily: "'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif"
-    fontSize: '1.25rem'
-    fontWeight: 600
-    lineHeight: 1.3
-    letterSpacing: '-0.025em'
+    fontSize: 1.375rem
+    fontWeight: 650
+    letterSpacing: -0.02em
   body:
     fontFamily: "'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif"
-    fontSize: '0.875rem'
+    fontSize: 0.9375rem
     lineHeight: 1.75
   label:
-    fontFamily: "'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace"
-    fontSize: '0.75rem'
-    fontWeight: 500
-    letterSpacing: '0.05em'
+    fontFamily: "'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif"
+    fontSize: 0.8125rem
+    fontWeight: 600
   code:
     fontFamily: "'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace"
-    fontSize: 'clamp(0.75rem, 1.3vw, 0.9375rem)'
+    fontSize: clamp(0.75rem, 1.3vw, 0.9375rem)
 rounded:
   square: '0'
-  control: '6px'
-  panel: '12px'
+  control: 6px
+  panel: 12px
 spacing:
-  half: '0.5rem'
-  three-quarter: '0.75rem'
-  one: '1rem'
-  one-quarter: '1.25rem'
-  one-half: '1.5rem'
-  two: '2rem'
-  two-half: '2.5rem'
-  three: '3rem'
+  half: 0.5rem
+  three-quarter: 0.75rem
+  one: 1rem
+  one-quarter: 1.25rem
+  one-half: 1.5rem
+  two: 2rem
+  two-half: 2.5rem
+  three: 3rem
 components:
   button-primary:
     backgroundColor: '{colors.signal}'
     textColor: '{colors.signal-ink}'
     rounded: '{rounded.control}'
-    padding: '0.75rem 1.25rem'
+    padding: 0.75rem 1.1rem
   button-primary-hover:
     backgroundColor: '{colors.signal-hover}'
   button-outline:
     textColor: '{colors.ink}'
     rounded: '{rounded.control}'
-    padding: '0.65rem 1rem'
+    padding: 0.65rem 1rem
   button-outline-hover:
     backgroundColor: '{colors.signal}'
     textColor: '{colors.signal-ink}'
@@ -103,27 +100,28 @@ components:
     backgroundColor: '{colors.ink}'
     textColor: '{colors.paper}'
     rounded: '{rounded.control}'
-    padding: '0.65rem 1rem'
+    padding: 0.65rem 1rem
   button-copy-hover:
     backgroundColor: '{colors.signal}'
     textColor: '{colors.signal-ink}'
   input-login:
-    backgroundColor: 'transparent'
+    backgroundColor: transparent
     textColor: '{colors.ink}'
     rounded: '{rounded.square}'
-    padding: '0.8rem 1rem'
+    padding: 0.8rem 1rem
   panel-install:
     backgroundColor: '{colors.paper-raised}'
     rounded: '{rounded.panel}'
-    padding: 'clamp(1.25rem, 3vw, 2rem)'
+    padding: clamp(1.25rem, 3vw, 2rem)
   panel-command:
     backgroundColor: '{colors.terminal-bg}'
     textColor: '{colors.terminal-ink}'
     rounded: '{rounded.panel}'
   example-selector:
-    backgroundColor: 'transparent'
-    padding: '0.6rem 0.85rem'
-    height: '2.75rem'
+    backgroundColor: '{colors.paper}'
+    textColor: '{colors.signal}'
+    rounded: '{rounded.control}'
+    padding: 1rem
 ---
 
 # Design System: OMG
@@ -132,131 +130,121 @@ components:
 
 **Creative North Star: "The command workbench"**
 
-OMG's public pages put readable CLI examples beside direct explanations. The public site supports light green-tinted paper with burnt-orange actions and a dark green-black palette with peach actions. Both modes keep the same composition and type hierarchy. The existing OMG wordmark stays intact.
+OMG uses familiar developer-tool craft: neutral white or charcoal surfaces, measured Archivo headings, and Plex command text. The user named bun.com and ripgrep.dev as references and rejected green-tinted public surfaces and repetitive slogan/feature rows. The user reviewed and approved this replacement on 2026-11-11 and authorized merging it into main and deploying it with Wrangler.
 
-Use compact navigation, measured headings, ruled content rows, and generous section spacing. The dark command workbench is the signature component. It shows selectable examples and links to their guides. Authenticated dashboard and admin routes retain their existing dark operational theme through a scoped token override.
+The command explorer is the homepage's signature component. Its selection rail and dark transcript give the product interaction room to be read. Orange marks actions, selection, and focus; documentation and technical details remain visually quiet. Authenticated dashboard and admin routes retain their independent dark operational theme.
 
 **Key Characteristics:**
 
-- Readable commands with clear action and guide links.
-- Archivo text paired with IBM Plex Mono for code and technical labels.
-- System-aware light and dark public pages, an animated Arch command example, and scoped dark authenticated workspaces.
-- Small control corners and larger command-container corners.
+- Neutral public light/dark surfaces with restrained orange actions.
+- Archivo hierarchy and IBM Plex Mono commands, with metric-matched font fallbacks.
+- Full-width command exploration and compact, varied technical content.
+- Flat tonal grouping, small control corners, and larger container corners.
 
-This document records the implementation in `site/src/app.css`, the shared header and footer, home components, login fields, and documentation layouts. Frontmatter values are normative. The color and spacing names describe extracted values; they do not introduce new runtime CSS variables. `.impeccable/design.json` adds preview snippets, motion, depth, and responsive metadata. Its synthesized tonal ramps are panel previews, not runtime palette additions.
+Runtime sources are canonical: `site/src/app.css`, shared public navigation, home components, login fields, and documentation layouts. Frontmatter mirrors their reusable values; its names do not add CSS variables. The sidecar contains preview snippets and extensions. Synthesized tonal ramps are panel previews, not additional runtime palette choices.
 
 ## Colors
 
-The public palette combines green-tinted neutrals with burnt orange. Colors named `terminal-*` belong to the command example; `workspace-*` records the existing authenticated override.
+Public surfaces are strictly neutral. Orange is the action accent; terminal output uses a small blue highlight for result hierarchy.
 
 ### Primary
 
-- **Burnt-orange signal** is the primary action, selected text, focus outline, link hover, and occasional heading emphasis. Its hover counterpart deepens the same accent. Signal ink supplies the contrasting action text.
-- **Workspace orange** is the brighter action accent scoped to dashboard and admin routes, with its own hover and contrasting ink values.
+- **Signal orange** identifies install actions, active choices, focus, selection, and link hover. The dark-mode signal lightens for charcoal surfaces. Signal ink supplies contrasting action text.
+- **Workspace orange** retains the existing brighter account/operator action treatment.
 
 ### Neutral
 
-- **Paper and raised paper** distinguish the public page from installer and command-row containers.
-- **Ink and muted ink** separate headings and commands from descriptions and metadata. Muted text still carries useful information.
-- **Rule and strong rule** separate sections and define outlined controls. They replace most card borders and shadows.
-- **Terminal background, tabs, and rule** form the dark command workbench. Terminal ink and muted text establish command and comment hierarchy. Selected peach marks the active example and its focus ring; command peach and prompt green distinguish executable text from the shell prompt.
-- **Workspace paper, raised paper, ink, muted ink, and rules** retain the existing dark account and operator palette. The two translucent rules inherit their context.
-- **Danger** is reserved for errors, with a lighter workspace variant.
+- **Paper and raised paper** separate the page from command selection, runtime, source, and installer containers. Dark variants preserve the same roles.
+- **Ink and muted ink** distinguish headings and executable commands from explanations and metadata. **Rule and strong rule** divide technical content and outline controls.
+- **Terminal charcoal, ink, muted text, rule, and output** form the consistently dark transcript. **Terminal selected** marks the prompt, caret, guide hover, and local keyboard focus. **Terminal output highlight** distinguishes output headings and successful result lines; it is not a public brand accent.
+- **Workspace paper, raised paper, ink, muted ink, and translucent rules** preserve the account/operator palette independently.
+- **Danger** and its dark/workspace variants remain reserved for error states.
 
-**The Theme Boundary Rule.** Public pages follow the system color scheme until a light or dark choice is saved in localStorage under omg-theme. The header switch is available directly on desktop and inside Menu on mobile. A preloaded, deferred same-origin script owns the root data-theme attribute and delegated toggle clicks, including on prerendered pages without hydration. CSS honors the system preference without JavaScript. Dashboard and admin pages retain their scoped workspace override. The terminal keeps its separate dark palette in both modes.
+**The Theme Boundary Rule.** Public pages follow the system scheme until a light or dark preference is saved under omg-theme. The same-origin theme script updates the root data-theme attribute, browser theme color, system changes, and cross-tab changes. CSS supplies the no-JavaScript system fallback. Dashboard and admin routes keep the scoped workspace override; the command transcript stays dark in either public mode.
 
 ## Typography
 
-Archivo supplies display and body text. IBM Plex Mono supplies commands, technical labels, and form input text. Use the metric-matched fallback faces already defined in the global stylesheet. Keep the Archivo font preload and fallback metrics when changing font loading.
+Archivo Variable supplies display and body text, with the existing Archivo Fallback metrics and system sans fallback. IBM Plex Mono supplies commands, transcripts, technical file names, and login input text, with the existing Plex Mono Fallback metrics. Preserve font preloading and metric overrides when changing loading behavior.
 
 ### Hierarchy
 
-- **Display** is the homepage title. At the hero's narrow breakpoint, it changes to `clamp(3rem, 8.5vw, 4.5rem)`.
-- **Headline** is the shared home section title. Workflow and benchmark headings use a smaller local scale, `clamp(2rem, 3.4vw, 2.75rem)`, with weight 600 and line height 1.15.
-- **Title** is the recurring workflow title size. Its modest scale keeps commands and instructions prominent.
-- **Body** records workflow descriptions. Hero and documentation summaries use a larger size, 1.0625rem. Body line height varies by context, including 1.7 for summaries and 1.8 for article reading.
-- **Label** records the mono page kicker, which is uppercase. Navigation and button labels generally remain sentence case in Archivo.
-- **Code** records the recurring workflow and installer scale. The installer uses line height 1.9. The hero's first command is larger, `clamp(0.875rem, 1.4vw, 1.125rem)`.
+- **Display** is the compact homepage definition; its measure starts at 17ch, becomes 23ch below 55rem, and uses 2.5rem below 35rem.
+- **Headline** records package/runtime headings. The installation title uses the shared larger scale, `clamp(2.25rem, 4vw, 3.25rem)`, weight 650, line height 1.1.
+- **Title** records compact environment and source headings. First-command headings use 1.25rem with line height 1.35.
+- **Body** records package/runtime explanation. The introduction uses 1rem and line height 1.75; small technical notes range from 0.75rem to 0.875rem.
+- **Label** records compact technical step labels. Navigation uses 0.8125rem and weight 500; action labels use weight 600.
+- **Code** records the responsive installer scale. The transcript command uses 0.875rem and output 0.8125rem with line height 1.85.
 
-Headings use balanced wrapping and tight negative tracking. Keep explanatory copy within observed reading widths: the hero starts at 35ch, workflow descriptions at 52ch, and learning articles at 48rem. Do not turn these contextual values into a single forced text width.
+Headings use balanced wrapping and negative tracking. Explanatory widths vary by context: intro 47ch, package/runtime copy 49ch, and reading articles 48rem. Do not impose one measure on every surface.
 
 ## Layout
 
-The shared public shell is `min(100% - clamp(2.5rem, 8vw, 8rem), 75rem)`, centered. The homepage sets its content-width variable to 75rem. Sections use horizontal rules and responsive block spacing, usually `clamp(4rem, 7vw, 6rem)`; the installation section uses its own shorter spacing.
+The public shell is centered at `min(100% - clamp(2.5rem, 8vw, 8rem), 75rem)`. Homepage sections use `clamp(3rem, 5vw, 4.5rem)` vertical padding and thin dividing rules. Content determines grouping and density.
 
-The homepage hero has two columns, with a slightly wider command example. It becomes one column at 55rem. Workflow rows, benchmark content, and the first-command block become one column at 44rem. Commands wrap instead of forcing the page wider.
+The homepage introduction pairs a product definition with explanation/actions in two columns, then gives the command explorer the full shell width. The introduction stacks below 55rem. The explorer uses a 17rem selection rail, reduced to 14rem below 55rem; below 40rem its choices become a compact horizontal row above the transcript. The runtime guide band wraps naturally below it.
 
-The header is five rem tall on wide screens. Below 50rem, it becomes four and a half rem tall, hides the full navigation and account link, and exposes a native details menu. The installer action remains visible. Below 30rem, the command toolbar and example controls tighten their padding. The footer becomes vertically arranged below 40rem.
+The package backend definition list and raised runtime panel sit side by side; an environment strip spans both. These stack below 40rem. The source/performance panel also stacks below 40rem. The installer keeps a download/review block and a separate first-command block, which stacks below 44rem.
 
-Documentation uses a 16rem sidebar at 64rem and above. Learning articles use a 15rem contents column at the same breakpoint. At smaller sizes, reading content follows navigation in one column. Keep the body's 20rem minimum width and use `min-width: 0` on grid content that contains code.
+The header is 4.5rem high. Below 50rem, the full navigation and account link give way to a native details menu, with the theme control inside it; the install action stays visible. The footer stacks below 40rem. Documentation uses a 16rem sidebar from 64rem; learning articles use a 15rem contents column at that breakpoint. Keep the 20rem body minimum and `min-width: 0` around code-bearing grid children.
 
-Interactive links and controls generally reserve at least 2.75rem of height. Keep visible keyboard focus, native menu behavior, readable commands without JavaScript, and status space for clipboard feedback.
+Interactive links and controls generally reserve 2.75rem height. Commands wrap; transcript output may scroll vertically inside its fixed viewport. Keep persistent space for clipboard status and readable commands without JavaScript.
 
 ## Elevation & Depth
 
-Most public content stays flat. Paper tones, thin rules, and spacing provide separation. The command workbench has a restrained shadow, and the open mobile menu has a lighter shadow to distinguish it from content below. There is no global card-shadow system.
+Public content is flat. Neutral tones, one-pixel rules, and spacing establish hierarchy. The command explorer has a border and no shadow. The open mobile menu alone uses the existing soft shadow (`0 12px 20px rgb(0 0 0 / 0.08)`).
 
-### Shadow vocabulary
-
-- **Command workbench:** `0 14px 32px rgb(30 40 20 / 0.12)`.
-- **Mobile menu:** `0 12px 20px rgb(30 40 20 / 0.08)`.
-
-**The Flat Content Rule.** Use rules and raised paper for ordinary content. Keep the existing shadows attached to the command workbench and mobile navigation.
+**The Flat Content Rule.** Use neutral tonal grouping and thin rules for ordinary content. The command explorer is flat and bordered; reserve the existing soft shadow for the open mobile menu.
 
 ## Shapes
 
-Public action controls and workflow command rows use the control radius. The workbench and installer container use the panel radius. Fields and documentation panels keep square corners where the implementation does. Mobile navigation links use a local 4px radius.
-
-Use simple rectangles, one-pixel rules, and inline SVG icons. Preserve the existing OMG brand mark. The visual direction uses no raster compositions or decorative background imagery.
+Controls use gently rounded corners (6px). The explorer, raised runtime/source panels, and installer use container corners (12px). Login fields and documentation panels retain their existing square corners. Mobile menu links and terminal playback controls use a local 4px radius. Use inline SVG icons and preserve the existing OMG brand mark.
 
 ## Components
 
 ### Buttons
 
-The primary install link uses signal fill and contrasting ink. It has a three-rem minimum height, medium-weight Archivo, and the control radius. Hover changes its background with `160ms ease-out`.
+Primary install actions use signal fill and contrasting ink, a three-rem minimum height, and medium-weight Archivo. Hover uses the signal-hover token. Header install actions begin transparent with a strong-rule border and fill on hover. Copy actions begin in ink on paper and change to signal on hover; pending state reduces opacity to 0.6 and uses a wait cursor.
 
-The header install action starts transparent with a strong-rule border. Hover fills it with signal and changes the text to contrasting ink. The installer copy button starts in ink on paper and switches to signal on hover. Its pending state reduces opacity to 0.6 and uses a wait cursor.
-
-The global keyboard focus treatment is a two-pixel signal outline with a four-pixel offset. Do not add lift or scale transforms to these controls.
+The global keyboard treatment is a two-pixel signal outline with a four-pixel offset. Terminal focus uses the local light orange outline with a negative four-pixel offset. Controls do not lift or scale.
 
 ### Cards / Containers
 
-Workflow commands use raised paper, control corners, and 1.75rem padding, reduced to 1.25rem in the narrow layout. The installer uses raised paper and panel corners with responsive padding. Workflow descriptions and benchmark evidence use ruled rows rather than repeated detached cards.
+Raised neutral panels group runtime instructions, source/performance details, and installation. They use container corners without shadows. Backend support uses a definition list with ruled rows; environment commands occupy a compact spanning strip. These are content-specific structures, not a repeated feature-card grid.
 
 ### Inputs / Fields
 
-Login fields are square, transparent, and bordered with the strong rule. They use mono text and comfortable inset padding. Focus changes the border to signal; the current field-specific rule removes the outline. Preserve visible focus when extending the form. Form errors use danger text, and disabled submission uses reduced opacity.
+Login fields retain square corners, transparent backgrounds, a strong-rule border, mono text, and 0.8rem by 1rem padding. Focus changes the border to signal; the existing field-specific rule removes the outline. Preserve visible focus when extending the form. Errors use danger; disabled submission reduces opacity.
 
 ### Navigation
 
-Header links use small, medium-weight Archivo and muted ink. Hover and the current page use signal. The menu uses native details and summary elements, and its links return to the root paper palette. The compact footer repeats essential project and legal links with the same muted-to-signal interaction.
+Header links use small, medium-weight Archivo in muted ink. Hover and current-page state use signal. The mobile menu uses native details and summary; its links inherit public theme colors. Essential project and legal footer links follow the same muted-to-signal treatment. No affiliate or plugin advertising belongs in the footer.
 
-### Command workbench
+### Command explorer
 
-The workbench combines a toolbar, example-selector row, command body, and guide link. It uses a separate green-black palette, mono commands, readable comments, and peach/green command accents. Example buttons have a 2.75rem minimum height. The selected example has a peach bottom border and white text. Hover adds a subtle local fill; keyboard focus uses a peach inset outline.
+A public-theme toolbar and command selection rail surround a separate charcoal transcript. Desktop choices show category and command preview; the selected choice has paper fill, a rule border, and signal text. Narrow choices hide previews and remain a readable three-choice row. The transcript body is 17rem tall on desktop and 18rem below 40rem. Its output uses neutral gray, with blue for headings and success lines.
 
-HomeTerminal.svelte owns the terminal playback. terminal-examples.ts holds source-matched Arch demonstration fixtures. The first command types after a 300ms lead-in at 42ms per character; output appears at 150ms per line, then playback stops. Selecting another example cancels the previous timer. Pause and replay controls remain inside the terminal. Hidden tabs pause; reduced motion and server rendering show the complete transcript immediately. The visual animation is hidden from assistive technology and a separate complete transcript announces only example changes. Keep the visible Example output label and destination guide link. The demo never executes commands.
+HomeTerminal owns playback; terminal-examples holds source-matched Arch fixtures. A 300ms lead-in precedes typing at 42ms per character; output appears at 150ms per line, then stops. Selecting a command cancels the previous timer. Pause and replay controls stay inside the terminal. Hidden tabs pause. Reduced motion and server rendering show the complete transcript immediately. A separate complete transcript announces only example changes to assistive technology. Keep the visible Example output label and the destination guide link. The demo never executes commands.
 
 ### Installation block
 
-The installer stays readable as wrapped code. The copy action has a persistent status area beneath it, followed by platform and provenance requirements. The next-command block pairs a read-only search example with a quick-start link. These are instructions, so keep command order and qualification visible.
+Keep the download, review, then execute order visible in wrapped code. The copy control has a persistent status area; provenance and platform requirements stay alongside the command. The follow-up search is read-only and links to the quick start. InstallationView continues to own clipboard state and analytics.
 
-Smooth anchor scrolling becomes automatic scrolling when reduced motion is requested. Other effects are short state changes; the implementation has no decorative entrance sequence.
+Smooth anchor scrolling becomes automatic under reduced motion. The typing caret is the only looping visual state during command entry; there is no decorative entrance sequence.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** use the paired public light/dark tokens and scoped workspace tokens.
-- **Do** make commands readable, selectable, and paired with useful guide links.
-- **Do** use ruled rows and raised paper for ordinary content grouping.
-- **Do** preserve keyboard focus, generous control targets, wrapping code, and reduced-motion scrolling.
+- **Do** preserve neutral public light/dark tokens and the separate workspace override.
+- **Do** keep commands readable, selectable, and paired with useful guide links.
+- **Do** choose grouping from content: definition lists, code panels, compact bands, or native details.
+- **Do** preserve visible keyboard focus, wrapping code, complete transcripts, and reduced-motion behavior.
 - **Do** preserve the existing wordmark, Archivo, and IBM Plex Mono.
 
 ### Don't:
 
+- **Don't** reintroduce green-tinted public surfaces or repetitive slogan/feature-row composition.
 - **Don't** replace the public palette with the authenticated workspace palette.
-- **Don't** add generic AI-style decoration, raster mockups, or decorative hero imagery.
-- **Don't** turn every content row into a rounded, shadowed card.
-- **Don't** add oversized poster typography that obscures the commands and installation path.
+- **Don't** add generic AI decoration, ornamental imagery, or repeated shadowed cards.
 - **Don't** present historical unequal-work benchmark timings as visual proof of a speedup.
+- **Don't** replace the approved neutral CLI-tool direction with green-tinted palettes or repetitive slogan sections.

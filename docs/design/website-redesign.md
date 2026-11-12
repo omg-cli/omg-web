@@ -1,31 +1,33 @@
 # Website redesign
 
-## Decision
+## Status and direction
 
-Build a direct developer-tool website around executable command examples. Retain the product's orange accent and existing typeface; replace the black oversized-poster composition with compact light pages and dark code panels. The user confirmed a modern, direct CLI-project direction without AI-style decoration. Build directly in Svelte, without a raster mockup.
+The user reviewed and approved the replacement on 2026-11-11 and authorized merging it into main and deploying it with Wrangler. The user chose familiar modern CLI-tool craft, naming bun.com and ripgrep.dev, and rejected the earlier green-tinted palette and repetitive slogan/feature-row layout. The implemented design follows that reviewed direction.
 
-## Architecture
+The current public palette is neutral white/charcoal with an orange action accent. Runtime CSS is canonical and DESIGN.md mirrors it. The surface contract lives in `.impeccable/surfaces/site-src-routes-page-svelte.md`; this document records implementation and validation context.
 
-The root layout owns the shared header, footer, and public/workspace theme boundary. CSS tokens own color, spacing, and type. HomeHero owns only the selected command example. InstallationView continues to own the installer and clipboard outcomes. Server loads, auth, analytics, and document data retain their current owners.
+## Implemented composition
 
-Usage: visitor scans the purpose, selects a command example, opens installation, copies the reviewed installer, then continues to the quick start. Documentation and learning pages inherit the same public tokens and navigation.
+A compact two-column introduction defines the package/runtime CLI and offers installation and documentation. One full-width command explorer follows, with command previews in a public-theme selection rail and an always-dark neutral Arch transcript. On mobile, choices form a horizontal row above output. A compact language guide band closes the introduction.
 
-Alternatives considered: keep the black poster identity and only polish its spacing; rebuild all account and operator screens. The first retains the repetition the user rejected. The second couples an aesthetic change to unrelated authenticated workflows. The chosen theme boundary allows consistent public pages while protecting those workspaces.
+Below it, a package backend definition list sits beside a raised runtime panel. A spanning environment strip keeps capture and drift scope visible. Compact source information and a native performance disclosure precede installation. This replaces the repeated feature-row composition with structures fitted to their content.
 
-## Scope
+## Architecture and product boundaries
 
-Shared tokens and navigation, complete homepage, compact footer, documentation and guide readability. Semantic buttons and links, visible focus, 44px controls, reduced motion, narrow-screen layouts, and no-JavaScript readable commands.
+The root layout retains shared header/footer ownership and the public/workspace theme boundary. HomeHero owns the introduction; HomeTerminal owns command selection and playback; terminal-examples holds source-reviewed fixtures. InstallationView owns clipboard outcomes and associated analytics. Auth, server loads, metadata, document data, privacy behavior, and backend contracts keep their existing owners.
 
-## Verification
+Public pages follow system light/dark preference until the visitor selects a preference. The same-origin theme script applies the root attribute, persists omg-theme, updates browser theme color, and handles system/cross-tab changes. CSS supports the no-JavaScript system preference. Account and operator workspaces retain their scoped operational dark palette.
 
-Run Svelte/type checks, public browser tests, site unit tests, production build and bundle budget. Inspect desktop and mobile screenshots together, including docs and guides. Exercise command selection, navigation, clipboard success and denial, and keyboard menu operation.
+Keep supported x86_64 Linux and Apple Silicon macOS scope, including supported Linux inside WSL2; there is no native Windows build. Environment capture/drift checks remain scoped to Arch, Debian, and Ubuntu. Installation visibly downloads a script for review before execution and explains GitHub CLI provenance verification. Historical unequal-work benchmark timings remain qualified rather than promoted as speedup proof.
 
-## Research follow-up
+## Motion and access
 
-Decision to validate: can a new developer understand OMG and reach an appropriate install or runtime guide without guessing? Recruit five developers across Linux and macOS. Ask them to describe what OMG manages, locate platform requirements, install after reviewing the script, select a runtime, and find benchmark evidence. Record task completion, first-click choice, confusion, and verbatim anonymous notes with consent. Current design judgments come from source inspection and heuristic review, not claimed participant findings.
+The terminal types one real command, reveals source-matched Arch example output, then stops. Values are representative fixtures labeled Example output. Pause/replay stay operable; selecting another example cancels the prior timer, and background tabs pause. Reduced motion and server rendering show the complete transcript. Assistive technology receives a separate complete transcript rather than character announcements. The demo executes no commands and makes no network calls.
 
-## Dark mode and terminal playback
+Preserve native details navigation/disclosure, visible focus, wrapping commands, 44px control targets, clipboard success/denial status, and narrow layouts. No decorative entrance sequence, imagery, badges, fabricated social proof, or affiliate/plugin advertising is part of the direction.
 
-Keep the approved composition and add a system-aware light/dark preference. A small preloaded, deferred same-origin script applies the saved preference at startup, preserving public caching and the existing CSP. It owns persistence, system/cross-tab updates, and delegated clicks on the header controls, including prerendered pages without hydration. CSS handles the initial system palette and the no-JavaScript fallback. Authenticated workspace tokens stay scoped.
+## Verification and remaining review
 
-The terminal is the single focal animation: type one real OMG command, reveal source-matched output line by line, then stop. Arch Linux is the example host. Versions and environment values are representative fixtures, labeled as example output. Pause and replay belong to the terminal. Selecting a workflow cancels the previous timer. Reduced motion and no JavaScript show the complete transcript; background tabs pause. No network calls or command execution occur.
+Validate Svelte/types, site unit tests, production build and bundle budget, and focused public browser coverage. Inspect desktop/mobile light/dark screenshots together; exercise command selection/playback, reduced motion, navigation, clipboard outcomes, and keyboard menu operation. Verification evidence belongs in the task report; this document does not claim that an unrun check passed.
+
+The user reviewed the actual local preview and approved release. No participant research was performed. A later usability study could ask developers to explain package/runtime scope, find platform requirements, inspect a command, and reach the appropriate install/runtime guide; record only observations actually collected.

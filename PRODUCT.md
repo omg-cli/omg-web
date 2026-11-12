@@ -25,7 +25,7 @@ Developers managing system packages and project runtimes. This audience is infer
 
 ## Brand commitments
 
-OMG name and existing logo. The user requested a unique, modern, direct CLI-project website without generic AI design patterns.
+OMG name and existing logo. The user requested familiar, modern CLI-tool craft and named bun.com and ripgrep.dev as references. Public surfaces use neutral white and charcoal with a restrained orange action accent; green-tinted palettes and repetitive slogan/feature rows were explicitly rejected. The user reviewed and approved the replacement on 2026-11-11 and authorized merging into main and deployment with Wrangler.
 
 ## Evidence on hand
 

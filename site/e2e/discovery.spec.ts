@@ -179,10 +179,10 @@ test('dark mode follows the system and remembers a manual choice across pages', 
   await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
   await page.goto('/', { waitUntil: 'networkidle' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(20, 23, 18)');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(16, 16, 16)');
   await page.getByRole('button', { name: 'Switch to light mode' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(250, 251, 248)');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   await page.reload({ waitUntil: 'networkidle' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page
@@ -250,7 +250,7 @@ test('dark mode remains reachable from the compact mobile menu', async ({ page }
   await page.goto('/', { waitUntil: 'networkidle' });
   await page.locator('.mobile-menu summary').click();
   await page.getByRole('button', { name: 'Switch to dark mode' }).click();
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(20, 23, 18)');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(16, 16, 16)');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
@@ -262,7 +262,7 @@ test.describe('dark mode without JavaScript', () => {
   });
   test('keeps the complete Arch demo readable', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(20, 23, 18)');
+    await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(16, 16, 16)');
     await expect(page.locator('.command code')).toHaveText('omg search ripgrep --no-aur');
     await expect(page.locator('.terminal-output')).toContainText('ripgrep 15.2.0-1');
     await expect(page.getByRole('button', { name: 'Replay terminal demo' })).toBeDisabled();
@@ -275,5 +275,5 @@ test('theme control works on a directly loaded prerendered documentation page', 
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/docs/', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Switch to light mode' }).click();
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(250, 251, 248)');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
 });

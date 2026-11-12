@@ -8,7 +8,7 @@
 
 <section id="install" class="installation home-shell home-section" aria-labelledby="install-title">
   <header>
-    <h2 id="install-title" class="home-section-title">Ready when you are.</h2>
+    <h2 id="install-title" class="home-section-title">Install OMG. Try it on your setup.</h2>
     <p class="home-section-intro">
       Supported x86_64 Linux distributions or Apple Silicon macOS, including Linux inside WSL2.
       Download the installer, review it, then run it.
@@ -22,7 +22,7 @@
         >Copy install command <Icon name="copy" size={16} /></button
       >
       <a href="https://github.com/omg-cli/omg/releases"
-        >Download from GitHub <span aria-hidden="true">↗</span></a
+        >Download from GitHub <Icon name="external" size={16} /></a
       >
     </div>
     <p class="copy-status" role="status">{installation.message}</p>
@@ -41,7 +41,7 @@
     <div class="first-command-action">
       <code><span aria-hidden="true">$ </span>omg search ripgrep</code>
       <a href="/docs/#quick-start"
-        >Continue with the quick start <span aria-hidden="true">↗</span></a
+        >Continue with the quick start <Icon name="external" size={16} /></a
       >
     </div>
   </div>
@@ -76,8 +76,8 @@
   .step-label {
     margin: 0 0 1rem;
     color: var(--ink-muted);
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: 0.8125rem;
+    font-weight: 600;
   }
   pre {
     margin: 0;
@@ -123,6 +123,7 @@
     display: inline-flex;
     min-height: 2.75rem;
     align-items: center;
+    gap: 0.5rem;
     color: var(--ink);
     font-size: 0.8125rem;
     text-decoration-color: var(--rule-strong);

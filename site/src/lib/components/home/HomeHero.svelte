@@ -1,61 +1,62 @@
 <script lang="ts">
   import Icon from '../Icon.svelte';
-
   import HomeTerminal from './HomeTerminal.svelte';
 </script>
 
 <section class="hero home-shell" aria-labelledby="hero-title">
-  <div class="hero-copy">
-    <h1 id="hero-title">Packages.<br />Runtimes.<br /><span>One command.</span></h1>
-    <p class="hero-description">
-      Your system packages and language versions, managed together. A free, open-source CLI built in
-      Rust.
-    </p>
-    <nav class="hero-actions" aria-label="Homepage introduction">
-      <a class="primary-link" href="#install">Install OMG <Icon name="down" size={17} /></a>
-      <a class="docs-link" href="/docs/">Read the docs <Icon name="right" size={17} /></a>
-    </nav>
-    <p class="platforms">Linux x86_64 <span> / </span> macOS Apple Silicon <span> / </span> WSL2</p>
+  <div class="introduction">
+    <h1 id="hero-title">A simpler way to manage packages and runtimes.</h1>
+    <div class="hero-copy">
+      <p>
+        Meet OMG. Search and install system packages, switch language versions, and check your
+        environment from one open-source CLI.
+      </p>
+      <nav class="hero-actions" aria-label="Homepage introduction">
+        <a class="primary-link" href="#install">Install OMG <Icon name="down" size={17} /></a>
+        <a class="docs-link" href="/docs/">Read the docs <Icon name="right" size={17} /></a>
+      </nav>
+      <p class="platforms">Linux x86_64 · macOS Apple Silicon · WSL2</p>
+    </div>
   </div>
-
   <HomeTerminal />
-
   <div class="runtime-strip">
-    <p>Your languages. Your package manager.</p>
+    <p>One CLI. Five language runtimes.</p>
     <nav aria-label="Supported runtime guides">
       <a href="/runtimes/node/">Node.js</a><a href="/runtimes/python/">Python</a><a
         href="/runtimes/go/">Go</a
       ><a href="/runtimes/rust/">Rust</a><a href="/runtimes/bun/">Bun</a>
     </nav>
-    <a class="all-runtimes" href="/runtimes/">Runtime guides <Icon name="right" size={16} /></a>
+    <a class="all-runtimes" href="/runtimes/"
+      >Browse runtime guides <Icon name="right" size={16} /></a
+    >
   </div>
 </section>
 
 <style>
   .hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
-    column-gap: clamp(2rem, 5vw, 5rem);
-    padding-top: clamp(3.5rem, 7vw, 6rem);
+    padding-top: clamp(2.5rem, 5vw, 4.5rem);
   }
-  .hero-copy {
-    padding-block: 0.5rem 2.75rem;
+  .introduction {
+    display: grid;
+    grid-template-columns: 1.22fr 1fr;
+    align-items: center;
+    gap: 2rem 5rem;
+    margin-bottom: 2.75rem;
   }
   h1 {
+    max-width: 17ch;
     margin: 0;
-    font-size: clamp(3rem, 5.25vw, 4.75rem);
-    font-weight: 630;
-    letter-spacing: -0.04em;
-    line-height: 1.04;
+    font-size: clamp(2.5rem, 4.3vw, 3.75rem);
+    font-weight: 720;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    text-wrap: balance;
   }
-  h1 > span {
-    color: var(--signal);
-  }
-  .hero-description {
-    max-width: 35ch;
-    margin: 1.75rem 0;
+  .hero-copy > p:first-child {
+    max-width: 47ch;
+    margin: 0 0 1.5rem;
     color: var(--ink-muted);
-    font-size: 1.0625rem;
+    font-size: 1rem;
     line-height: 1.75;
   }
   .hero-actions {
@@ -70,17 +71,16 @@
     min-height: 3rem;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    gap: 0.75rem;
     font-size: 0.875rem;
     font-weight: 600;
     text-decoration: none;
   }
   .primary-link {
-    padding: 0.75rem 1.25rem;
+    padding: 0.75rem 1.1rem;
     border-radius: 6px;
     background: var(--signal);
     color: var(--signal-ink);
-    transition: background 160ms ease-out;
   }
   .primary-link:hover {
     background: var(--signal-hover);
@@ -89,34 +89,26 @@
     color: var(--signal);
   }
   .platforms {
-    margin: 1.25rem 0 0;
+    margin: 1rem 0 0;
     color: var(--ink-muted);
-    font-size: 0.6875rem;
-    line-height: 1.8;
-  }
-  .platforms span {
-    padding-inline: 0.35rem;
-    color: #92988b;
+    font-size: 0.75rem;
   }
   .runtime-strip {
-    grid-column: 1 / -1;
     display: flex;
-    align-items: center;
     flex-wrap: wrap;
-    gap: 1rem 2rem;
-    margin-top: 3.5rem;
+    align-items: center;
+    gap: 0.5rem 2rem;
     padding-block: 1.25rem;
-    border-block: 1px solid var(--rule);
   }
   .runtime-strip p {
     margin: 0;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     color: var(--ink-muted);
   }
   .runtime-strip nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem 1.75rem;
+    gap: 0.25rem 1.75rem;
   }
   .runtime-strip a {
     display: inline-flex;
@@ -137,29 +129,28 @@
     font-weight: 400;
   }
   @media (max-width: 55rem) {
-    .hero {
+    .introduction {
       grid-template-columns: 1fr;
-    }
-    .hero-copy {
-      max-width: 36rem;
-    }
-    .hero-description {
-      max-width: 45ch;
+      gap: 1.25rem;
+      margin-bottom: 2rem;
     }
     h1 {
-      font-size: clamp(3rem, 8.5vw, 4.5rem);
+      max-width: 23ch;
     }
-    .runtime-strip {
-      margin-top: 2rem;
+    .hero-copy > p:first-child {
+      max-width: 60ch;
     }
   }
-  @media (max-width: 30rem) {
+  @media (max-width: 35rem) {
+    h1 {
+      font-size: 2.5rem;
+    }
     .runtime-strip {
-      gap: 0.5rem;
+      gap: 0.25rem;
     }
     .runtime-strip nav {
       width: 100%;
-      gap: 1.25rem;
+      gap: 0.5rem 1.5rem;
     }
     .runtime-strip .all-runtimes {
       margin-left: 0;

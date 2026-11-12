@@ -232,7 +232,7 @@ test.describe('Svelte public surfaces', () => {
     ).toEqual({ '@type': 'Offer', price: '0', priceCurrency: 'USD' });
     await expect(
       page.getByText(
-        'Your system packages and language versions, managed together. A free, open-source CLI built in Rust.',
+        'Meet OMG. Search and install system packages, switch language versions, and check your environment from one open-source CLI.',
         { exact: true }
       )
     ).toBeVisible();
@@ -248,17 +248,25 @@ test.describe('Svelte public surfaces', () => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     await expect(
-      page.getByRole('heading', { name: /Packages\.\s*Runtimes\.\s*One command\./, level: 1 })
+      page.getByRole('heading', {
+        name: 'A simpler way to manage packages and runtimes.',
+        level: 1,
+      })
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: /Less tool-switching\.\s*More getting things done\./ })
+      page.getByRole('heading', { name: /Your system packages\.\s*A consistent interface\./ })
     ).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Performance you can inspect.' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Open source. Open to inspection.' })
+    ).toBeVisible();
+    await page.getByText('What about performance?', { exact: true }).click();
     await expect(page.getByRole('link', { name: 'Inspect the benchmark record' })).toHaveAttribute(
       'href',
       'https://github.com/omg-cli/omg/tree/fe72b92b6e61c13a19f00627d22f3d1bc5713347/benchmarks/records/20260903_015949-5c43ddcc'
     );
-    await expect(page.getByRole('heading', { name: 'Ready when you are.' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Install OMG. Try it on your setup.' })
+    ).toBeVisible();
     await expect
       .poll(() =>
         page.evaluate(

@@ -75,7 +75,7 @@
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
-    min-height: 5rem;
+    min-height: 4.5rem;
     margin: 0 auto;
     gap: 2.5rem;
   }
@@ -157,7 +157,7 @@
     list-style: none;
     border-bottom: 1px solid var(--rule);
     background: var(--paper);
-    box-shadow: 0 12px 20px rgb(30 40 20 / 0.08);
+    box-shadow: 0 12px 20px rgb(0 0 0 / 0.08);
   }
   .mobile-menu a {
     display: block;
