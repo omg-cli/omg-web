@@ -27,6 +27,7 @@ const SOURCES = [
 let cached: SecurityFeed = SECURITY_SNAPSHOT;
 let expiresAt = 0;
 let pending: Promise<SecurityFeed> | undefined;
+const pendingEdgeRefreshes = new Map<string, Promise<void>>();
 
 async function refresh(fetcher: typeof fetch, previousFeed: SecurityFeed): Promise<SecurityFeed> {
   const results = await Promise.allSettled(
@@ -114,8 +115,9 @@ async function edgeFeed(fetcher: typeof fetch, runtime: FeedCacheRuntime): Promi
   } catch {
     reportCacheFailure('security_feed.cache_read_failed');
   }
-  runtime.ctx.waitUntil(
-    (async () => {
+  let refreshTask = pendingEdgeRefreshes.get(key);
+  if (refreshTask === undefined) {
+    refreshTask = (async () => {
       try {
         const feed = await refresh(fetcher, previous);
         await (
@@ -129,9 +131,13 @@ async function edgeFeed(fetcher: typeof fetch, runtime: FeedCacheRuntime): Promi
         );
       } catch {
         reportCacheFailure('security_feed.cache_refresh_failed');
+      } finally {
+        pendingEdgeRefreshes.delete(key);
       }
-    })()
-  );
+    })();
+    pendingEdgeRefreshes.set(key, refreshTask);
+  }
+  runtime.ctx.waitUntil(refreshTask);
   return { ...previous, stale: true };
 }
 
