@@ -49,7 +49,8 @@
         },
         featureList: [
           'Unified system package manager for Linux and macOS',
-          'Multi-language runtime manager for Node.js, Python, Go, Rust, and Bun',
+          'Language version management for JavaScript, Python, Go, Rust, Ruby, Java, Zig, Erlang, PHP, and Swift',
+          'JavaScript runtime selection with Node.js, Bun, and Deno, plus .NET SDK version management',
           'Zero-shim execution with direct PATH shell integration',
           'Automatic version-file detection (.nvmrc, .node-version, .python-version, .tool-versions)',
           'Environment capture and drift checks on Arch, Debian, and Ubuntu',
@@ -62,7 +63,7 @@
 
 <SeoHead
   title="OMG — Package & Runtime Manager for Linux and macOS"
-  description="Manage system packages and Node.js, Bun, Python, Go, and Rust versions with one free CLI for x86_64 Linux and Apple Silicon macOS, including WSL2."
+  description="Manage system packages and language versions with OMG. Supports JavaScript, Python, Go, Rust, Ruby, Java, Zig, Erlang, PHP, and Swift."
   path="/"
   {structuredData}
 />

@@ -13,7 +13,7 @@ export const LEARNING_CATEGORIES = {
   runtimes: {
     title: 'Language runtimes',
     description:
-      'Install and switch Node.js, Bun, Python, Go, and Rust versions with OMG. Understand project pins, shell setup, and supported platforms.',
+      'Manage JavaScript, Python, Go, and Rust language versions. Guides cover Node.js and Bun, project pins, shell setup, and supported platforms.',
   },
   guides: {
     title: 'Developer workflow guides',
