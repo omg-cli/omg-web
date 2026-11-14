@@ -33,7 +33,7 @@ The command explorer types a real source-reviewed Arch example and reveals its n
 
 ## PATH AND CONSTRAINTS
 
-Explore a command → inspect supported backends/runtime behavior → download/review installer → quickstart. Dense technical content replaces repeated feature slogans. Both themes have strictly neutral surfaces. Preserve platform limits, safe installer review/provenance, documented output, metadata, privacy, navigation and existing logo. The user reviewed the local result on 2026-11-11 and authorized merging into main and deployment with Wrangler.
+Explore a command → inspect supported backends/runtime behavior → run the one-line installer → quickstart. Dense technical content replaces repeated feature slogans. Both themes have strictly neutral surfaces. Preserve platform limits, the one-line installer with optional source inspection and existing provenance checks, documented output, metadata, privacy, navigation and existing logo. The user reviewed the local result on 2026-11-11 and authorized merging into main and deployment with Wrangler.
 
 ## Direction contract
 
@@ -48,3 +48,7 @@ FIRST VIEWPORT: Compact header; product definition left and explanation/actions 
 FORM: Familiar CLI-tool website, explicitly pinned by user references Bun and ripgrep.dev; canon overrides seed 06f61a97 assigned index 7. Code-led.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+## Installer command preference · 2026-11-13
+
+The user explicitly requested `curl -fsSL https://getomg.dev/install.sh | bash` as the primary installer command, with a nearby `install.sh` link for optional inspection. Keep the visible command and clipboard value identical. Do not restore a mandatory download/less/run sequence or use quitting a pager as an execution gate.

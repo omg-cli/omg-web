@@ -678,7 +678,7 @@
       "name": "Installer container",
       "kind": "card",
       "description": "Raised paper groups installation instructions without a shadow.",
-      "html": "<section class=\"ds-install\"><h3>1. Download, review, install</h3><pre><code>curl -fsSL https://getomg.dev/install.sh -o omg-install.sh\nless omg-install.sh &amp;&amp; bash omg-install.sh</code></pre></section>",
+      "html": "<section class=\"ds-install\"><h3>1. Install OMG</h3><pre><code>curl -fsSL https://getomg.dev/install.sh | bash</code></pre><a href=\"/install.sh\">Read install.sh</a></section>",
       "css": ".ds-install{padding:clamp(1.25rem,3vw,2rem);border-radius:12px;background:var(--paper-raised, #f5f5f5);color:var(--ink, #171717);font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif)}.ds-install h3{margin:0 0 1rem;color:var(--ink-muted, #626262);font-size:.75rem;font-weight:500}.ds-install pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.ds-install code{font-family:var(--font-mono, 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace);font-size:clamp(.75rem,1.3vw,.9375rem);line-height:1.9}.ds-install p{margin:.5rem 0 0;color:var(--ink-muted, #626262);font-size:.75rem}",
       "refersTo": "panel-install"
     },
