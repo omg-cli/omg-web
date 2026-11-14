@@ -86,7 +86,7 @@ export const architectureTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'On Arch, OMG binds libalpm through direct FFI instead of invoking pacman for queries. Debian and Ubuntu read the native APT database. Fedora reads RPM data directly, with a subprocess fallback when the database format requires it. AUR requests use HTTPS. Fedora support does not establish RHEL compatibility.',
+            'On Arch, OMG binds libalpm through direct FFI instead of invoking pacman for queries. Rust bindings do not remove the dependency on the C libalpm library; required C fallbacks remain. Debian and Ubuntu read the native APT database. Fedora reads RPM data directly, with a subprocess fallback when the database format requires it. AUR requests use HTTPS. Fedora support does not establish RHEL compatibility.',
           ],
         },
       ],

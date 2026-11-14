@@ -41,6 +41,11 @@ export const securityTopic: DocsTopic = {
           ],
         },
         {
+          kind: 'note',
+          tone: 'info',
+          text: 'Scan coverage depends on the advisory source and its freshness. This website has not verified continuously up-to-date production CVE ingestion. GitHub security commits are a record of code changes, not a live vulnerability-database status check.',
+        },
+        {
           kind: 'commands',
           title: 'Scan and report',
           commands: [

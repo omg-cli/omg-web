@@ -111,7 +111,7 @@
 
 <SeoHead
   title="Security, in the open — OMG"
-  description="Follow OMG security improvements as they land. Live commit history, installation protections and verifiable changes across OMG and OMG-Web."
+  description="Follow OMG security improvements as they land. Repository commit history, installation protections and verifiable changes across OMG and OMG-Web."
   path="/security/"
   {structuredData}
 />
@@ -188,8 +188,9 @@
   <p class="feed-note">
     These protections are implemented in <a href="https://github.com/omg-cli/omg/pull/399"
       >PR #399</a
-    >; check release notes for your installed version. They apply to OMG-managed operations,
-    including
+    >; check release notes for your installed version. Repository activity does not verify
+    production CVE freshness or establish that a change is in your installed release. These
+    protections apply to OMG-managed operations, including
     <code>omg tool install</code>. Selecting Node with OMG does not change direct npm commands.
     <a href="https://github.com/omg-cli/omg/blob/main/docs/omarchy.md#compare-the-actual-defaults"
       >Compare the defaults and evidence</a
