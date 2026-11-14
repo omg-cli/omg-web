@@ -11,16 +11,16 @@
     <h2 id="install-title" class="home-section-title">Install OMG. Try it on your setup.</h2>
     <p class="home-section-intro">
       Supported x86_64 Linux distributions or Apple Silicon macOS, including Linux inside WSL2.
-      Download the installer, review it, then run it.
     </p>
   </header>
   <div class="install-command">
-    <h3 class="step-label">1. Download, review, install</h3>
+    <h3 class="step-label">1. Install OMG</h3>
     <pre><code>{installation.command}</code></pre>
     <div class="install-actions">
       <button type="button" disabled={installation.pending} onclick={() => installation.copy()}
         >Copy install command <Icon name="copy" size={16} /></button
       >
+      <a href="/install.sh">Read install.sh <Icon name="external" size={16} /></a>
       <a href="https://github.com/omg-cli/omg/releases"
         >Download from GitHub <Icon name="external" size={16} /></a
       >
@@ -28,8 +28,8 @@
     <p class="copy-status" role="status">{installation.message}</p>
     <p class="platform-note">
       The installer requires GitHub CLI (<code>gh</code>) to verify release provenance. On Windows,
-      run these commands inside a supported Arch, Debian, Ubuntu, or Fedora WSL2 terminal. There is
-      no native Windows build. <a href="/docs/installation/">Check supported platforms</a>.
+      run this command inside a supported Arch, Debian, Ubuntu, or Fedora WSL2 terminal. There is no
+      native Windows build. <a href="/docs/installation/">Check supported platforms</a>.
     </p>
   </div>
   <div class="first-command">

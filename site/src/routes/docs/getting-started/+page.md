@@ -35,23 +35,22 @@ Debian 13 and Ubuntu 26.04 need the APT 7 archive included in v0.1.224. Intel ma
 
 Keep your native package manager available. OMG is still approaching beta, and package transactions can affect the whole system.
 
-## Download and inspect the installer
+## Run the installer
 
 You need HTTPS access, `curl`, Bash, and the GitHub CLI, `gh`. The installer uses `gh` to verify build provenance in addition to checking the archive's SHA-256 digest.
 
 ```bash
-curl --proto '=https' --tlsv1.2 -fsSL https://getomg.xyz/install.sh -o omg-install.sh
-less omg-install.sh
+curl -fsSL https://getomg.dev/install.sh | bash
 ```
 
-The first command saves the script. The second opens it for inspection. Press `q` to leave `less`.
+To read the installer before running it, open [install.sh](https://getomg.dev/install.sh).
 
 The public script URL can change independently of this guide's release. For a fixed installer source, use the reviewed release's script as described in [installation](/docs/installation/).
 
-Install the pinned release without editing shell startup files:
+The one-liner installs the current release. To install this guide's pinned release without editing shell startup files instead:
 
 ```bash
-OMG_VERSION=v0.1.224 OMG_NO_TELEMETRY=1 OMG_SKIP_SHELL=1 bash omg-install.sh
+curl -fsSL https://getomg.dev/install.sh | OMG_VERSION=v0.1.224 OMG_NO_TELEMETRY=1 OMG_SKIP_SHELL=1 bash
 export PATH="$HOME/.local/bin:$PATH"
 omg --version
 omgd --version

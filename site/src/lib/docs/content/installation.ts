@@ -23,10 +23,9 @@ export const installationTopic: DocsTopic = {
               {
                 id: 'download',
                 label: 'Download the script',
-                detail: 'curl to omg-install.sh',
+                detail: 'curl | bash',
                 tone: 'signal',
               },
-              { id: 'inspect', label: 'Read it with less', detail: 'you decide to run it' },
               { id: 'check-archive', label: 'Check the archive', detail: 'published sha256' },
               { id: 'provenance', label: 'Verify build proof', detail: 'gh attestation verify' },
               { id: 'install', label: 'Install the binaries', detail: 'into ~/.local/bin' },
@@ -39,8 +38,7 @@ export const installationTopic: DocsTopic = {
               },
             ],
             edges: [
-              { from: 'download', to: 'inspect' },
-              { from: 'inspect', to: 'check-archive' },
+              { from: 'download', to: 'check-archive' },
               { from: 'check-archive', to: 'provenance' },
               { from: 'provenance', to: 'install' },
               { from: 'install', to: 'path' },
@@ -52,16 +50,13 @@ export const installationTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The universal installer detects your operating system and package backend, downloads the matching release binaries, and installs them to ~/.local/bin. It requires the GitHub CLI (gh) to verify the release attestation. Download the script, review it, then run it.',
+            'The universal installer detects your operating system and package backend, downloads the matching release binaries, and installs them to ~/.local/bin. It requires the GitHub CLI (gh) to verify the release attestation.',
           ],
         },
         {
           kind: 'commands',
           title: 'Linux and macOS, including WSL',
-          commands: [
-            `curl -fsSL ${SITE_ORIGIN}/install.sh -o omg-install.sh`,
-            'less omg-install.sh && bash omg-install.sh',
-          ],
+          commands: [`curl -fsSL ${SITE_ORIGIN}/install.sh | bash`],
         },
         {
           kind: 'note',
@@ -210,10 +205,7 @@ export const installationTopic: DocsTopic = {
         {
           kind: 'commands',
           title: 'Remove a script installation',
-          commands: [
-            `curl -fsSL ${SITE_ORIGIN}/install.sh -o omg-install.sh`,
-            'less omg-install.sh && bash omg-install.sh --uninstall',
-          ],
+          commands: [`curl -fsSL ${SITE_ORIGIN}/install.sh | bash -s -- --uninstall`],
         },
         {
           kind: 'note',

@@ -113,8 +113,11 @@ test.describe('Svelte public surfaces', () => {
     // Windows clipboard APIs normalize line endings to CRLF.
     const copiedCommand = await page.evaluate(() => navigator.clipboard.readText());
     expect(copiedCommand.replaceAll('\r\n', '\n')).toBe(
-      `curl -fsSL ${SITE_ORIGIN}/install.sh -o omg-install.sh\nless omg-install.sh && bash omg-install.sh`
+      `curl -fsSL ${SITE_ORIGIN}/install.sh | bash`
     );
+    await expect(
+      page.locator('#install').getByRole('link', { name: 'Read install.sh' })
+    ).toHaveAttribute('href', '/install.sh');
     await expect(page.getByRole('link', { name: 'Download from GitHub' })).toHaveAttribute(
       'href',
       'https://github.com/omg-cli/omg/releases'
@@ -145,7 +148,9 @@ test.describe('Svelte public surfaces', () => {
       await expect(page.getByRole('status')).toHaveText(
         'Could not copy. Select and copy the install command above.'
       );
-      await expect(page.locator('#install code').first()).toContainText('less omg-install.sh');
+      await expect(page.locator('#install code').first()).toContainText(
+        `curl -fsSL ${SITE_ORIGIN}/install.sh | bash`
+      );
       await expect(copy).toBeEnabled();
     });
   }

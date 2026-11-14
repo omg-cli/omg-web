@@ -8,7 +8,7 @@
 
   const canonicalUrl = `${SITE_ORIGIN}/docs/`;
   const sourceDocsUrl = `https://github.com/omg-cli/omg/tree/${DOCS_TOPICS[0].source.reviewedCommit}/docs`;
-  const installCommand = `curl -fsSL ${SITE_ORIGIN}/install.sh -o omg-install.sh\nless omg-install.sh && bash omg-install.sh`;
+  const installCommand = `curl -fsSL ${SITE_ORIGIN}/install.sh | bash`;
   const structuredData = serializeJsonLd({
     '@context': 'https://schema.org',
     '@graph': [
@@ -97,13 +97,13 @@
         <p class="section-copy">
           The universal installer detects Linux or macOS and downloads the matching release. On
           Windows, run it inside WSL2. The GitHub CLI (gh) is required to verify the release
-          attestation. Download the script, review it, then run it.
+          attestation.
         </p>
         <pre class="install-command"><code><span>$ </span>{installCommand}</code></pre>
         <p class="install-note">
-          Prefer a direct download? <a href="https://github.com/omg-cli/omg/releases"
-            >Download release binaries on GitHub</a
-          >.
+          <a href="/install.sh">Read install.sh</a> before running it, or download a release
+          directly:
+          <a href="https://github.com/omg-cli/omg/releases">Download release binaries on GitHub</a>.
         </p>
         <p class="install-note">
           The handbook and operational guides describe release v0.1.224. Newer development-only

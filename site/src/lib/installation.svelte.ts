@@ -14,7 +14,7 @@ class ClipboardUnavailable extends Data.TaggedError('ClipboardUnavailable')<{
 
 /** Own the supported installer command and its clipboard outcome. */
 export class InstallationView {
-  readonly command = `curl -fsSL ${SITE_ORIGIN}/install.sh -o omg-install.sh\nless omg-install.sh && bash omg-install.sh`;
+  readonly command = `curl -fsSL ${SITE_ORIGIN}/install.sh | bash`;
   #state = $state<keyof typeof COPY_MESSAGES>('idle');
 
   constructor(private readonly onCopied: () => void) {}
