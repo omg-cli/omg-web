@@ -135,13 +135,14 @@
           <div>
             <dt>Linux</dt>
             <dd>
-              Arch, Debian 12, Ubuntu 24.04, and Fedora releases. RHEL and CentOS-family hosts
-              receive a Fedora-artifact fallback; that is not a compatibility guarantee.
+              Arch (pacman/AUR), Debian 12/13 and Ubuntu 24.04/26.04 (APT/DEB), and Fedora
+              (DNF/RPM). RHEL and CentOS-family hosts receive a Fedora-artifact fallback; that is
+              not a compatibility guarantee.
             </dd>
           </div>
           <div>
             <dt>macOS</dt>
-            <dd>Apple Silicon through the universal installer.</dd>
+            <dd>Apple Silicon through the universal installer; system packages use Homebrew.</dd>
           </div>
           <div>
             <dt>Windows</dt>

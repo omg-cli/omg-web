@@ -48,7 +48,7 @@
           priceCurrency: 'USD',
         },
         featureList: [
-          'Unified system package manager for Linux and macOS',
+          'System packages with pacman/AUR, APT/DEB, DNF/RPM, and Homebrew',
           'Language version management for JavaScript, Python, Go, Rust, Ruby, Java, Zig, Erlang, PHP, and Swift',
           'JavaScript runtime selection with Node.js, Bun, and Deno, plus .NET SDK version management',
           'Zero-shim execution with direct PATH shell integration',

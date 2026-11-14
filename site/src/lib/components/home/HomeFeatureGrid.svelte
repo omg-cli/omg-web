@@ -17,11 +17,11 @@
       </div>
       <div>
         <dt>Debian / Ubuntu</dt>
-        <dd>apt</dd>
+        <dd>APT / DEB</dd>
       </div>
       <div>
         <dt>Fedora</dt>
-        <dd>dnf</dd>
+        <dd>DNF / RPM</dd>
       </div>
       <div>
         <dt>macOS</dt>
