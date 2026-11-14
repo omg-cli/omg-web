@@ -214,7 +214,7 @@ test.describe('Svelte public surfaces', () => {
     );
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
       'content',
-      `${SITE_ORIGIN}/og/omg-og.png`
+      `${SITE_ORIGIN}/og/omg-social-20261113.png`
     );
     await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
       'content',
@@ -243,7 +243,7 @@ test.describe('Svelte public surfaces', () => {
     ).toBeVisible();
     expect(() => JSON.parse(structuredDataText)).not.toThrow();
 
-    const socialImage = await page.request.get('/og/omg-og.png');
+    const socialImage = await page.request.get('/og/omg-social-20261113.png');
     expect(socialImage.ok()).toBe(true);
     expect(socialImage.headers()['content-type']).toBe('image/png');
   });

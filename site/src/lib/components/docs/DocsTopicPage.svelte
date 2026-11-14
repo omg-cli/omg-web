@@ -1,7 +1,7 @@
 <script lang="ts">
   import SeoHead from '../SeoHead.svelte';
   import { serializeJsonLd } from '../../../../../shared/public-site';
-  import { SITE_ORIGIN } from '../../../../../shared/public-site';
+  import { SITE_ORIGIN, SOCIAL_CARD } from '../../../../../shared/public-site';
   import type { DocsTopic } from '../../docs/topic';
   import { DOCS_TOPICS, docsTopicHref, docsSourceHref } from '../../docs/topics';
   import DocsBlocks from './DocsBlocks.svelte';
@@ -38,7 +38,7 @@
           url: canonical,
           mainEntityOfPage: canonical,
           dateModified: topic.source.reviewedAt,
-          image: `${SITE_ORIGIN}/og/omg-og.png`,
+          image: `${SITE_ORIGIN}${SOCIAL_CARD.path}`,
           author: {
             '@type': 'Organization',
             name: 'OMG maintainers',

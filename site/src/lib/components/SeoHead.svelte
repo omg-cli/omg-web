@@ -1,11 +1,5 @@
 <script lang="ts">
-  import { SITE_ORIGIN } from '../../../../shared/public-site';
-
-  /**
-   * The reviewed social card, with its real dimensions, so the declared
-   * `og:image:width`/`height` can never drift from the file that is served.
-   */
-  const SOCIAL_CARD = { path: '/og/omg-og.png', width: 1200, height: 630 } as const;
+  import { SITE_ORIGIN, SOCIAL_CARD } from '../../../../shared/public-site';
 
   let {
     title,
@@ -34,8 +28,7 @@
 
   const canonical = $derived(`${SITE_ORIGIN}${path}`);
   const imageUrl = `${SITE_ORIGIN}${SOCIAL_CARD.path}`;
-  const imageAlt =
-    'OMG: one CLI for system packages, language runtimes, and development environments.';
+  const imageAlt = SOCIAL_CARD.alt;
 </script>
 
 <svelte:head>

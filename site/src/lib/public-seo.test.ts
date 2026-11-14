@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
 import Updates from '../routes/updates/+page.svelte';
@@ -8,7 +9,9 @@ import { sitemapResponse } from './server/public-files';
 describe('public discovery contracts', () => {
   it('gives release links a complete social preview on the canonical origin', () => {
     const { head } = render(Updates);
-    expect(head).toContain('property="og:image" content="https://getomg.dev/og/omg-og.png"');
+    expect(head).toContain(
+      'property="og:image" content="https://getomg.dev/og/omg-social-20261113.png"'
+    );
     expect(head).toContain('property="og:image:width" content="1200"');
     expect(head).toContain('property="og:image:height" content="630"');
     expect(head).toContain('name="twitter:card" content="summary_large_image"');
@@ -25,15 +28,24 @@ describe('public discovery contracts', () => {
     expect(head).toContain('"dateModified"');
   });
 
-  it('advertises the 1200x630 card as the default social image', () => {
+  it('advertises the real 1200x630 snapshot as the default social image', async () => {
+    const png = await readFile(new URL('../../static/og/omg-social-20261113.png', import.meta.url));
+    expect(png.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
     const { head } = render(DocsTopicPage, {
       props: { topic: cliTopic },
       context: new Map([
         ['__request__', { page: { data: {}, url: new URL('https://getomg.dev/docs/cli/') } }],
       ]),
     });
-    expect(head).toContain('property="og:image" content="https://getomg.dev/og/omg-og.png"');
+    expect(head).toContain(
+      'property="og:image" content="https://getomg.dev/og/omg-social-20261113.png"'
+    );
+    expect(head).toContain(
+      'name="twitter:image" content="https://getomg.dev/og/omg-social-20261113.png"'
+    );
     expect(head).toContain('property="article:modified_time"');
+    expect(head).toContain('"image":"https://getomg.dev/og/omg-social-20261113.png"');
   });
 
   it('makes authored runtime and workflow pages discoverable with truthful dates', async () => {
