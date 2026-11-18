@@ -16,7 +16,8 @@
 
 <style>
   .theme-toggle {
-    display: none;
+    display: inline-flex;
+    visibility: hidden;
     align-items: center;
     justify-content: center;
     min-width: 2.75rem;
@@ -30,7 +31,12 @@
     cursor: pointer;
   }
   :global(:root[data-theme]) .theme-toggle {
-    display: inline-flex;
+    visibility: visible;
+  }
+  @media (scripting: none) {
+    .theme-toggle {
+      display: none;
+    }
   }
   .light-choice,
   .dark-choice {

@@ -111,7 +111,7 @@ export const troubleshootingTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'If the prompt feels slow, make sure the daemon is running so the hook avoids the slower fallback path, and prefer the cached prompt functions such as omg-ec over shelling out to full commands. For broken completions, regenerate them and rebuild the Zsh completion cache.',
+            'Check whether a prompt theme runs full package queries on each prompt. Prefer the cached prompt functions such as omg-ec for counts; a running daemon refreshes their snapshot. Runtime pin detection itself reads project files and installed versions. For broken completions, regenerate them and rebuild the Zsh completion cache.',
           ],
         },
         {
@@ -174,7 +174,7 @@ export const troubleshootingTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Download failures are usually network problems. Check proxy variables, connectivity to the runtime origin, and free space in the directory shown by omg config get data_dir. Unsupported runtime names fail by design. OMG does not install a fallback manager for them.',
+            'Read the specific download error before retrying. Check connectivity to the runtime origin, proxy settings, and free space in the directory shown by omg config get data_dir. A checksum mismatch, rejected archive path, or missing launcher is an integrity failure: preserve the error and do not disable verification. Unsupported runtime names fail by design; OMG does not install a fallback manager for them.',
           ],
         },
       ],
@@ -196,7 +196,7 @@ export const troubleshootingTopic: DocsTopic = {
                 'pkill -x omgd; data_dir="$(omg config get data_dir)"; mv "$data_dir/status-cache.json" "$data_dir/status-cache.json.bak"; omg daemon',
             },
             {
-              text: 'OMG quarantines a corrupt transaction history automatically. Look for the preserved copy before further recovery.',
+              text: 'Reading malformed history fails and leaves the original file in place. When a later transaction is recorded, OMG can quarantine malformed history before starting a fresh log. Preserve the original and inspect any existing recovery copies.',
               command:
                 'data_dir="$(omg config get data_dir)"; ls "$data_dir"/history.json.corrupt-*',
             },

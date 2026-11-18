@@ -191,6 +191,11 @@ let landingJavascriptGzipBytes = 0;
 for (const name of landingJavascript) {
   landingJavascriptGzipBytes += gzipSync(await readFile(resolve(clientDirectory, name))).byteLength;
 }
+// The native prompt boots before SvelteKit. Include its modules and command data in the same budget.
+for (const file of ['prompt.js', 'session.js', 'recordings.json']) {
+  const url = new URL(`../static/terminal/${file}`, import.meta.url);
+  landingJavascriptGzipBytes += gzipSync(await readFile(url)).byteLength;
+}
 if (landingJavascript.size === 0) {
   reportFailure(
     'landing-page JavaScript closure is empty; the Svelte manifest shape may have changed'

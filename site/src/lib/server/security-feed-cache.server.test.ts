@@ -27,6 +27,74 @@ describe('security feed edge cache', () => {
   });
   afterEach(() => vi.useRealTimers());
 
+  it.each(['cold', 'expired'] as const)(
+    'coalesces ten concurrent %s cache requests into one upstream refresh',
+    async condition => {
+      const { securityFeed } = await import('./security-updates.server');
+      const state = runtime();
+      const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => Response.json([]));
+      if (condition === 'expired') {
+        await securityFeed(fetcher, state);
+        await Promise.all(state.tasks);
+        vi.setSystemTime(Date.now() + 300_001);
+        fetcher.mockClear();
+      }
+
+      const upstream = Promise.withResolvers<Response>();
+      fetcher.mockImplementation(async () => (await upstream.promise).clone());
+      const responses = await Promise.all(
+        Array.from({ length: 10 }, () => securityFeed(fetcher, state))
+      );
+      upstream.resolve(Response.json([]));
+      await Promise.all(state.tasks);
+
+      expect(responses.every(feed => feed.stale)).toBe(true);
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      expect((await securityFeed(fetcher, state)).stale).toBe(false);
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    }
+  );
+
+  it('starts another coalesced refresh after a cache write rejects', async () => {
+    const { securityFeed } = await import('./security-updates.server');
+    const state = runtime();
+    state.cache.put.mockRejectedValueOnce(new Error('cache write unavailable'));
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => Response.json([]));
+    await securityFeed(fetcher, state);
+    await Promise.all(state.tasks);
+
+    const upstream = Promise.withResolvers<Response>();
+    fetcher.mockImplementation(async () => (await upstream.promise).clone());
+    await Promise.all(Array.from({ length: 10 }, () => securityFeed(fetcher, state)));
+    upstream.resolve(Response.json([]));
+    await Promise.all(state.tasks);
+
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect((await securityFeed(fetcher, state)).stale).toBe(false);
+  });
+
+  it('coalesces by origin while allowing different origins to refresh concurrently', async () => {
+    const { securityFeed } = await import('./security-updates.server');
+    const state = runtime();
+    const upstream = Promise.withResolvers<Response>();
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockImplementation(async () => (await upstream.promise).clone());
+    await Promise.all([
+      securityFeed(fetcher, state),
+      securityFeed(fetcher, { ...state, origin: 'https://getomg.xyz/security/?ignored=true' }),
+      securityFeed(fetcher, { ...state, origin: 'https://staging.getomg.xyz' }),
+    ]);
+    upstream.resolve(Response.json([]));
+    await Promise.all(state.tasks);
+
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect([...state.entries.keys()]).toEqual([
+      'https://getomg.xyz/__omg-cache/security-feed/v1',
+      'https://staging.getomg.xyz/__omg-cache/security-feed/v1',
+    ]);
+  });
+
   it('returns the stale snapshot while upstream requests are still pending, then shares the refresh across module reloads', async () => {
     const { securityFeed } = await import('./security-updates.server');
     const state = runtime();

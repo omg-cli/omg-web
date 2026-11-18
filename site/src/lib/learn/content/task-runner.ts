@@ -21,7 +21,7 @@ export const content: LearningContent = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Name a task when running this command. The CLI requires the task argument; if multiple ecosystems define the same task at equal priority, an attended shell prompts you to choose one.',
+            'Name a task when running this command. The CLI requires the task argument; if multiple ecosystems define the same task at equal priority, an attended shell prompts you to choose one. In a non-interactive shell, an unresolved tie fails. Use --using <ecosystem> to select a known ecosystem explicitly. --watch, --parallel, --using, and --all are mutually exclusive modes.',
           ],
         },
       ],
@@ -107,7 +107,7 @@ export const content: LearningContent = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'If you are migrating a repository from mise or working in a repository that uses `mise.toml` for task definitions (`[tasks.build]`, `[tasks.test]`), OMG runs these tasks natively in pure Rust. You do not need to install the mise binary or convert your configuration: OMG detects and executes `[tasks.*]` entries out of the box.',
+            'If you are migrating a repository from mise or working in a repository that uses `mise.toml` for task definitions (`[tasks.build]`, `[tasks.test]`), OMG runs these tasks natively in pure Rust. You do not need to install the mise binary for the supported task subset. Review project task definitions before executing them: task scripts run through a shell. Compatibility does not imply that every mise task, plugin, template, or environment feature is implemented.',
           ],
         },
       ],
@@ -116,7 +116,7 @@ export const content: LearningContent = {
   sources: [
     {
       title: 'OMG task runner implementation (src/core/task_runner.rs)',
-      href: '/docs/architecture/',
+      href: 'https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/core/task_runner.rs',
     },
     { title: 'OMG CLI reference for omg run', href: '/docs/cli/' },
     { title: 'OMG daily workflows guide', href: '/docs/workflows/' },

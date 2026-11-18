@@ -27,7 +27,12 @@ function structuredDataFrom(head: string) {
 }
 
 describe('docs topic page renderer', () => {
-  const rendered = render(DocsTopicPage, { props: { topic: cliTopic } });
+  const rendered = render(DocsTopicPage, {
+    props: { topic: cliTopic },
+    context: new Map([
+      ['__request__', { page: { data: {}, url: new URL('https://getomg.dev/docs/cli/') } }],
+    ]),
+  });
 
   it('renders one h1 and the sidebar with the active topic marked', () => {
     const h1Count = (rendered.body.match(/<h1/g) ?? []).length;
@@ -68,7 +73,15 @@ describe('docs topic page renderer', () => {
   });
 
   it('keeps structured and visible breadcrumb labels aligned', () => {
-    const installationPage = render(DocsTopicPage, { props: { topic: installationTopic } });
+    const installationPage = render(DocsTopicPage, {
+      props: { topic: installationTopic },
+      context: new Map([
+        [
+          '__request__',
+          { page: { data: {}, url: new URL('https://getomg.dev/docs/installation/') } },
+        ],
+      ]),
+    });
     const parsed = structuredDataFrom(installationPage.head);
     const breadcrumb = parsed['@graph'].find(node => node['@type'] === 'BreadcrumbList');
     const article = parsed['@graph'].find(node => node['@type'] === 'TechArticle');

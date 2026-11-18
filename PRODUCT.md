@@ -16,10 +16,10 @@ Developers managing system packages and project runtimes. This audience is infer
 
 ## Capabilities and constraints
 
-- System packages on supported x86_64 Linux distributions and Apple Silicon macOS, including supported Linux inside WSL2. No native Windows build.
+- System packages through pacman/AUR on Arch, APT/DEB on Debian/Ubuntu, DNF/RPM on Fedora, and Homebrew on Apple Silicon macOS, including supported x86_64 Linux inside WSL2. No native Windows build.
 - Language version management for JavaScript, Python, Go, Rust, Ruby, Java, Zig, Erlang, PHP, and Swift. JavaScript runtime choices include Node.js, Bun, and Deno; .NET SDK versions are supported too. The runtime handbook also documents the Pi tool.
 - Environment capture and drift checks on Arch, Debian, and Ubuntu.
-- Installation downloads a script for review before execution and requires GitHub CLI for provenance verification.
+- The primary installer command is `curl -fsSL https://getomg.dev/install.sh | bash`, with a nearby source link for optional inspection. The installer requires GitHub CLI for provenance verification.
 - Keep authentication, analytics privacy behavior, metadata, source references, and backend contracts intact.
 - Do not turn historical unequal-work benchmarks into speed claims.
 

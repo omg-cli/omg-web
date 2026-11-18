@@ -8,35 +8,33 @@
 
 <section id="install" class="installation home-shell home-section" aria-labelledby="install-title">
   <header>
-    <h2 id="install-title" class="home-section-title">Install OMG. Try it on your setup.</h2>
+    <h2 id="install-title" class="home-section-title">Install OMG</h2>
     <p class="home-section-intro">
-      Supported x86_64 Linux distributions or Apple Silicon macOS, including Linux inside WSL2.
-      Download the installer, review it, then run it.
+      For supported x86_64 Linux distributions and Apple Silicon macOS. In Windows, use a supported
+      WSL2 distribution.
     </p>
   </header>
   <div class="install-command">
-    <h3 class="step-label">1. Download, review, install</h3>
+    <p class="step-label">
+      The installer uses GitHub CLI (<code>gh</code>) to verify the release.
+      <a href="/docs/installation/">Check prerequisites</a>.
+    </p>
     <pre><code>{installation.command}</code></pre>
     <div class="install-actions">
       <button type="button" disabled={installation.pending} onclick={() => installation.copy()}
         >Copy install command <Icon name="copy" size={16} /></button
       >
+      <a href="/install.sh">Read install.sh <Icon name="external" size={16} /></a>
       <a href="https://github.com/omg-cli/omg/releases"
         >Download from GitHub <Icon name="external" size={16} /></a
       >
     </div>
     <p class="copy-status" role="status">{installation.message}</p>
-    <p class="platform-note">
-      The installer requires GitHub CLI (<code>gh</code>) to verify release provenance. On Windows,
-      run these commands inside a supported Arch, Debian, Ubuntu, or Fedora WSL2 terminal. There is
-      no native Windows build. <a href="/docs/installation/">Check supported platforms</a>.
-    </p>
   </div>
   <div class="first-command">
     <div>
-      <p class="step-label">2. Try your first command</p>
-      <h3>Find a package before changing your system.</h3>
-      <p>Run a read-only search to see what OMG can find through your system package manager.</p>
+      <h3>Search for your first package</h3>
+      <p>This command searches your package index without installing anything.</p>
     </div>
     <div class="first-command-action">
       <code><span aria-hidden="true">$ </span>omg search ripgrep</code>
@@ -70,7 +68,8 @@
   .install-command {
     min-width: 0;
     padding: clamp(1.25rem, 3vw, 2rem);
-    border-radius: 12px;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
     background: var(--paper-raised);
   }
   .step-label {
@@ -138,23 +137,9 @@
     color: var(--ink-muted);
     font-size: 0.75rem;
   }
-  .platform-note {
-    max-width: 80ch;
-    margin: 0.5rem 0 0;
-    color: var(--ink-muted);
-    font-size: 0.75rem;
-    line-height: 1.8;
-  }
-  .platform-note a {
-    display: inline;
-    font-size: inherit;
-  }
-  .platform-note code {
-    font-size: inherit;
-  }
   .first-command {
     display: grid;
-    grid-template-columns: 1fr 0.9fr;
+    grid-template-columns: minmax(0, 24rem) minmax(0, 24rem);
     gap: 1.5rem 3rem;
     align-items: center;
     padding-top: 2.5rem;
@@ -178,7 +163,7 @@
     display: grid;
     gap: 0.75rem;
     justify-items: start;
-    justify-self: end;
+    justify-self: start;
   }
   .first-command-action code {
     font-size: clamp(0.875rem, 1.4vw, 1rem);

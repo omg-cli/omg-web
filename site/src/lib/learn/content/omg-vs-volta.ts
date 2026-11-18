@@ -103,8 +103,8 @@ export const content: LearningContent = {
       href: 'https://docs.volta.sh/guide/getting-started',
     },
     {
-      title: 'OMG package.json version detection in the v0.1.223 release',
-      href: 'https://github.com/omg-cli/omg/blob/v0.1.223/src/hooks/mod.rs',
+      title: 'OMG package.json version detection in v0.1.224',
+      href: 'https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs',
     },
     { title: 'OMG installation and platforms', href: '/docs/installation/' },
     { title: 'OMG runtime behavior', href: '/docs/runtimes/' },

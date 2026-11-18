@@ -74,7 +74,7 @@ export const content: LearningContent = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'OMG manages the Node.js executable and the `npm` and `npx` binaries bundled with that release. It activates them by symlinking the selected version to `~/.local/share/omg/versions/node/current/bin` and prepending that directory to your PATH.',
+            'OMG manages the Node.js executable and the `npm` and `npx` binaries bundled with that release. omg use node updates the current symlink in the versions tree. When a project pin matches an installed version, the shell hook prepends that concrete version directory to PATH. The Linux data root defaults to ~/.local/share/omg; macOS uses ~/Library/Application Support/omg.',
             'OMG does not intercept or wrap `npm install` or `pnpm install`. Dependency resolution, `node_modules`, and lockfiles (`package-lock.json`, `pnpm-lock.yaml`) remain strictly under the control of their respective package managers.',
           ],
         },
@@ -105,8 +105,14 @@ export const content: LearningContent = {
     },
   ],
   sources: [
-    { title: 'OMG runtime implementation (src/runtimes/node.rs)', href: '/docs/runtimes/' },
-    { title: 'OMG shell hook resolution (src/hooks/mod.rs)', href: '/docs/architecture/' },
+    {
+      title: 'OMG runtime implementation (src/runtimes/node.rs)',
+      href: 'https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/node.rs',
+    },
+    {
+      title: 'OMG shell hook resolution (src/hooks/mod.rs)',
+      href: 'https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs',
+    },
     { title: 'Node.js official release distribution', href: 'https://nodejs.org/dist/' },
   ],
   related: [

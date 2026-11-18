@@ -18,8 +18,8 @@ interface DocsTopicMeta {
   readonly source: DocsSourceProvenance;
 }
 
-const reviewedCommit = 'c43c8ff10701be2cf6a17a39d030fd7180db9308';
-const reviewedAt = '2026-09-22';
+const reviewedCommit = 'f0d8cb5d8a95dbbc6cae50460178702ac0263ebb';
+const reviewedAt = '2026-11-11';
 
 const REGISTRY = {
   installation: {
@@ -27,7 +27,7 @@ const REGISTRY = {
     navLabel: 'Installation',
     title: 'Installing OMG',
     summary:
-      'Install OMG on Arch, Debian 12, Ubuntu 24.04, Fedora, and macOS; enable shell integration, update, and uninstall.',
+      'Install OMG on Arch, Debian, Ubuntu, Fedora, and Apple Silicon macOS; enable shell integration, update, and uninstall.',
     source: {
       repo: 'omg-cli/omg',
       path: 'docs/installation.md',

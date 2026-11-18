@@ -2,6 +2,7 @@ import { SITE_ORIGIN } from '../../../../shared/public-site';
 import { applySecurityHeaders } from '../../../../shared/security-headers';
 import { DOCS_TOPICS, docsTopicHref } from '../docs/topics';
 import { LEARNING_PAGES, learningHref } from '../learn/catalog';
+import { MARKDOWN_DOCUMENTS } from '../docs/markdown-documents.server';
 import { RELEASE_NOTES } from '../release-notes';
 import type { WebsiteEnv } from '../../../alchemy.run';
 
@@ -95,7 +96,16 @@ export function withPublicHtmlCache(
   const isRead = method === 'GET' || method === 'HEAD';
   const isSuccessful = response.status >= 200 && response.status < 300;
   const isHtml = (response.headers.get('content-type') ?? '').includes('text/html');
-  if (!isRead || !isSuccessful || !isHtml || NON_CACHEABLE_PATH.test(pathname)) {
+  const explicitPrivatePolicy = /(?:no-store|private)/iu.test(
+    response.headers.get('Cache-Control') ?? ''
+  );
+  if (
+    !isRead ||
+    !isSuccessful ||
+    !isHtml ||
+    explicitPrivatePolicy ||
+    NON_CACHEABLE_PATH.test(pathname)
+  ) {
     return response;
   }
 
@@ -141,6 +151,7 @@ export function sitemapResponse(): Response {
     ),
     ...DOCS_TOPICS.map(topic => sitemapEntry(docsTopicHref(topic.slug), topic.source.reviewedAt)),
     ...LEARNING_PAGES.map(page => sitemapEntry(learningHref(page), page.modified)),
+    ...MARKDOWN_DOCUMENTS.map(page => sitemapEntry(page.href, page.metadata.source.reviewedAt)),
   ].join('\n');
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

@@ -54,6 +54,8 @@
   --signal-hover: #a52d0c;
   --signal-ink: #ffffff;
   --danger: #b32d40;
+  --site-width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
+  --page-title: clamp(2rem, 4.1vw, 3.4rem);
   --font-display: 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif;
   --font-body: 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace;
@@ -155,7 +157,7 @@ a {
 }
 
 .home-shell {
-  width: min(100% - clamp(2.5rem, 8vw, 8rem), var(--content-width));
+  width: var(--site-width);
   margin-inline: auto;
 }
 
@@ -307,13 +309,13 @@ a {
   max-width: calc(42rem + clamp(2rem, 8vw, 6rem));
   min-height: 100vh;
   margin: 0 auto;
-  padding: clamp(4rem, 12vw, 10rem) clamp(1rem, 4vw, 3rem) clamp(5rem, 14vw, 9rem);
+  padding: clamp(3rem, 6vw, 5rem) clamp(1rem, 4vw, 3rem) 5rem;
 }
 
 .legal-title {
   margin: 1.25rem 0 0;
   font-family: var(--font-display);
-  font-size: clamp(3rem, 9vw, 5.75rem);
+  font-size: var(--page-title);
   font-weight: 650;
   letter-spacing: -0.035em;
   line-height: 1.1;
@@ -460,4 +462,87 @@ h3 {
   * {
     scrollbar-color: auto;
   }
+}
+
+button[data-copy-code],
+button[data-copy-page] {
+  display: none;
+}
+:root[data-doc-copy='ready'] button[data-copy-code],
+:root[data-doc-copy='ready'] button[data-copy-page] {
+  display: inline-flex;
+}
+.docs-code {
+  margin-block: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper-raised);
+}
+.docs-code .code-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 2.75rem;
+  gap: 0.75rem;
+  padding: 0.25rem 0.75rem;
+}
+.docs-code button {
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.docs-code button:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+.docs-code button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.docs-code [data-copy-status] {
+  min-height: 1.5em;
+  color: var(--ink-muted);
+  font-size: 0.6875rem;
+}
+.docs-code pre {
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Keep a short command and its copy control on the same line, including on phones. */
+.docs-code.single-command {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+.docs-code.single-command pre {
+  grid-area: 1 / 1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.docs-code.single-command .code-actions {
+  display: contents;
+}
+.docs-code.single-command button {
+  grid-area: 1 / 2;
+  margin-inline: 0.25rem;
+}
+.docs-code.single-command [data-copy-status] {
+  grid-area: 2 / 1 / 3 / -1;
+  padding-inline: 1rem;
+}
+.docs-code.single-command [data-copy-status]:empty {
+  display: none;
+}
+html:not([data-doc-copy='ready']) .docs-code .code-actions {
+  display: none;
 }

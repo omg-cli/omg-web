@@ -66,11 +66,9 @@
 
 <main id="main-content" class="updates-shell">
   <header>
-    <p class="page-kicker">OMG / release notes</p>
-    <h1>What changed.</h1>
+    <h1>Release notes</h1>
     <p class="introduction">
-      Selected highlights from published releases. Free and open source, with the details here when
-      you need them.
+      Highlights from published OMG releases. Open a version for changes and the full release notes.
     </p>
     <nav aria-label="Release resources">
       <a href="/docs/">Documentation</a><a href="/docs/installation/">Installation guide</a>
@@ -78,8 +76,7 @@
   </header>
   <aside aria-label="Release compatibility">
     The latest published release predates beta. Commands, flags, and on-disk formats can change.
-    These summaries are reviewed selections, not the complete release notes. Check the full notes
-    before updating important environments.
+    Check the full notes before updating an environment you rely on.
   </aside>
   <section aria-label="Published releases">
     {#each RELEASE_NOTES as release, index (release.version)}
@@ -105,14 +102,14 @@
 
 <style>
   .updates-shell {
-    width: min(calc(100% - 2rem), 70rem);
+    width: var(--site-width);
     margin-inline: auto;
-    padding-block: clamp(3rem, 7vw, 6rem);
+    padding-block: clamp(3rem, 6vw, 5rem);
   }
   h1 {
     margin: 1rem 0;
     font-family: var(--font-display);
-    font-size: clamp(3rem, 7vw, 6rem);
+    font-size: var(--page-title);
     line-height: 1;
     letter-spacing: -0.06em;
     font-weight: 550;

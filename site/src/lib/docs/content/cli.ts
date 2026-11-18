@@ -19,7 +19,7 @@ export const cliTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'The CLI has one parser for package operations, runtime managers, project tasks, environment records, and team or enterprise workflows. `omg --help` shows the public command list. Add `--all-commands` to include advanced commands, and add `--help` after any command or subcommand for its exact arguments.',
+            'This reference targets v0.1.224. The CLI has one parser for package operations, runtime managers, project tasks, environment records, and team or enterprise workflows. `omg --help` shows the public command list. Add `--all-commands` to include advanced commands, and add `--help` after any command or subcommand for its exact arguments.',
             'Package commands use the native backend of the host: ALPM and the AUR on Arch, APT on Debian or Ubuntu, DNF and RPM on Fedora, and Homebrew on Apple Silicon macOS. Native Windows has no backend; use OMG inside WSL so the Linux guest supplies the backend. Runtime and audit coverage still varies by provider and platform.',
             '`omg completions` supports Bash, Zsh, Fish, PowerShell (`pwsh`), and Elvish. The directory-change PATH hook currently emits Bash, Zsh, and Fish scripts; PowerShell and Elvish are completion-only values and return an unsupported-shell error when passed to `omg hook`.',
           ],
@@ -83,6 +83,41 @@ export const cliTopic: DocsTopic = {
         },
         {
           kind: 'table',
+          title: 'Exit status and automation contracts in v0.1.224',
+          columns: ['Command or option', 'What an agent or CI job can rely on'],
+          rows: [
+            [
+              'omg env check',
+              'Read-only comparison; missing omg.lock or detected drift exits nonzero',
+            ],
+            [
+              'omg audit scan --fail-on-findings',
+              'Findings and scan errors exit nonzero; omit the flag for report-only findings',
+            ],
+            [
+              'omg audit licenses --check-policy',
+              'Arch only; policy violations fail even when --filter narrows displayed rows',
+            ],
+            [
+              'omg config validate',
+              'Read its output: v0.1.224 can report validation issues and still exit successfully',
+            ],
+            [
+              '--json',
+              'Only use where the command implements JSON; it does not convert every command into a stable machine protocol',
+            ],
+            [
+              '--yes',
+              'Only accepted by specific mutation commands; it does not bypass required AUR source review or attended security gates',
+            ],
+            [
+              'omg run <task> -- <args...>',
+              'Requires a task name, forwards trailing arguments, and executes project-defined code',
+            ],
+          ],
+        },
+        {
+          kind: 'table',
           title: 'Nested parser options',
           columns: ['Command family', 'Exact nested arguments and options'],
           rows: [
@@ -92,11 +127,11 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'config, privacy, and env',
-              '`config reset --yes`; `privacy export --output`; `env share --description --public`; `env sync <url-or-id>`',
+              '`config reset --yes`; `privacy export --output`; `env export --source-target <platform>`; `env plan --target <platform>`; `env share --description --public`; `env sync <url-or-id>`',
             ],
             [
               'audit',
-              '`sbom --output`; `secrets --path`; `log --limit --severity --export`; `slsa <package> --certificate-identity <identity>`; `licenses --format --export --filter --check-policy`; `fix --dry-run --yes --min-severity`; `export --framework --period --output`',
+              '`scan --fail-on-findings`; `sbom --output --inventory-only`; `secrets --path`; `log --limit --severity --export`; `slsa <package> --certificate-identity <identity>`; `licenses --format --export --filter --check-policy`; `fix --dry-run --yes --min-severity`; `export --framework --period --output`',
             ],
             [
               'snapshots, CI, and migration',
@@ -158,6 +193,7 @@ export const cliTopic: DocsTopic = {
             ],
             ['omg explicit', 'List explicitly installed packages; --count prints only the count'],
             ['omg sync (sy)', 'Refresh package databases from mirrors'],
+            ['omg ec / tc / oc / uc', 'Print explicit, total, orphan, or available-update counts'],
           ],
         },
         {
@@ -173,7 +209,7 @@ export const cliTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'warning',
-          text: 'Package operations are backend-specific. AUR recipes execute community build code, and rollback depends on the backend, cached archives, or reachable source history. Keep the native package manager available for recovery. The Bash and Zsh hooks provide omg-ec, omg-tc, omg-oc, and omg-uc count helpers; the separate omg ec/tc/oc/uc CLI commands were added after v0.1.223.',
+          text: 'Package operations are backend-specific. AUR recipes execute community build code, and rollback depends on the backend, cached archives, or reachable source history. Keep the native package manager available for recovery. The Bash and Zsh hooks provide omg-ec, omg-tc, omg-oc, and omg-uc count helpers. The v0.1.224 CLI also provides omg ec, omg tc, omg oc, and omg uc.',
         },
       ],
     },
@@ -188,7 +224,7 @@ export const cliTopic: DocsTopic = {
           rows: [
             [
               'omg use <runtime> [version]',
-              'Install or select a version; omit the version to use a detected project pin, or pass --uninstall to remove it',
+              'Install or select a version; omit the version to use a detected project pin. --uninstall requires an explicit version',
             ],
             [
               'omg list [runtime]',
@@ -310,15 +346,15 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'omg doctor',
-              'Check network, backend, daemon, PATH, and shell hook; --network tests mirrors, --eol checks Node.js, Python, Rust, Go, Ruby, Java, Bun, and Deno, --turbo primes sudo',
+              'Check backend, daemon, PATH, and shell hook; --network tests mirrors and --eol checks runtime end-of-life. Exit 0 means no health issues were found; warnings can remain. Issues exit nonzero. --turbo instead primes sudo credentials; it does not run the health checks',
             ],
             [
               'omg audit [scan]',
-              'Scan installed packages for advisories; v0.1.223 needs omgd, while current main has a direct fallback. Findings are reported without a failure exit status',
+              'Scan installed packages for advisories using the daemon or direct backend. Findings are report-only by default; audit scan --fail-on-findings makes them fail the command',
             ],
             [
               'omg audit sbom',
-              'Write a CycloneDX system-package inventory; v0.1.223 succeeds on Arch, while current main also supports Debian, Ubuntu, and Fedora. -o/--output selects the file',
+              'Write a CycloneDX system-package SBOM on Arch, Debian, Ubuntu, or Fedora; -o/--output selects the file. --inventory-only explicitly skips advisory matching',
             ],
             ['omg audit secrets', 'Scan a directory for credentials; -p/--path selects it'],
             [
@@ -335,7 +371,7 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'omg audit licenses',
-              'Report installed-package licenses on Arch; --format, --export, --filter, and --check-policy. Violations currently print without a failure exit status',
+              'Report installed-package licenses on Arch; --format, --export, and --filter control output. --check-policy checks the full installed inventory and exits nonzero on policy violations',
             ],
             [
               'omg audit fix',
@@ -359,7 +395,7 @@ export const cliTopic: DocsTopic = {
         {
           kind: 'note',
           tone: 'info',
-          text: 'The newer CLI checkout adds audit scan --fail-on-findings and audit sbom --inventory-only, and makes audit licenses --check-policy inspect all installed Arch packages and fail on violations. Inventory-only SBOMs mark advisory matching as skipped. These changes are not in v0.1.223.',
+          text: 'These audit options ship in v0.1.224. A failure to collect required inventory or advisories is an error, not an empty successful scan. An inventory-only SBOM marks advisory matching as skipped; it is not a vulnerability verdict.',
         },
       ],
     },
@@ -416,7 +452,7 @@ export const cliTopic: DocsTopic = {
           rows: [
             [
               'omg env capture',
-              'Write explicit package names and selected runtime versions to omg.lock on Arch, Debian, or Ubuntu',
+              'Write explicit package names and probed supported OMG runtime and registry-tool versions to omg.lock on Arch, Debian, or Ubuntu',
             ],
             [
               'omg env check',
@@ -426,7 +462,18 @@ export const cliTopic: DocsTopic = {
               'omg env share',
               'Publish a GitHub Gist; --description and --public control metadata and visibility',
             ],
-            ['omg env sync <url-or-id>', 'Fetch and check a shared environment record'],
+            [
+              'omg env sync <url-or-id>',
+              'Fetch and check a shared environment record without installing software',
+            ],
+            [
+              'omg env export --source-target <platform>',
+              'Read omg.lock and print a portable TOML manifest; source-target identifies the capture platform',
+            ],
+            [
+              'omg env plan --target <platform>',
+              'Read .omg.toml and print a JSON requirements plan without installing or copying files',
+            ],
             ['omg diff <to>', 'Compare the current lock or --from <file> with another lock file'],
             [
               'omg snapshot create / list',
@@ -509,7 +556,7 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'omg container build',
-              'Build an image from the current directory; --dockerfile, --tag, --no-cache, --build-arg, and --target. In v0.1.223, pass a relative -f path because the default path is rejected; the newer checkout fixes that default',
+              'Build an image from the current directory; --dockerfile, --tag, --no-cache, --build-arg, and --target. The default file is Dockerfile; an explicit -f path must be relative',
             ],
             [
               'omg container list / images / pull <image>',
@@ -521,7 +568,7 @@ export const cliTopic: DocsTopic = {
             ],
             [
               'omg container init',
-              'Generate Dockerfile.omg; --base selects the image. Build with omg container build -f Dockerfile.omg -t myapp. Omit the unsupported trailing dot printed by v0.1.223',
+              'Generate Dockerfile.omg; --base selects the image. Build with omg container build -f Dockerfile.omg -t myapp. Existing Dockerfile.omg is not overwritten; remote installers are checksum-pinned',
             ],
             [
               'omg account link / status / unlink',
@@ -552,7 +599,7 @@ export const cliTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Configuration paths follow XDG on Linux and WSL and Application Support on macOS. `OMG_DATA_DIR`, `OMG_CONFIG_DIR`, and `OMG_SOCKET_PATH` can override the active locations. Review exported data before sharing it.',
+            'Configuration paths follow XDG on Linux and WSL and Application Support on macOS. Unprivileged processes can use `OMG_DATA_DIR`, `OMG_CONFIG_DIR`, `OMG_CACHE_DIR`, and `OMG_SOCKET_PATH` overrides; root ignores these caller-supplied locations. Review exported data before sharing it.',
           ],
         },
       ],

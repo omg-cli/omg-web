@@ -1,11 +1,5 @@
 <script lang="ts">
-  import { SITE_ORIGIN } from '../../../../shared/public-site';
-
-  /**
-   * The reviewed social card, with its real dimensions, so the declared
-   * `og:image:width`/`height` can never drift from the file that is served.
-   */
-  const SOCIAL_CARD = { path: '/og/omg-og.png', width: 1200, height: 630 } as const;
+  import { SITE_ORIGIN, SOCIAL_CARD } from '../../../../shared/public-site';
 
   let {
     title,
@@ -15,6 +9,8 @@
     structuredData,
     publishedTime,
     modifiedTime,
+    robots = 'index, follow, max-image-preview:large',
+    markdownPath,
   }: {
     title: string;
     description: string;
@@ -26,18 +22,24 @@
     publishedTime?: string | undefined;
     /** ISO 8601 date for `article:modified_time`, when the build can prove it. */
     modifiedTime?: string | undefined;
+    robots?: string;
+    markdownPath?: string;
   } = $props();
 
   const canonical = $derived(`${SITE_ORIGIN}${path}`);
   const imageUrl = `${SITE_ORIGIN}${SOCIAL_CARD.path}`;
-  const imageAlt =
-    'OMG: one CLI for system packages, language runtimes, and development environments.';
+  const imageAlt = SOCIAL_CARD.alt;
 </script>
 
 <svelte:head>
   <title>{title}</title>
   <meta name="description" content={description} />
-  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="robots" content={robots} />
+  {#if markdownPath}<link
+      rel="alternate"
+      type="text/markdown"
+      href={`${SITE_ORIGIN}${markdownPath}`}
+    /><link rel="describedby" type="text/plain" href={`${SITE_ORIGIN}/llms.txt`} />{/if}
   <link rel="canonical" href={canonical} />
   <meta property="og:type" content={type} />
   <meta property="og:title" content={title} />

@@ -4,6 +4,7 @@ export interface LearningPageMeta {
   readonly slug: string;
   readonly category: LearningCategory;
   readonly title: string;
+  readonly navLabel?: string;
   readonly description: string;
   /** Date the authored page content changed, not the deployment date. */
   readonly modified: string;
@@ -13,7 +14,7 @@ export const LEARNING_CATEGORIES = {
   runtimes: {
     title: 'Language runtimes',
     description:
-      'Manage JavaScript, Python, Go, and Rust language versions. Guides cover Node.js and Bun, project pins, shell setup, and supported platforms.',
+      'Install and switch language versions, JavaScript runtimes, and SDKs. Check project pins, shell behavior, provider verification, and host-specific limits.',
   },
   guides: {
     title: 'Developer workflow guides',
@@ -31,14 +32,16 @@ export const LEARNING_PAGES = [
   {
     category: 'runtimes',
     slug: 'node',
+    navLabel: 'Node.js',
     title: 'Manage Node.js versions with OMG',
     description:
       'Install Node.js in pure Rust without external subprocesses, verify official SHA-256 digests, switch project versions with .node-version or .nvmrc, and diagnose PATH conflicts.',
-    modified: '2026-09-22',
+    modified: '2026-11-11',
   },
   {
     category: 'runtimes',
     slug: 'bun',
+    navLabel: 'Bun',
     title: 'Install and switch Bun versions',
     description:
       'Manage Bun versions with OMG, use .bun-version for a project, verify GitHub release checksums, and separate runtime management from Bun package dependencies.',
@@ -47,14 +50,16 @@ export const LEARNING_PAGES = [
   {
     category: 'runtimes',
     slug: 'python',
+    navLabel: 'Python',
     title: 'Manage Python versions and virtual environments',
     description:
       'Download precompiled standalone CPython with SHA-256 validation, detect pyproject.toml and .python-version pins, and isolate dependencies in virtual environments.',
-    modified: '2026-09-22',
+    modified: '2026-11-11',
   },
   {
     category: 'runtimes',
     slug: 'go',
+    navLabel: 'Go runtime',
     title: 'Manage Go versions with OMG',
     description:
       'Install Go, switch project versions with go.mod or .go-version, understand GOROOT and GOPATH tools, and verify toolchains on Linux, macOS, and WSL.',
@@ -63,6 +68,7 @@ export const LEARNING_PAGES = [
   {
     category: 'runtimes',
     slug: 'rust',
+    navLabel: 'Rust',
     title: 'Manage Rust toolchains with OMG',
     description:
       'Install Rust, switch between stable and nightly toolchains, use rust-toolchain.toml, and manage Cargo binaries alongside system packages.',
@@ -74,7 +80,7 @@ export const LEARNING_PAGES = [
     title: 'Run project tasks across ecosystems with OMG',
     description:
       'Discover and run named tasks from Cargo, JavaScript, Python, Go Task, Ruby, Java, PHP, mise, and Make project files with omg run.',
-    modified: '2026-09-22',
+    modified: '2026-11-11',
   },
   {
     category: 'guides',
@@ -114,7 +120,7 @@ export const LEARNING_PAGES = [
     title: 'Capture and check development environments',
     description:
       'On Arch, Debian, or Ubuntu, record explicit package names and selected runtimes in omg.lock, then check for drift without installing software.',
-    modified: '2026-09-22',
+    modified: '2026-11-11',
   },
   {
     category: 'compare',
@@ -162,7 +168,7 @@ export const LEARNING_PAGES = [
     title: 'OMG vs Volta: moving a JavaScript toolchain',
     description:
       'Compare Node.js pin compatibility, package-manager behavior, OS package commands, and platform support before moving a Volta project to OMG.',
-    modified: '2026-09-22',
+    modified: '2026-11-11',
   },
 ] as const satisfies readonly LearningPageMeta[];
 

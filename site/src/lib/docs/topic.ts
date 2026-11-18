@@ -51,6 +51,7 @@ export type DocsBlock =
       readonly kind: 'commands';
       readonly title: string;
       readonly commands: readonly [string, ...string[]];
+      readonly language?: 'sh' | 'toml' | 'json' | 'yaml' | 'text';
     }
   /** A numbered procedure where each step may carry a command. */
   | { readonly kind: 'steps'; readonly steps: readonly [DocsStep, ...DocsStep[]] }

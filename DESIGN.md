@@ -38,17 +38,16 @@ colors:
   terminal-rule: '#383838'
   terminal-output: '#d6d6d6'
   terminal-selected: '#ff936e'
-  terminal-output-highlight: '#a9cfff'
 typography:
   display:
     fontFamily: "'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif"
-    fontSize: clamp(2.5rem, 4.3vw, 3.75rem)
+    fontSize: clamp(2rem, 3.7vw, 3.4rem)
     fontWeight: 720
     lineHeight: 1.08
     letterSpacing: -0.035em
   headline:
     fontFamily: "'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif"
-    fontSize: clamp(1.75rem, 2.7vw, 2.4rem)
+    fontSize: clamp(1.5rem, 2.6vw, 2.2rem)
     fontWeight: 680
     lineHeight: 1.15
     letterSpacing: -0.03em
@@ -117,11 +116,6 @@ components:
     backgroundColor: '{colors.terminal-bg}'
     textColor: '{colors.terminal-ink}'
     rounded: '{rounded.panel}'
-  example-selector:
-    backgroundColor: '{colors.paper}'
-    textColor: '{colors.signal}'
-    rounded: '{rounded.control}'
-    padding: 1rem
 ---
 
 # Design System: OMG
@@ -132,7 +126,7 @@ components:
 
 OMG uses familiar developer-tool craft: neutral white or charcoal surfaces, measured Archivo headings, and Plex command text. The user named bun.com and ripgrep.dev as references and rejected green-tinted public surfaces and repetitive slogan/feature rows. The user reviewed and approved this replacement on 2026-11-11 and authorized merging it into main and deploying it with Wrangler.
 
-The command explorer is the homepage's signature component. Its selection rail and dark transcript give the product interaction room to be read. Orange marks actions, selection, and focus; documentation and technical details remain visually quiet. Authenticated dashboard and admin routes retain their independent dark operational theme.
+The command explorer is the homepage's signature component. The prompt and persistent transcript are the first interactive content in the page body. Orange marks actions, selection, and focus; documentation and technical details remain visually quiet. Authenticated dashboard and admin routes retain their independent dark operational theme.
 
 **Key Characteristics:**
 
@@ -145,7 +139,7 @@ Runtime sources are canonical: `site/src/app.css`, shared public navigation, hom
 
 ## Colors
 
-Public surfaces are strictly neutral. Orange is the action accent; terminal output uses a small blue highlight for result hierarchy.
+Public surfaces are strictly neutral. Orange marks actions and keyboard focus. The terminal distinguishes commands and output by type and contrast.
 
 ### Primary
 
@@ -156,7 +150,7 @@ Public surfaces are strictly neutral. Orange is the action accent; terminal outp
 
 - **Paper and raised paper** separate the page from command selection, runtime, source, and installer containers. Dark variants preserve the same roles.
 - **Ink and muted ink** distinguish headings and executable commands from explanations and metadata. **Rule and strong rule** divide technical content and outline controls.
-- **Terminal charcoal, ink, muted text, rule, and output** form the consistently dark transcript. **Terminal selected** marks the prompt, caret, guide hover, and local keyboard focus. **Terminal output highlight** distinguishes output headings and successful result lines; it is not a public brand accent.
+- **Terminal charcoal, ink, muted text, rule, and output** form the consistently dark transcript. **Terminal selected** marks the prompt, insertion caret and local keyboard focus.
 - **Workspace paper, raised paper, ink, muted ink, and translucent rules** preserve the account/operator palette independently.
 - **Danger** and its dark/workspace variants remain reserved for error states.
 
@@ -168,22 +162,22 @@ Archivo Variable supplies display and body text, with the existing Archivo Fallb
 
 ### Hierarchy
 
-- **Display** is the compact homepage definition; its measure starts at 17ch, becomes 23ch below 55rem, and uses 2.5rem below 35rem.
+- **Display** is the compact homepage definition; its maximum measure is 30ch and its size scales from 2rem to 3.4rem.
 - **Headline** records package/runtime headings. The installation title uses the shared larger scale, `clamp(2.25rem, 4vw, 3.25rem)`, weight 650, line height 1.1.
 - **Title** records compact environment and source headings. First-command headings use 1.25rem with line height 1.35.
 - **Body** records package/runtime explanation. The introduction uses 1rem and line height 1.75; small technical notes range from 0.75rem to 0.875rem.
 - **Label** records compact technical step labels. Navigation uses 0.8125rem and weight 500; action labels use weight 600.
-- **Code** records the responsive installer scale. The transcript command uses 0.875rem and output 0.8125rem with line height 1.85.
+- **Code** records the responsive installer scale. The transcript scales from 0.8125rem to 0.9375rem at line height 1.6. The editable command is 1rem.
 
-Headings use balanced wrapping and negative tracking. Explanatory widths vary by context: intro 47ch, package/runtime copy 49ch, and reading articles 48rem. Do not impose one measure on every surface.
+Headings use balanced wrapping and negative tracking. Explanatory widths vary by context: headline 30ch, package/runtime copy 51ch, and reading articles 48rem. Do not impose one measure on every surface.
 
 ## Layout
 
 The public shell is centered at `min(100% - clamp(2.5rem, 8vw, 8rem), 75rem)`. Homepage sections use `clamp(3rem, 5vw, 4.5rem)` vertical padding and thin dividing rules. Content determines grouping and density.
 
-The homepage introduction pairs a product definition with explanation/actions in two columns, then gives the command explorer the full shell width. The introduction stacks below 55rem. The explorer uses a 17rem selection rail, reduced to 14rem below 55rem; below 40rem its choices become a compact horizontal row above the transcript. The runtime guide band wraps naturally below it.
+A short product definition precedes a full-width, editable Arch terminal. Keep the prompt in the opening phone viewport. Place the install and documentation links below the terminal.
 
-The package backend definition list and raised runtime panel sit side by side; an environment strip spans both. These stack below 40rem. The source/performance panel also stacks below 40rem. The installer keeps a download/review block and a separate first-command block, which stacks below 44rem.
+The package backend definition list and runtime guidance sit side by side and stack below 40rem. A native disclosure contains the benchmark methodology. The installer keeps a download/review block and a separate first-command block, which stacks below 44rem.
 
 The header is 4.5rem high. Below 50rem, the full navigation and account link give way to a native details menu, with the theme control inside it; the install action stays visible. The footer stacks below 40rem. Documentation uses a 16rem sidebar from 64rem; learning articles use a 15rem contents column at that breakpoint. Keep the 20rem body minimum and `min-width: 0` around code-bearing grid children.
 
@@ -197,7 +191,7 @@ Public content is flat. Neutral tones, one-pixel rules, and spacing establish hi
 
 ## Shapes
 
-Controls use gently rounded corners (6px). The explorer, raised runtime/source panels, and installer use container corners (12px). Login fields and documentation panels retain their existing square corners. Mobile menu links and terminal playback controls use a local 4px radius. Use inline SVG icons and preserve the existing OMG brand mark.
+Controls use gently rounded corners (6px). The explorer, raised runtime/source panels, and installer use container corners (12px). Login fields and documentation panels retain their existing square corners. Mobile menu links and the terminal Run control use a local 4px radius. Use inline SVG icons and preserve the existing OMG brand mark.
 
 ## Components
 
@@ -209,7 +203,7 @@ The global keyboard treatment is a two-pixel signal outline with a four-pixel of
 
 ### Cards / Containers
 
-Raised neutral panels group runtime instructions, source/performance details, and installation. They use container corners without shadows. Backend support uses a definition list with ruled rows; environment commands occupy a compact spanning strip. These are content-specific structures, not a repeated feature-card grid.
+A raised neutral panel groups the installer and its actions. They use container corners without shadows. Backend support uses a definition list with ruled rows; the runtime guide links lead to project-specific setup. These are content-specific structures, not a repeated feature-card grid.
 
 ### Inputs / Fields
 
@@ -221,15 +215,13 @@ Header links use small, medium-weight Archivo in muted ink. Hover and current-pa
 
 ### Command explorer
 
-A public-theme toolbar and command selection rail surround a separate charcoal transcript. Desktop choices show category and command preview; the selected choice has paper fill, a rule border, and signal text. Narrow choices hide previews and remain a readable three-choice row. The transcript body is 17rem tall on desktop and 18rem below 40rem. Its output uses neutral gray, with blue for headings and success lines.
-
-HomeTerminal owns playback; terminal-examples holds source-matched Arch fixtures. A 300ms lead-in precedes typing at 42ms per character; output appears at 150ms per line, then stops. Selecting a command cancels the previous timer. Pause and replay controls stay inside the terminal. Hidden tabs pause. Reduced motion and server rendering show the complete transcript immediately. A separate complete transcript announces only example changes to assistive technology. Keep the visible Example output label and the destination guide link. The demo never executes commands.
+The labeled Arch simulation opens with a completed package search and an editable command. A fixed-height scrollback records commands and their results. Run, Enter and touch suggestions use the same session. The simulated package set, active Node version and captured lockfile live only in the mounted component. Arrow keys recall recent commands. Show the initial output and command reference link when JavaScript is unavailable.
 
 ### Installation block
 
-Keep the download, review, then execute order visible in wrapped code. The copy control has a persistent status area; provenance and platform requirements stay alongside the command. The follow-up search is read-only and links to the quick start. InstallationView continues to own clipboard state and analytics.
+Show the one-line installer with a nearby source inspection link and the GitHub CLI prerequisite. The copy control has a persistent status area; provenance and platform requirements stay alongside the command. The follow-up search is read-only and links to the quick start. InstallationView continues to own clipboard state and analytics.
 
-Smooth anchor scrolling becomes automatic under reduced motion. The typing caret is the only looping visual state during command entry; there is no decorative entrance sequence.
+Smooth anchor scrolling becomes automatic under reduced motion. The editable input uses the native insertion caret.
 
 ## Do's and Don'ts
 

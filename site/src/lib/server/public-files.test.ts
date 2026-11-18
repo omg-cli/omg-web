@@ -1,3 +1,4 @@
+import { MARKDOWN_DOCUMENTS } from '../docs/markdown-documents.server';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
@@ -72,7 +73,9 @@ Sitemap: https://getomg.dev/sitemap.xml
     expect(response.headers.get('content-type')).toBe('application/xml; charset=utf-8');
     // A sitemap is a discovery file; a noindex header on it must not come back.
     expect(response.headers.has('x-robots-tag')).toBe(false);
-    expect(body.match(/<url>/g)).toHaveLength(9 + DOCS_TOPICS.length + LEARNING_PAGES.length);
+    expect(body.match(/<url>/g)).toHaveLength(
+      9 + DOCS_TOPICS.length + LEARNING_PAGES.length + MARKDOWN_DOCUMENTS.length
+    );
     expect(body).toContain('<loc>https://getomg.dev/security/</loc>');
     expect(body).toContain('<loc>https://getomg.dev/</loc>');
     expect(body).toContain('<loc>https://getomg.dev/docs/</loc>');
@@ -81,7 +84,9 @@ Sitemap: https://getomg.dev/sitemap.xml
     for (const topic of DOCS_TOPICS) {
       expect(body).toContain(`<loc>https://getomg.dev/docs/${topic.slug}/</loc>`);
     }
-    expect(body.match(/<lastmod>/g)).toHaveLength(LEARNING_PAGES.length + DOCS_TOPICS.length + 2);
+    expect(body.match(/<lastmod>/g)).toHaveLength(
+      LEARNING_PAGES.length + DOCS_TOPICS.length + MARKDOWN_DOCUMENTS.length + 2
+    );
     expect(body).toContain('<lastmod>2026-09-21</lastmod>');
     expect(body).not.toContain('<changefreq>');
     expect(body).not.toContain('<priority>');
@@ -143,6 +148,17 @@ Sitemap: https://getomg.dev/sitemap.xml
     expect(response.headers.get('vary')).toBe('Origin, Accept-Encoding');
     expect(response.headers.has('x-robots-tag')).toBe(false);
   });
+
+  it.each(['no-store', 'private, max-age=0'])(
+    'preserves an explicit %s policy on public search HTML',
+    policy => {
+      const original = new Response('<h1>Search results</h1>', {
+        headers: { 'Content-Type': 'text/html', 'Cache-Control': policy },
+      });
+      const response = withPublicHtmlCache(original, 'GET', '/docs/search/');
+      expect(response.headers.get('Cache-Control')).toBe(policy);
+    }
+  );
 
   it.each(['GET', 'HEAD'])('gives a successful %s docs page the edge cache policy', method => {
     const securedResponse = withSiteHeaders(htmlResponse(), 'shadow');

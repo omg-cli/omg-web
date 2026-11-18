@@ -49,7 +49,7 @@ export const runtimesTopic: DocsTopic = {
           diagram: {
             title: 'Which version file wins',
             caption:
-              'OMG reads the project directory first and then its parents. Dedicated pins and supported language manifests come before .tool-versions; package.json follows for Node and Bun.',
+              'OMG reads the project directory first and then its parents. Dedicated pins and supported language manifests come before .tool-versions; package.json follows for Node and Bun. Supported mise configuration layers are considered after these files in each directory.',
             nodes: [
               {
                 id: 'folder',
@@ -100,7 +100,7 @@ export const runtimesTopic: DocsTopic = {
           title: 'Version file priority per runtime',
           columns: ['Runtime', 'Detection order'],
           rows: [
-            ['Node.js', '.node-version, .nvmrc, package.json, then .tool-versions'],
+            ['Node.js', '.node-version, .nvmrc, .tool-versions, then package.json'],
             ['Python', '.python-version, pyproject.toml, then .tool-versions'],
             ['Go', '.go-version, go.mod, then .tool-versions'],
             ['Rust', 'rust-toolchain, rust-toolchain.toml, then .tool-versions'],
@@ -145,7 +145,7 @@ export const runtimesTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'Record the required installed Python version in .python-version before relying on the shell hook. At a new prompt, verify python3 --version and which -a python3. Then create a fresh environment with python3 -m venv .venv. Invoke .venv/bin/python and .venv/bin/python -m pip explicitly: the reviewed Bash and Zsh hooks reset PATH at each prompt and can undo virtual-environment activation.',
+            'Record the required installed Python version in .python-version before relying on the shell hook. At a new prompt, verify python3 --version and which -a python3. Then create a fresh environment with python3 -m venv .venv. Invoke .venv/bin/python and .venv/bin/python -m pip explicitly: the v0.1.224 Bash and Zsh hooks reset PATH at each prompt and can undo virtual-environment activation.',
           ],
         },
         {
@@ -165,7 +165,7 @@ export const runtimesTopic: DocsTopic = {
         {
           kind: 'paragraphs',
           paragraphs: [
-            'On Arch, Debian, and Ubuntu, omg env capture records selected runtime versions and explicit package names in omg.lock. Teammates use omg env check to inspect drift. This capture path is unavailable on Fedora and macOS, and the lock does not include application dependencies.',
+            'On Arch, Debian, and Ubuntu, omg env capture records explicit package names and the versions found by probing supported OMG runtimes and registry tools. Teammates use omg env check to inspect drift. This capture path is unavailable on Fedora and macOS. The lock does not record system package versions or application dependencies.',
           ],
         },
       ],
@@ -181,7 +181,7 @@ export const runtimesTopic: DocsTopic = {
             'Verification depends on the provider. Archive-based managers compare published SHA-256 checksums when available; Python uses python-build-standalone metadata, Java uses Adoptium checksums, and Bun and Deno use release metadata or checksum sidecars. Pi installs through npm with lifecycle scripts disabled.',
             'Direct runtime downloads use HTTPS with certificate validation.',
             'OMG stages an installation in a temporary directory on the same filesystem, then publishes the version directory after installation and validation succeed.',
-            'Each installed version has its own directory. Switch away from a version before removing it with omg use <runtime> <version> --uninstall.',
+            'Each installed version has its own directory. Switch away before removing it with omg use <runtime> <version> --uninstall. Uninstall requires an explicit version; it does not infer the version from a project pin.',
           ],
         },
       ],

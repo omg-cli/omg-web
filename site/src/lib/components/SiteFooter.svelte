@@ -6,12 +6,19 @@
 <footer class="site-footer">
   <section class="footer-callout" aria-labelledby="footer-callout-title">
     <div>
-      <h2 id="footer-callout-title">Built in the open.</h2>
-      <p>Free under the MIT license. No account needed to use the CLI.</p>
+      <h2 id="footer-callout-title">
+        <a href="https://latham.cloud/work/omg">Built by Olen Latham</a>
+      </h2>
+      <p>No account needed to use the CLI.</p>
     </div>
-    <a class="source-link" href="https://github.com/omg-cli/omg"
-      >Explore the source<Icon name="external" size={18} /></a
-    >
+    <div class="source-links">
+      <a class="source-link" href="https://github.com/omg-cli/omg"
+        >Source <Icon name="external" size={15} /></a
+      >
+      <a class="source-link" href="https://opensource.org/licenses/MIT"
+        >MIT license <Icon name="external" size={15} /></a
+      >
+    </div>
   </section>
 
   <div class="footer-bar">
@@ -27,16 +34,6 @@
         <li><a href="/docs/">Docs</a></li>
         <li><a href="/updates/">Updates</a></li>
         <li><a href="/security/">Security</a></li>
-        <li>
-          <a href="https://github.com/omg-cli/omg" target="_blank" rel="noopener noreferrer">
-            GitHub
-          </a>
-        </li>
-        <li>
-          <a href="https://latham.cloud/work/omg" target="_blank" rel="noopener">
-            Built by Olen Latham
-          </a>
-        </li>
         <li><a href="/privacy/">Privacy</a></li>
         <li><a href="/terms/">Terms</a></li>
       </ul>
@@ -46,7 +43,7 @@
 
 <style>
   .site-footer {
-    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
+    width: var(--site-width);
     margin: 0 auto;
     border-top: 1px solid var(--rule);
   }
@@ -68,6 +65,16 @@
     margin: 0.5rem 0 0;
     color: var(--ink-muted);
     font-size: 0.8125rem;
+  }
+  h2 a {
+    text-decoration: none;
+  }
+  h2 a:hover {
+    color: var(--signal);
+  }
+  .source-links {
+    display: flex;
+    gap: 1.5rem;
   }
   .source-link {
     display: inline-flex;
