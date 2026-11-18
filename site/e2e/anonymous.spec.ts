@@ -291,6 +291,7 @@ test.describe('Svelte public surfaces', () => {
     );
     await page.getByRole('link', { name: 'Try in the browser' }).click();
     await expect(page.getByRole('heading', { name: 'Try OMG' })).toBeInViewport();
+    await expect(page.getByRole('textbox', { name: 'Terminal command' })).toBeInViewport();
     await page.goBack();
     for (const topicSlug of [
       'installation',

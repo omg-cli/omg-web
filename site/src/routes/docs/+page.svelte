@@ -93,7 +93,7 @@
       <p>Search the package index for ripgrep. Use your own shell or the browser terminal.</p>
       <DocsCode code="omg search ripgrep" />
       <div class="link-line">
-        <a href="/#terminal-title">Try in the browser <Icon name="right" size={14} /></a>
+        <a href="/">Try in the browser <Icon name="right" size={14} /></a>
         <a href="/docs/getting-started/">Getting started guide</a>
       </div>
     </section>
