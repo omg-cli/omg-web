@@ -219,10 +219,7 @@ test('terminal commands change the environment in one visit', async ({ page }) =
 test('the terminal accepts commands before the app hydrates and keeps them through hydration', async ({
   page,
 }) => {
-  let resume = () => {};
-  const paused = new Promise<void>(resolve => {
-    resume = resolve;
-  });
+  const { promise: paused, resolve: resume } = Promise.withResolvers<void>();
   await page.route('**/*', async route => {
     const request = route.request();
     if (
