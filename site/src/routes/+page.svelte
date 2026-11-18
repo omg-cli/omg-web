@@ -81,7 +81,6 @@
   }
 
   .home {
-    --content-width: 75rem;
     overflow: clip;
     background: var(--paper);
   }

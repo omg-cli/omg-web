@@ -68,7 +68,8 @@
   .install-command {
     min-width: 0;
     padding: clamp(1.25rem, 3vw, 2rem);
-    border-radius: 12px;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
     background: var(--paper-raised);
   }
   .step-label {
@@ -138,7 +139,7 @@
   }
   .first-command {
     display: grid;
-    grid-template-columns: 1fr 0.9fr;
+    grid-template-columns: minmax(0, 24rem) minmax(0, 24rem);
     gap: 1.5rem 3rem;
     align-items: center;
     padding-top: 2.5rem;
@@ -162,7 +163,7 @@
     display: grid;
     gap: 0.75rem;
     justify-items: start;
-    justify-self: end;
+    justify-self: start;
   }
   .first-command-action code {
     font-size: clamp(0.875rem, 1.4vw, 1rem);

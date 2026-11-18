@@ -191,6 +191,8 @@ test('terminal commands change the environment in one visit', async ({ page }) =
   await input.press('Enter');
   await page.keyboard.press('y');
   await expect(log).toContainText('1 package installed');
+  await page.getByRole('button', { name: 'omg info ripgrep', exact: true }).click();
+  await expect(log).toContainText('Installed: yes');
   await page.getByRole('button', { name: 'omg env check', exact: true }).click();
   await expect(log).toContainText('Extra Packages (not in lockfile):');
   await expect(log).toContainText('+ ripgrep');
@@ -200,6 +202,7 @@ test('terminal commands change the environment in one visit', async ({ page }) =
   await input.fill('node --version');
   await page.getByRole('button', { name: 'omg use node 22', exact: true }).click();
   await expect(log).toContainText('Now using Node.js 22.23.5');
+  await expect(page.getByRole('button', { name: 'node --version', exact: true })).toBeVisible();
   await input.press('Enter');
   await expect(log).toContainText('v22.23.5');
   await input.press('ArrowUp');

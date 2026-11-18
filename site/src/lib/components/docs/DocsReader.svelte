@@ -3,7 +3,7 @@
   import { page } from '$app/state';
   import { DOCS_TOPICS, docsTopicHref } from '../../docs/topics';
   import DocsSearchForm from './DocsSearchForm.svelte';
-  let { children }: { children: Snippet } = $props();
+  let { children, query = '' }: { children: Snippet; query?: string } = $props();
   const navigation = $derived(
     page.data.documentationNavigation ??
       DOCS_TOPICS.map(topic => ({
@@ -20,7 +20,11 @@
 
 {#snippet topicLinks()}
   <nav aria-label="Documentation topics">
-    <a class="docs-home" href="/docs/">Documentation</a>
+    <a
+      class="docs-home"
+      href="/docs/"
+      aria-current={page.url.pathname === '/docs/' ? 'page' : undefined}>Documentation</a
+    >
     {#each groups as group (group)}<div class="nav-group">
         <p>{group}</p>
         <ul>
@@ -33,17 +37,17 @@
             </li>{/each}
         </ul>
       </div>{/each}
+    <a class="agent-link" href="/docs/#agents">Docs for agents</a>
   </nav>
 {/snippet}
 
 <main id="main-content" class="docs-reader">
   <aside class="docs-sidebar">
-    <DocsSearchForm />
+    <DocsSearchForm {query} />
     <div class="desktop-topics">{@render topicLinks()}</div>
     <details class="mobile-topics">
       <summary>Browse documentation</summary>{@render topicLinks()}
     </details>
-    <a class="agent-link" href="/llms.txt">Docs for agents</a>
   </aside>
   <div class="reader-content">{@render children()}</div>
 </main>
@@ -52,7 +56,7 @@
   .docs-reader {
     display: grid;
     grid-template-columns: 16rem minmax(0, 1fr);
-    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
+    width: var(--site-width);
     margin-inline: auto;
     gap: 3rem;
   }
@@ -106,7 +110,8 @@
     background: var(--paper-raised);
   }
   li a[aria-current='page'] {
-    color: var(--signal);
+    box-shadow: inset 2px 0 var(--signal);
+    color: var(--ink);
     background: var(--paper-raised);
     font-weight: 600;
   }
@@ -119,7 +124,8 @@
     font-size: 0.75rem;
   }
   .agent-link:hover,
-  .docs-home:hover {
+  .docs-home:hover,
+  .docs-home[aria-current='page'] {
     color: var(--signal);
   }
   .reader-content {

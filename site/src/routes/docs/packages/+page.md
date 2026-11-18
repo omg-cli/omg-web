@@ -35,6 +35,21 @@ The `debian-pure` build feature supports index and test work. It refuses live De
 
 ```bash
 omg search ripgrep
+```
+
+The first three matches in the recorded Arch Linux session on OMG v0.1.224 were:
+
+```text
+  ripgrep 15.2.0-1  ℹ Official
+  ripgrep-all 0.10.10-3  ℹ Official
+  ripgrep-all-git 0.10.10.462.g0f10fb9-1  ⚠ AUR
+```
+
+Press Enter on a result to inspect its details or Esc to return to the prompt. Package versions and ordering follow your current package index.
+
+To see more metadata, restrict the search to official packages, or inspect a package by name:
+
+```bash
 omg search ripgrep --detailed --limit 30
 omg search ripgrep --no-aur
 omg info ripgrep
@@ -42,7 +57,7 @@ omg info ripgrep
 
 Search defaults to 15 results. On Arch, it includes AUR entries unless you pass `--no-aur`. `--detailed` adds source metadata where available. A name match or security grade does not certify the package's behavior.
 
-An attended search can offer a picker that opens details. Selecting a result does not install it. Use `--json` only with commands whose output contract you have checked in the [CLI reference](/docs/cli/).
+Use `--json` only with commands whose output contract you have checked in the [CLI reference](/docs/cli/).
 
 To inspect an installed package's relationships and disk use:
 

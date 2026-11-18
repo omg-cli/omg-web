@@ -1,7 +1,10 @@
 <script lang="ts">
+  import { building } from '$app/env';
+  import { page } from '$app/state';
   import SeoHead from '../../lib/components/SeoHead.svelte';
   import { serializeJsonLd, SITE_ORIGIN } from '../../../../shared/public-site';
-  import DocsSearchForm from '../../lib/components/docs/DocsSearchForm.svelte';
+  import DocsReader from '../../lib/components/docs/DocsReader.svelte';
+  import DocsOutline from '../../lib/components/docs/DocsOutline.svelte';
   import DocsCode from '../../lib/components/docs/DocsCode.svelte';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
@@ -9,6 +12,7 @@
   import { release, repository } from '../../lib/docs/source-review.json';
 
   const canonicalUrl = `${SITE_ORIGIN}/docs/`;
+  const docsOrigin = $derived(building ? SITE_ORIGIN : page.url.origin);
   const sourceDocsUrl = `https://github.com/omg-cli/omg/tree/${DOCS_TOPICS[0].source.reviewedCommit}/docs`;
   const installCommand = `curl -fsSL ${SITE_ORIGIN}/install.sh | bash`;
   const structuredData = serializeJsonLd({
@@ -58,8 +62,6 @@
   ] as const;
 </script>
 
-<svelte:head><script src="/docs.js" defer></script></svelte:head>
-
 <SeoHead
   title="OMG Documentation - Install, Commands, and Platforms"
   description="Install OMG, learn its package and runtime commands, capture supported system state, check drift, and browse the curated handbook."
@@ -68,10 +70,9 @@
   {structuredData}
 />
 
-<main id="main-content" class="docs-shell">
+<DocsReader>
   <header class="docs-hero">
     <h1>OMG documentation</h1>
-    <DocsSearchForm />
     <nav class="task-links" aria-label="Common documentation tasks">
       <a href="/docs/packages/#find-a-package-and-its-source">Find a package</a>
       <a href="/docs/getting-started/#select-a-runtime">Switch Node.js versions</a>
@@ -80,182 +81,166 @@
     </nav>
   </header>
 
-  <div class="docs-layout">
-    <aside class="docs-aside">
-      <nav class="section-nav" aria-label="Documentation sections">
-        {#snippet sections()}
-          <ul>
-            <li><a href="#install">Install</a></li>
-            <li><a href="#quick-start">Quick start</a></li>
-            <li><a href="#platforms">Platforms</a></li>
-            <li><a href="#agents">Use docs with an agent</a></li>
-            <li><a href="#guides">Guides by task</a></li>
-            <li><a href="#reference">Handbook</a></li>
-          </ul>
-        {/snippet}
-        <details class="mobile-index">
-          <summary>On this page</summary>
-          {@render sections()}
-        </details>
-        <div class="desktop-index">{@render sections()}</div>
-      </nav>
-    </aside>
+  <article>
+    <DocsOutline
+      headings={[
+        { id: 'install', title: 'Install' },
+        { id: 'quick-start', title: 'Quick start' },
+        { id: 'platforms', title: 'Platforms' },
+        { id: 'agents', title: 'Use docs with an agent' },
+        { id: 'guides', title: 'Guides by task' },
+        { id: 'reference', title: 'Handbook' },
+      ]}
+    />
+    <section id="install" class="docs-section">
+      <h2>Install OMG</h2>
+      <p class="section-copy">
+        The universal installer detects Linux or macOS and downloads the matching release. On
+        Windows, run it inside WSL2. The GitHub CLI (gh) is required to verify the release
+        attestation.
+      </p>
+      <DocsCode code={installCommand} />
+      <p class="install-note">
+        <a href="/install.sh">Read install.sh</a> before running it, or download a release directly:
+        <a href="https://github.com/omg-cli/omg/releases">Download release binaries on GitHub</a>.
+      </p>
+      <p class="install-note">
+        The handbook and operational guides describe <a
+          href={`https://github.com/${repository}/releases/tag/${release.version}`}
+          >release {release.version}</a
+        >. Newer development-only behavior is labeled separately. Check the source and review date
+        on each page. <a href="/updates/">Browse project updates.</a>
+      </p>
+    </section>
 
-    <article>
-      <section id="install" class="docs-section">
-        <h2>Install OMG</h2>
-        <p class="section-copy">
-          The universal installer detects Linux or macOS and downloads the matching release. On
-          Windows, run it inside WSL2. The GitHub CLI (gh) is required to verify the release
-          attestation.
-        </p>
-        <DocsCode code={installCommand} />
-        <p class="install-note">
-          <a href="/install.sh">Read install.sh</a> before running it, or download a release
-          directly:
-          <a href="https://github.com/omg-cli/omg/releases">Download release binaries on GitHub</a>.
-        </p>
-        <p class="install-note">
-          The handbook and operational guides describe <a
-            href={`https://github.com/${repository}/releases/tag/${release.version}`}
-            >release {release.version}</a
-          >. Newer development-only behavior is labeled separately. Check the source and review date
-          on each page. <a href="/updates/">Browse project updates.</a>
-        </p>
-      </section>
+    <section id="quick-start" class="docs-section">
+      <h2>Quick start</h2>
+      <p class="section-copy">
+        Package operations, runtime selection, and environment state use the same command surface.
+      </p>
+      <div class="command-groups">
+        {#each commandGroups as group (group.title)}
+          <section class="command-group">
+            <div>
+              <h3>{group.title}</h3>
+              <p>{group.description}</p>
+            </div>
+            <DocsCode code={group.commands.join('\n')} />
+          </section>
+        {/each}
+      </div>
+    </section>
 
-      <section id="quick-start" class="docs-section">
-        <h2>Quick start</h2>
-        <p class="section-copy">
-          Package operations, runtime selection, and environment state use the same command surface.
-        </p>
-        <div class="command-groups">
-          {#each commandGroups as group (group.title)}
-            <section class="command-group">
-              <div>
-                <h3>{group.title}</h3>
-                <p>{group.description}</p>
-              </div>
-              <DocsCode code={group.commands.join('\n')} />
-            </section>
-          {/each}
+    <section id="platforms" class="docs-section">
+      <h2>Platforms: Arch, Debian, Ubuntu, Fedora, and macOS</h2>
+      <dl class="platform-list">
+        <div>
+          <dt>Linux</dt>
+          <dd>
+            Arch (pacman/AUR), Debian 12/13 and Ubuntu 24.04/26.04 (APT/DEB), and Fedora (DNF/RPM).
+            RHEL and CentOS-family hosts receive a Fedora-artifact fallback; that is not a
+            compatibility guarantee.
+          </dd>
         </div>
-      </section>
+        <div>
+          <dt>macOS</dt>
+          <dd>Apple Silicon through the universal installer; system packages use Homebrew.</dd>
+        </div>
+        <div>
+          <dt>Windows</dt>
+          <dd>Use OMG inside WSL with a supported Linux guest. Native Windows is not supported.</dd>
+        </div>
+        <div>
+          <dt>Architecture</dt>
+          <dd>
+            x86_64 Linux and WSL guests; Apple Silicon on macOS. Linux ARM64 and Intel macOS
+            releases are not published.
+          </dd>
+        </div>
+      </dl>
+    </section>
 
-      <section id="platforms" class="docs-section">
-        <h2>Platforms: Arch, Debian, Ubuntu, Fedora, and macOS</h2>
-        <dl class="platform-list">
-          <div>
-            <dt>Linux</dt>
-            <dd>
-              Arch (pacman/AUR), Debian 12/13 and Ubuntu 24.04/26.04 (APT/DEB), and Fedora
-              (DNF/RPM). RHEL and CentOS-family hosts receive a Fedora-artifact fallback; that is
-              not a compatibility guarantee.
-            </dd>
-          </div>
-          <div>
-            <dt>macOS</dt>
-            <dd>Apple Silicon through the universal installer; system packages use Homebrew.</dd>
-          </div>
-          <div>
-            <dt>Windows</dt>
-            <dd>
-              Use OMG inside WSL with a supported Linux guest. Native Windows is not supported.
-            </dd>
-          </div>
-          <div>
-            <dt>Architecture</dt>
-            <dd>
-              x86_64 Linux and WSL guests; Apple Silicon on macOS. Linux ARM64 and Intel macOS
-              releases are not published.
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      <section id="agents" class="docs-section">
-        <h2>Use docs with an agent</h2>
-        <p class="section-copy">
-          Give your agent the <a href="/llms.txt">documentation index</a> to find a page, or request its
-          Markdown directly.
-        </p>
-        <DocsCode code={`curl -H 'Accept: text/markdown' ${SITE_ORIGIN}/docs/environments/`} />
-        <p class="section-copy">
-          <a href="/docs/manifest.json">Get versioned sources and sections</a>,
-          <a href="/docs/search.json?q=env+check">search for env check as JSON</a>, or
-          <a href="/llms-full.txt">read the entire documentation set as text</a>.
-        </p>
-        <p class="section-copy">
-          Each search result includes a <code>markdownHref</code> for the matching part of the
-          guide.
-          <a href="/markdown/docs/environments/?section=detect-drift-without-repairing-it"
-            >Read the drift-check procedure as Markdown</a
-          >.
-        </p>
-      </section>
-      <section id="guides" class="docs-section reference-section">
-        <h2>Guides by task</h2>
-        <p class="section-copy">
-          Browse <a href="/runtimes/">runtime setup guides</a> or learn to
-          <a href="/guides/node-npm-pnpm/">use Node.js, npm, and pnpm together</a>.
-        </p>
-        <ul class="reference-list">
-          {#each data.documentationNavigation.filter(entry => entry.section !== 'Reference') as entry (entry.href)}
-            <li>
-              <a href={entry.href}
-                ><span class="reference-label">{entry.label}</span><span class="reference-summary"
-                  >{entry.title}</span
-                ></a
-              >
-            </li>
-          {/each}
-        </ul>
-      </section>
-      <section id="reference" class="docs-section reference-section">
-        <h2>Handbook</h2>
-        <p class="section-copy">
-          Eight concise topics answer common tasks on this site. Each topic links to its pinned
-          upstream reference. The pages were checked against the CLI code and documentation at that
-          commit. For the complete set of guides, including AUR builds, task detection, migration,
-          containers, and release operations, browse the <a
-            href={sourceDocsUrl}
-            target="_blank"
-            rel="noopener noreferrer">OMG source documentation</a
-          >.
-        </p>
-        <ul class="reference-list">
-          {#each DOCS_TOPICS as topic (topic.slug)}
-            <li>
-              <a href={docsTopicHref(topic.slug)}>
-                <span class="reference-label">{topic.navLabel}</span>
-                <span class="reference-summary">{topic.summary}</span>
-              </a>
-            </li>
-          {/each}
-        </ul>
-      </section>
-    </article>
-  </div>
-</main>
+    <section id="agents" class="docs-section">
+      <h2>Use docs with an agent</h2>
+      <p class="section-copy">
+        Add this URL to your client's MCP settings and choose Streamable HTTP. Ask it to find the
+        environment drift procedure or read a specific section. Public documentation is available
+        without an API key.
+      </p>
+      <DocsCode code={`${docsOrigin}/mcp`} />
+      <p class="section-copy">
+        Give your agent the <a href="/llms.txt">documentation index</a> to find a page, or request its
+        Markdown directly.
+      </p>
+      <DocsCode code={`curl -H 'Accept: text/markdown' ${docsOrigin}/docs/environments/`} />
+      <p class="section-copy">
+        <a href="/docs/manifest.json">Get versioned sources and sections</a>,
+        <a href="/docs/search.json?q=env+check">search for env check as JSON</a>, or
+        <a href="/llms-full.txt">read the entire documentation set as text</a>.
+      </p>
+      <p class="section-copy">
+        Each search result includes a <code>markdownHref</code> for the matching part of the guide.
+        <a href="/markdown/docs/environments/?section=detect-drift-without-repairing-it"
+          >Read the drift-check procedure as Markdown</a
+        >.
+      </p>
+    </section>
+    <section id="guides" class="docs-section reference-section">
+      <h2>Guides by task</h2>
+      <p class="section-copy">
+        Browse <a href="/runtimes/">runtime setup guides</a> or learn to
+        <a href="/guides/node-npm-pnpm/">use Node.js, npm, and pnpm together</a>.
+      </p>
+      <ul class="reference-list">
+        {#each data.documentationNavigation.filter(entry => entry.section === 'Start here' || entry.section === 'Guides') as entry (entry.href)}
+          <li>
+            <a href={entry.href}
+              ><span class="reference-label">{entry.label}</span
+              >{#if entry.label !== entry.title}<span class="reference-summary">{entry.title}</span
+                >{/if}</a
+            >
+          </li>
+        {/each}
+      </ul>
+    </section>
+    <section id="reference" class="docs-section reference-section">
+      <h2>Handbook</h2>
+      <p class="section-copy">
+        Eight concise topics answer common tasks on this site. Each topic links to its pinned
+        upstream reference. The pages were checked against the CLI code and documentation at that
+        commit. For the complete set of guides, including AUR builds, task detection, migration,
+        containers, and release operations, browse the <a
+          href={sourceDocsUrl}
+          target="_blank"
+          rel="noopener noreferrer">OMG source documentation</a
+        >.
+      </p>
+      <ul class="reference-list">
+        {#each DOCS_TOPICS as topic (topic.slug)}
+          <li>
+            <a href={docsTopicHref(topic.slug)}>
+              <span class="reference-label">{topic.navLabel}</span>
+              <span class="reference-summary">{topic.summary}</span>
+            </a>
+          </li>
+        {/each}
+      </ul>
+    </section>
+  </article>
+</DocsReader>
 
 <style>
-  .docs-shell {
-    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
-    margin-inline: auto;
-  }
-
   .docs-hero {
     display: grid;
     align-items: end;
     gap: 1.25rem 2.5rem;
-    padding: clamp(1.5rem, 4vw, 3rem) 0 1rem;
-    border-bottom: 1px solid var(--rule-strong);
+    padding-block: 0.25rem 0;
   }
 
   .docs-hero h1 {
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(1.875rem, 4.25vw, 3.25rem);
+    font-size: var(--page-title);
     font-weight: 650;
     letter-spacing: -0.035em;
     line-height: 1.1;
@@ -282,53 +267,9 @@
     text-decoration-color: currentColor;
   }
 
-  .docs-layout {
-    display: grid;
-    min-width: 0;
-  }
-
-  .docs-aside {
-    border-bottom: 1px solid var(--rule);
-  }
-
-  .mobile-index summary {
-    min-height: 2.75rem;
-    padding-block: 0.75rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .desktop-index {
-    display: none;
-  }
-
-  .section-nav a {
-    font-family: var(--font-body);
-  }
-
-  .section-nav ul,
   .reference-list {
-    margin: 0;
     padding: 0;
     list-style: none;
-  }
-
-  .section-nav ul {
-    display: grid;
-    gap: 0.0625rem;
-  }
-
-  .section-nav a {
-    display: block;
-    padding-block: 0.7rem;
-    color: var(--ink-muted);
-    font-size: 0.8125rem;
-    text-decoration: none;
-  }
-
-  .section-nav a:hover {
-    color: var(--signal);
   }
 
   article {
@@ -336,7 +277,7 @@
   }
 
   .docs-section {
-    padding-block: clamp(2rem, 5vw, 3rem);
+    padding-block: clamp(1.5rem, 3vw, 2.5rem);
     border-bottom: 1px solid var(--rule);
     scroll-margin-top: 2rem;
   }
@@ -344,10 +285,10 @@
   .docs-section h2 {
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(2.25rem, 5vw, 2.5rem);
+    font-size: clamp(1.5rem, 3vw, 2rem);
     font-weight: 650;
     letter-spacing: -0.035em;
-    line-height: 1;
+    line-height: 1.2;
     text-wrap: balance;
   }
 
@@ -459,10 +400,6 @@
   }
 
   @media (min-width: 40rem) {
-    .docs-hero {
-      grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
-    }
-
     .task-links {
       display: flex;
       flex-wrap: wrap;
@@ -490,32 +427,7 @@
     }
   }
 
-  @media (min-width: 64rem) {
-    .mobile-index {
-      display: none;
-    }
-
-    .desktop-index {
-      display: block;
-    }
-
-    .docs-section {
-      padding-inline: 3rem;
-    }
-
-    .docs-layout {
-      grid-template-columns: 16rem minmax(0, 1fr);
-    }
-
-    .docs-aside {
-      padding: 2rem;
-      border-right: 1px solid var(--rule);
-      border-bottom: 0;
-    }
-
-    .section-nav {
-      position: sticky;
-      top: 2rem;
-    }
+  article :global(.page-outline) {
+    margin-bottom: 0;
   }
 </style>

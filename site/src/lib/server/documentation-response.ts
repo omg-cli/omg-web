@@ -32,17 +32,19 @@ export async function documentationResponse(
 ): Promise<Response> {
   if (request.method !== 'GET' && request.method !== 'HEAD') return original();
   const url = new URL(request.url);
-  const alias = url.pathname.endsWith('.md');
+  const alias = /\.md\/?$/u.test(url.pathname);
   const raw = url.pathname.startsWith('/markdown/');
   const path = raw
     ? url.pathname.slice('/markdown'.length)
     : alias
-      ? url.pathname.replace(/(?:\/index)?\.md$/u, '/')
+      ? url.pathname.replace(/(?:\/index)?\.md\/?$/u, '/')
       : url.pathname;
   if (!documents.has(path) || (raw && path === '/docs/')) return original();
   const exportUrl = new URL(path === '/docs/' ? '/llms.txt' : `/markdown${path}`, url);
   const section = path === '/docs/' ? null : url.searchParams.get('section');
   if (section !== null) exportUrl.searchParams.set('section', section);
+  else if (path !== '/docs/' && url.searchParams.has('sections'))
+    exportUrl.searchParams.set('sections', '');
   const alternate = path === '/docs/' ? '/docs/index.md' : exportUrl.pathname + exportUrl.search;
   const negotiated = !raw && !alias && prefersMarkdown(request.headers.get('Accept') ?? '');
   const response =

@@ -6,12 +6,12 @@ describe('section Markdown exports', () => {
   it('resolves every catalog section by its public ID and leaves whole-page text unchanged', async () => {
     const entries = await documentationEntries();
     for (const entry of entries) {
-      expect(await markdownExport(entry, null).text()).toBe(entry.markdown);
+      expect(await markdownExport(entry, new URLSearchParams()).text()).toBe(entry.markdown);
       for (const section of entry.sections) {
         const href = `${entry.href}#${section.id}`;
         const markdownHref = markdownResultHref(entries, href);
         expect(markdownHref).toBe(`https://getomg.dev${entry.markdownHref}?section=${section.id}`);
-        const response = markdownExport(entry, section.id);
+        const response = markdownExport(entry, new URLSearchParams({ section: section.id }));
         const body = await response.text();
         expect(response.status).toBe(200);
         expect(body).toContain(`Canonical: https://getomg.dev${href}`);
@@ -20,8 +20,10 @@ describe('section Markdown exports', () => {
         expect(body).toContain(entry.release ?? 'not pinned for this guide');
         expect(body).toContain(entry.sources[0]?.href);
       }
-      expect(markdownExport(entry, 'does-not-exist').status).toBe(404);
-      expect(markdownExport(entry, '').status).toBe(404);
+      expect(markdownExport(entry, new URLSearchParams({ section: 'does-not-exist' })).status).toBe(
+        404
+      );
+      expect(markdownExport(entry, new URLSearchParams({ section: '' })).status).toBe(404);
       expect(markdownResultHref(entries, `${entry.href}#does-not-exist`)).toBeUndefined();
     }
   });
@@ -44,10 +46,16 @@ describe('section Markdown exports', () => {
       ],
       markdown: `# The manual\n\n${first}\n\n${second}\n\n## Sources\n\nTrailing metadata`,
     };
-    const preview = await markdownExport(fixture, 'preview').text();
+    const preview = await markdownExport(
+      fixture,
+      new URLSearchParams({ section: 'preview' })
+    ).text();
     expect(preview).toContain(first);
     expect(preview).not.toContain('Second install section');
-    const confirm = await markdownExport(fixture, 'confirm').text();
+    const confirm = await markdownExport(
+      fixture,
+      new URLSearchParams({ section: 'confirm' })
+    ).text();
     expect(confirm).toContain(second);
     expect(confirm).toContain('](https://getomg.dev/docs/cli/)');
     expect(confirm).not.toContain('Preview');

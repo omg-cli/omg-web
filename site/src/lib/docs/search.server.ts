@@ -87,7 +87,12 @@ export function createDocumentationSearch(entries: readonly DocumentationEntry[]
     });
     if (/\s|^--/u.test(phrase)) {
       matches.sort(
-        (a, b) => Number(b.leads) - Number(a.leads) || Number(b.exact) - Number(a.exact)
+        (a, b) =>
+          Number(b.leads) - Number(a.leads) ||
+          Number(b.exact) - Number(a.exact) ||
+          (a.leads && b.leads
+            ? Number(b.document.category === 'Guides') - Number(a.document.category === 'Guides')
+            : 0)
       );
     }
     const results = matches.slice(0, 20).map(({ document, position }) => {

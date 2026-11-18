@@ -75,7 +75,7 @@
       <h1>{topic.title}</h1>
       <p class="topic-summary">{topic.summary}</p>
       <p class="applicability">
-        Release v0.1.224 Â· Reviewed <time datetime={topic.source.reviewedAt}
+        Release v0.1.224 &middot; Reviewed <time datetime={topic.source.reviewedAt}
           >{topic.source.reviewedAt}</time
         >
       </p>
@@ -136,7 +136,7 @@
   }
   h1 {
     margin: 0;
-    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-size: var(--page-title);
     font-weight: 680;
     letter-spacing: -0.035em;
     line-height: 1.1;

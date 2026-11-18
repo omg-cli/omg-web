@@ -2,7 +2,7 @@
   let { code }: { code: string } = $props();
 </script>
 
-<div class="docs-code" data-copy-container>
+<div class="docs-code" class:single-command={!code.includes('\n')} data-copy-container>
   <div class="code-actions">
     <span data-copy-status role="status"></span>
     <button type="button" data-copy-code>Copy code</button>

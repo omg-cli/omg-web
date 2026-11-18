@@ -46,7 +46,13 @@
       <summary>Menu</summary>
       <ul>
         {#each links as link (link.href)}
-          <li><a href={link.href} onclick={closeMenu}>{link.label}</a></li>
+          <li>
+            <a
+              href={link.href}
+              aria-current={page.url.pathname.startsWith(link.href) ? 'page' : undefined}
+              onclick={closeMenu}>{link.label}</a
+            >
+          </li>
         {/each}
         <li><a href="/compare/" onclick={closeMenu}>Comparisons</a></li>
         <li><a href="/dashboard/" onclick={closeMenu}>Account</a></li>
@@ -74,7 +80,7 @@
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
+    width: var(--site-width);
     min-height: 4.5rem;
     margin: 0 auto;
     gap: 2.5rem;
@@ -114,6 +120,11 @@
   .account-link:hover,
   .primary-links a[aria-current='page'] {
     color: var(--signal);
+  }
+  .primary-links a[aria-current],
+  .mobile-menu a[aria-current] {
+    text-decoration: underline;
+    text-underline-offset: 0.45em;
   }
   .account-actions {
     display: flex;

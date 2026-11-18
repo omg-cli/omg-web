@@ -41,7 +41,7 @@
       <h1>{metadata.title}</h1>
       <p class="description">{metadata.description}</p>
       <p class="applicability">
-        Release {metadata.release} Â· Reviewed
+        Release {metadata.release} &middot; Reviewed
         <time datetime={metadata.source.reviewedAt}>{metadata.source.reviewedAt}</time>
       </p>
       <DocActions markdownHref={`/markdown${path}`} {sourceHref} />
@@ -76,7 +76,7 @@
   }
   h1 {
     margin: 0;
-    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-size: var(--page-title);
     line-height: 1.1;
     font-weight: 680;
     letter-spacing: -0.035em;

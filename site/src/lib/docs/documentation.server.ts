@@ -153,7 +153,7 @@ export function documentationNavigation() {
     })),
     ...LEARNING_PAGES.filter(page => page.category === 'runtimes').map(page => ({
       href: learningHref(page),
-      label: page.title.replace(/^Manage /u, '').replace(/ versions with OMG$/u, ''),
+      label: page.navLabel,
       title: page.title,
       section: 'Runtimes',
     })),

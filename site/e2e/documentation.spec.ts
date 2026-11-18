@@ -76,6 +76,46 @@ test('every manifest page has matching readable HTML, Markdown and section ancho
   expect(manifest.pages.every(entry => !/\/(admin|dashboard|api)\//u.test(entry.href))).toBe(true);
 });
 
+test('the docs MCP client can initialize and follow a curated section permalink', async ({
+  request,
+}) => {
+  const headers = { accept: 'application/json, text/event-stream' };
+  const init = await request.post('/mcp', {
+    headers,
+    data: {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-11-25',
+        capabilities: {},
+        clientInfo: { name: 'omg-docs-test', version: '1' },
+      },
+    },
+  });
+  expect(init.status()).toBe(200);
+  expect(await init.text()).toContain('"name":"OMG documentation"');
+  const path = '/guides/reproducible-dev-environments/';
+  const section = 'capture-and-check';
+  const result = await request.post('/mcp', {
+    headers,
+    data: {
+      jsonrpc: '2.0',
+      id: 2,
+      method: 'tools/call',
+      params: { name: 'read_page', arguments: { path, section } },
+    },
+  });
+  expect(result.status()).toBe(200);
+  expect(await result.text()).toContain('omg env check');
+  const alias = path.slice(0, -1) + '.md';
+  const index = await request.get(alias + '?sections');
+  expect(index.headers()['content-type']).toContain('application/json');
+  expect(await index.text()).toContain(alias + '?section=' + section);
+  const passage = await request.get(alias + '?section=' + section);
+  expect(await passage.text()).toContain(path + '#' + section);
+});
+
 test('search returns useful section URLs, bounds inputs and preserves private cache policy', async ({
   request,
 }) => {
@@ -168,6 +208,9 @@ test('the docs index copies prompt-free examples and exposes agent resources wit
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto('/docs/');
   const firstGroup = page.locator('#quick-start .docs-code').first();
+  await expect(page.locator('#agents pre code').first()).toHaveText(
+    new URL('/mcp', page.url()).href
+  );
   await firstGroup.getByRole('button', { name: 'Copy code' }).click();
   await expect(firstGroup.getByRole('status')).toHaveText('Code copied.');
   expect((await page.evaluate(() => navigator.clipboard.readText())).replaceAll('\r\n', '\n')).toBe(
@@ -193,8 +236,12 @@ test('the docs index copies prompt-free examples and exposes agent resources wit
   ).toBe(true);
   await expect(reader.locator('#install button')).toBeHidden();
   const agents = reader.locator('#agents');
-  await expect(agents.locator('pre code')).toHaveText(
-    "curl -H 'Accept: text/markdown' https://getomg.dev/docs/environments/"
+  // The prerendered page carries its public origin. A development render uses the request origin.
+  const endpoint = new URL(await agents.locator('pre code').first().innerText());
+  expect(['https://getomg.dev', new URL(reader.url()).origin]).toContain(endpoint.origin);
+  expect(endpoint.pathname).toBe('/mcp');
+  await expect(agents.locator('pre code').nth(1)).toHaveText(
+    `curl -H 'Accept: text/markdown' ${endpoint.origin}/docs/environments/`
   );
   for (const href of [
     '/llms.txt',

@@ -10,6 +10,7 @@ export type TerminalPrompt =
 export interface TerminalOutput {
   text: string;
   prompt?: TerminalPrompt;
+  nextCommand?: string;
   frames?: readonly { text: string; duration: number }[];
 }
 
@@ -64,7 +65,7 @@ export class TerminalSession {
         return { text: `omg ${recording.release}` };
       case 'node -v':
       case 'node --version':
-        return { text: `v${this.#current.node}` };
+        return { text: `v${this.#current.node}`, nextCommand: 'omg env check' };
       case 'omg env capture': {
         const mask =
           Number(this.#current.explicit.has('ripgrep')) +
@@ -73,6 +74,7 @@ export class TerminalSession {
         if (!hash) throw new Error('Missing recorded environment fingerprint');
         this.#lock = this.#current;
         return {
+          nextCommand: 'omg env check',
           text: recording.environment.capture
             .replace('{hash}', hash)
             .replace(
@@ -81,8 +83,13 @@ export class TerminalSession {
             ),
         };
       }
-      case 'omg env check':
-        return { text: this.#checkEnvironment() };
+      case 'omg env check': {
+        const text = this.#checkEnvironment();
+        return {
+          text,
+          nextCommand: text === recording.environment.sync ? 'omg use node 22' : 'omg env capture',
+        };
+      }
     }
 
     const [program, verb, arg, ...options] = command.split(' ');
@@ -96,7 +103,7 @@ export class TerminalSession {
           };
       }
       if (verb === 'info' && !options.length && information.has(arg))
-        return { text: this.#info(arg) };
+        return { text: this.#info(arg), nextCommand: 'omg env check' };
       const pkg = packages.find(name => name === arg);
       if ((verb === 'install' || verb === 'i') && pkg && !options.length) {
         const tip = this.#showTip ? recording.confirmation.tip + '\n\n' : '';
@@ -115,6 +122,7 @@ export class TerminalSession {
           this.#current = { ...this.#current, node: version.version };
           return {
             text: cached ? version.cached : version.first,
+            nextCommand: 'node --version',
             frames: cached ? [] : version.frames,
           };
         }
@@ -133,6 +141,7 @@ export class TerminalSession {
     const lead = prompt.tip + recording.confirmation.yes + '\n\n';
     return {
       text: lead + (cached ? transaction.repeat : transaction.first),
+      nextCommand: `omg info ${pkg}`,
       frames: cached
         ? []
         : transaction.frames.map(frame => ({ ...frame, text: lead + frame.text })),

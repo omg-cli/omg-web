@@ -1,6 +1,7 @@
+import { buildDocsMarkdownSectionIndex } from '@farming-labs/docs';
 import { SITE_ORIGIN } from '../../../../shared/public-site';
 import { agentResponse, type DocumentationEntry } from './documentation.server';
-import { markdownSections } from './headings';
+import { markdownSections, mcpMarkdown } from './headings';
 
 // The rendered H2 order and public IDs come from the catalog. Parsing the export
 // preserves the original Markdown, including code fences, tables and subheadings.
@@ -21,7 +22,16 @@ function sectionsFor(entry: DocumentationEntry): ReadonlyMap<string, string> {
   return sections;
 }
 
-export function markdownExport(entry: DocumentationEntry, sectionId: string | null): Response {
+export function markdownExport(entry: DocumentationEntry, params: URLSearchParams): Response {
+  const sectionId = params.get('section');
+  if (sectionId === null && params.has('sections')) {
+    const canonicalUrl = new URL(entry.href, SITE_ORIGIN).href;
+    const index = buildDocsMarkdownSectionIndex(mcpMarkdown(entry.markdown, entry.sections), {
+      canonicalUrl,
+      markdownUrl: canonicalUrl.slice(0, -1) + '.md',
+    });
+    return agentResponse(JSON.stringify(index), 'application/json; charset=utf-8');
+  }
   if (sectionId === null) return agentResponse(entry.markdown);
   const body = sectionsFor(entry).get(sectionId);
   if (body === undefined)

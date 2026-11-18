@@ -4,6 +4,7 @@ export interface LearningPageMeta {
   readonly slug: string;
   readonly category: LearningCategory;
   readonly title: string;
+  readonly navLabel?: string;
   readonly description: string;
   /** Date the authored page content changed, not the deployment date. */
   readonly modified: string;
@@ -31,6 +32,7 @@ export const LEARNING_PAGES = [
   {
     category: 'runtimes',
     slug: 'node',
+    navLabel: 'Node.js',
     title: 'Manage Node.js versions with OMG',
     description:
       'Install Node.js in pure Rust without external subprocesses, verify official SHA-256 digests, switch project versions with .node-version or .nvmrc, and diagnose PATH conflicts.',
@@ -39,6 +41,7 @@ export const LEARNING_PAGES = [
   {
     category: 'runtimes',
     slug: 'bun',
+    navLabel: 'Bun',
     title: 'Install and switch Bun versions',
     description:
       'Manage Bun versions with OMG, use .bun-version for a project, verify GitHub release checksums, and separate runtime management from Bun package dependencies.',
@@ -47,6 +50,7 @@ export const LEARNING_PAGES = [
   {
     category: 'runtimes',
     slug: 'python',
+    navLabel: 'Python',
     title: 'Manage Python versions and virtual environments',
     description:
       'Download precompiled standalone CPython with SHA-256 validation, detect pyproject.toml and .python-version pins, and isolate dependencies in virtual environments.',
@@ -55,6 +59,7 @@ export const LEARNING_PAGES = [
   {
     category: 'runtimes',
     slug: 'go',
+    navLabel: 'Go',
     title: 'Manage Go versions with OMG',
     description:
       'Install Go, switch project versions with go.mod or .go-version, understand GOROOT and GOPATH tools, and verify toolchains on Linux, macOS, and WSL.',
@@ -63,6 +68,7 @@ export const LEARNING_PAGES = [
   {
     category: 'runtimes',
     slug: 'rust',
+    navLabel: 'Rust',
     title: 'Manage Rust toolchains with OMG',
     description:
       'Install Rust, switch between stable and nightly toolchains, use rust-toolchain.toml, and manage Cargo binaries alongside system packages.',

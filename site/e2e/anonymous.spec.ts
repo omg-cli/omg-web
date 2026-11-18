@@ -178,7 +178,7 @@ test.describe('Svelte public surfaces', () => {
     await page.getByRole('link', { name: 'Browse project updates.' }).click();
     await expect(page).toHaveURL(/\/updates\/$/);
     await page.waitForLoadState('load');
-    await expect(page.getByRole('heading', { name: 'What changed.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Release notes', exact: true })).toBeVisible();
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       'href',
       `${SITE_ORIGIN}/updates/`
@@ -297,7 +297,7 @@ test.describe('Svelte public surfaces', () => {
       'troubleshooting',
       'architecture',
     ]) {
-      await expect(page.locator(`a[href="/docs/${topicSlug}/"]`).first()).toBeVisible();
+      await expect(page.locator(`#reference a[href="/docs/${topicSlug}/"]`)).toBeVisible();
     }
     await expect(page.getByRole('link', { name: /CLI reference/ })).toHaveAttribute(
       'href',

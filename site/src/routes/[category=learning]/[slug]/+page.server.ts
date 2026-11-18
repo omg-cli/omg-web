@@ -1,4 +1,5 @@
 import { error } from '@sveltejs/kit';
+import { documentationNavigation } from '../../../lib/docs/documentation.server';
 import { LEARNING_PAGES } from '../../../lib/learn/catalog';
 import { loadLearningPage } from '../../../lib/learn/content.server';
 import type { EntryGenerator, PageServerLoad } from './$types';
@@ -10,5 +11,5 @@ export const entries: EntryGenerator = () =>
 export const load: PageServerLoad = async ({ params }) => {
   const page = await loadLearningPage(params.category, params.slug);
   if (!page) error(404, 'Guide not found');
-  return page;
+  return { ...page, documentationNavigation: documentationNavigation() };
 };

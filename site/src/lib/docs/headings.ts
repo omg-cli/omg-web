@@ -50,6 +50,31 @@ export function assignHeadingIds(tree: Root): DocumentationHeading[] {
 
 const parser = unified().use(remarkParse);
 
+/** Publish the same section anchors in MCP search that the HTML reader uses. */
+export function mcpMarkdown(markdown: string, sections: readonly { id: string; title: string }[]) {
+  const parts: string[] = [];
+  let cursor = 0;
+  let sectionIndex = 0;
+  for (const node of parser.parse(markdown).children) {
+    if (node.type !== 'heading' || !node.position) continue;
+    const start = node.position.start.offset;
+    const end = node.position.end.offset;
+    if (start === undefined || end === undefined) continue;
+    const title = text(node);
+    const section = sections[sectionIndex];
+    parts.push(markdown.slice(cursor, start));
+    if (node.depth === 2 && section?.title === title) {
+      parts.push(`## ${title} [#${section.id}]`);
+      sectionIndex++;
+    } else {
+      // Subheadings and export-only source notes have no catalog permalink.
+      parts.push(`**${title}**`);
+    }
+    cursor = end;
+  }
+  return parts.join('') + markdown.slice(cursor);
+}
+
 export function markdownHeadings(markdown: string): DocumentationHeading[] {
   return assignHeadingIds(parser.parse(markdown));
 }

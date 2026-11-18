@@ -11,6 +11,8 @@
   import { LatestReleaseView } from '../../latest-release.svelte';
   import DocsBlocks from '../docs/DocsBlocks.svelte';
   import SeoHead from '../SeoHead.svelte';
+  import DocsReader from '../docs/DocsReader.svelte';
+  import DocsOutline from '../docs/DocsOutline.svelte';
   import DocActions from '../docs/DocActions.svelte';
 
   let { meta, content }: { meta: LearningPageMeta; content: LearningContent } = $props();
@@ -65,8 +67,6 @@
   );
 </script>
 
-<svelte:head><script src="/docs.js" defer></script></svelte:head>
-
 <SeoHead
   title={`${meta.title} - OMG`}
   description={meta.description}
@@ -76,44 +76,36 @@
   {structuredData}
   markdownPath={`/markdown/${meta.category}/${meta.slug}/`}
 />
-<main id="main-content" class="learning-article" data-doc-content>
-  <nav aria-label="Breadcrumb">
-    <a href="/">Home</a><span aria-hidden="true"> / </span><a href={`/${meta.category}/`}
-      >{section.title}</a
-    >
-  </nav>
-  <header>
-    <h1>{meta.title}</h1>
-    <p class="summary">{meta.description}</p>
-    <p class="byline">
-      OMG maintainers · Updated <time datetime={meta.modified}>{meta.modified}</time> · Source-reviewed
-      guide
-    </p>
-    <DocActions markdownHref={`/markdown/${meta.category}/${meta.slug}/`} />
-    {#if meta.slug === 'omg-vs-mise' && latestRelease.version}
+<DocsReader>
+  <div class="learning-article" data-doc-content>
+    <nav aria-label="Breadcrumb">
+      <a href="/">Home</a><span aria-hidden="true"> / </span><a href={`/${meta.category}/`}
+        >{section.title}</a
+      >
+    </nav>
+    <header>
+      <h1>{meta.title}</h1>
+      <p class="summary">{meta.description}</p>
       <p class="byline">
-        Current download: {latestRelease.version} ·
-        <a href="https://releases.omg.latham.cloud/latest-version">Cloudflare release marker</a>
+        OMG maintainers · Updated <time datetime={meta.modified}>{meta.modified}</time> · Source-reviewed
+        guide
       </p>
-    {/if}
-  </header>
-  <div class="article-layout">
-    <aside>
-      <nav aria-label="On this page">
-        <p>On this page</p>
-        <ul>
-          {#each content.sections as entry (entry.id)}<li>
-              <a href={`#${entry.id}`}>{entry.heading}</a>
-            </li>{/each}
-        </ul>
-        <a href="/docs/installation/">Install OMG</a>
-      </nav>
-    </aside>
+      <DocActions markdownHref={`/markdown/${meta.category}/${meta.slug}/`} />
+      {#if meta.slug === 'omg-vs-mise' && latestRelease.version}
+        <p class="byline">
+          Current download: {latestRelease.version} ·
+          <a href="https://releases.omg.latham.cloud/latest-version">Cloudflare release marker</a>
+        </p>
+      {/if}
+    </header>
+    <DocsOutline
+      headings={content.sections.map(entry => ({ id: entry.id, title: entry.heading }))}
+    />
     <article>
       {#each content.sections as entry (entry.id)}
         <section id={entry.id}>
           <h2>{entry.heading}</h2>
-          {#each entry.blocks as block}<DocsBlocks {block} />{/each}
+          {#each entry.blocks as block (block)}<DocsBlocks {block} />{/each}
         </section>
       {/each}
       <section id="sources">
@@ -127,7 +119,7 @@
               <a href={source.href}>{source.title}</a>
             </li>{/each}
         </ul>
-        <a href={`/markdown/${meta.category}/${meta.slug}/`}>Read as Markdown</a>
+        <a href="/docs/installation/">Install OMG</a>
       </section>
       <nav class="related" aria-label="Related guides">
         <h2>Continue learning</h2>
@@ -139,13 +131,11 @@
       </nav>
     </article>
   </div>
-</main>
+</DocsReader>
 
 <style>
   .learning-article {
-    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
-    margin-inline: auto;
-    padding-block: clamp(2rem, 6vw, 5rem);
+    min-width: 0;
   }
   header {
     padding-block: 1rem 2rem;
@@ -153,7 +143,7 @@
   }
   h1 {
     max-width: 22ch;
-    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+    font-size: var(--page-title);
     line-height: 1.08;
     letter-spacing: -0.035em;
     overflow-wrap: anywhere;
@@ -168,26 +158,6 @@
     color: var(--ink-muted);
     font-size: 0.75rem;
     line-height: 1.8;
-  }
-  .article-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2rem;
-    padding-block: 2rem;
-  }
-  aside {
-    font-size: 0.9rem;
-  }
-  aside nav {
-    position: sticky;
-    top: 1.5rem;
-  }
-  aside ul {
-    padding-left: 1rem;
-  }
-  aside a {
-    display: inline-block;
-    padding-block: 0.65rem;
   }
   article {
     max-width: 48rem;
@@ -220,11 +190,5 @@
   }
   .related h2 {
     margin-top: 0;
-  }
-  @media (min-width: 64rem) {
-    .article-layout {
-      grid-template-columns: 15rem minmax(0, 1fr);
-      gap: 3rem;
-    }
   }
 </style>

@@ -16,6 +16,7 @@ export const GET: RequestHandler = async () => {
       'npm, pnpm, and Bun retain ownership of JavaScript dependency installation and lockfiles. Environment capture and drift checks are available on Arch, Debian, and Ubuntu and do not capture application dependency graphs or system package versions.',
       '',
       '## Machine-readable entry points',
+      `- [Documentation MCP server](${SITE_ORIGIN}/mcp): Connect with Streamable HTTP to search public guides and read individual sections or code examples.`,
       'Request a guide URL with Accept: text/markdown, use its Markdown link, or append .md to its slug. For a specific section, use the Markdown URL in its JSON search result. The documentation index is also available at /docs/index.md.',
       `- [Documentation manifest](${SITE_ORIGIN}/docs/manifest.json): Page URLs, Markdown URLs, release scope, dates, sources, and section anchors.`,
       `- [Complete documentation](${SITE_ORIGIN}/llms-full.txt): Full text of all published handbook and guide pages.`,

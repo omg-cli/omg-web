@@ -12,5 +12,5 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const entries = await documentationEntries();
   const entry = entries.find(item => item.href === `/${params.category}/${params.slug}/`);
   if (entry === undefined) error(404, 'Guide not found');
-  return markdownExport(entry, url.searchParams.get('section'));
+  return markdownExport(entry, url.searchParams);
 };

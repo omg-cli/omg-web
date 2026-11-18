@@ -19,6 +19,11 @@
     'omg search ripgrep --no-aur',
     'omg search ripgrep-all',
     'omg use node 20',
+    'omg use node 22',
+    'omg info ripgrep',
+    'omg info ripgrep-all',
+    'omg env check',
+    'omg env capture',
     'node --version',
     'omg --help',
     'clear',
@@ -31,6 +36,7 @@
   let command = $state('omg install ripgrep');
   let active = $state.raw<TerminalPrompt>();
   let selected = $state(0);
+  let nextCommand = $state('omg use node 22');
   let ready = $state(false);
   let busy = $state(false);
   let expanded = $state(false);
@@ -67,6 +73,7 @@
   function show(result: TerminalOutput) {
     clearTimeout(timer);
     active = result.prompt;
+    if (result.nextCommand) nextCommand = result.nextCommand;
     selected = 0;
     const frames = window.matchMedia('(prefers-reduced-motion: reduce)').matches
       ? []
@@ -99,6 +106,12 @@
     }
     entries = [...entries.slice(1 - limit), { command: submitted, text: '' }];
     show(session.run(submitted));
+  }
+
+  function runSuggestion(value: string, menu?: HTMLDetailsElement | null) {
+    if (menu) menu.open = false;
+    run(value);
+    if (!active) void tick().then(() => input?.focus({ preventScroll: true }));
   }
 
   function submit(event: SubmitEvent) {
@@ -261,16 +274,18 @@
   </div>
   {#if ready}
     <div class="suggestions" role="group" aria-label="Run a suggested command">
-      {#each ['omg env check', 'omg use node 22', 'omg env capture'] as suggestion (suggestion)}
-        <button type="button" disabled={!!active || busy} onclick={() => run(suggestion)}
-          >{suggestion}</button
-        >
-      {/each}
+      <span class="next-label">Try next</span>
+      <button type="button" disabled={!!active || busy} onclick={() => runSuggestion(nextCommand)}
+        >{nextCommand}</button
+      >
       <details>
         <summary>Commands</summary>
         <div class="command-list">
-          {#each suggestions as suggestion (suggestion)}
-            <button type="button" disabled={!!active || busy} onclick={() => run(suggestion)}
+          {#each suggestions.filter(item => item !== nextCommand) as suggestion (suggestion)}
+            <button
+              type="button"
+              disabled={!!active || busy}
+              onclick={event => runSuggestion(suggestion, event.currentTarget.closest('details'))}
               >{suggestion}</button
             >
           {/each}
@@ -327,6 +342,7 @@
     color: var(--terminal-accent);
   }
   .system,
+  .next-label,
   .suggestions summary {
     color: var(--terminal-muted);
     font-size: 0.8125rem;
@@ -460,6 +476,7 @@
   }
   form {
     display: grid;
+    width: min(100%, 52ch);
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.5rem;
@@ -491,12 +508,12 @@
     min-height: 2.75rem;
     border: 0;
     border-radius: 4px;
-    background: var(--terminal-ink);
+    background: var(--terminal-accent);
     color: var(--terminal-bg);
     font: 600 0.875rem var(--font-body);
   }
   form button:hover {
-    background: var(--terminal-accent);
+    background: #ffb49a;
   }
   .suggestions {
     gap: 0 1rem;

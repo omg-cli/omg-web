@@ -1,7 +1,6 @@
 <script lang="ts">
   import SeoHead from '../../../lib/components/SeoHead.svelte';
   import DocsReader from '../../../lib/components/docs/DocsReader.svelte';
-  import DocsSearchForm from '../../../lib/components/docs/DocsSearchForm.svelte';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
 </script>
@@ -12,11 +11,10 @@
   path="/docs/search/"
   robots="noindex, follow"
 />
-<DocsReader>
+<DocsReader query={data.query}>
   <section class="search-page">
     <h1>Search documentation</h1>
     <p class="intro">Find a command, option, or task across the handbook and guides.</p>
-    <DocsSearchForm query={data.query} />
     <p class="search-status" role="status">
       {data.message ||
         `${data.total} matching sections${data.total > 20 ? ' · Showing the first 20' : ''}`}
@@ -51,7 +49,7 @@
 <style>
   h1 {
     margin: 0;
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-size: var(--page-title);
     font-weight: 680;
     letter-spacing: -0.035em;
     line-height: 1.1;

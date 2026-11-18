@@ -7,7 +7,7 @@
   <h1 id="hero-title">One CLI for system packages and language runtimes.</h1>
   <HomeTerminal />
   <nav class="hero-actions" aria-label="Homepage introduction">
-    <a class="primary-link" href="#install">Install OMG <Icon name="down" size={17} /></a>
+    <a href="#install">Install OMG <Icon name="down" size={17} /></a>
     <a href="/docs/">Read the docs <Icon name="right" size={17} /></a>
   </nav>
 </section>
@@ -19,7 +19,7 @@
   h1 {
     max-width: 30ch;
     margin: 0 0 clamp(1.25rem, 2.5vw, 2rem);
-    font-size: clamp(2rem, 3.7vw, 3.4rem);
+    font-size: var(--page-title);
     font-weight: 720;
     letter-spacing: -0.035em;
     line-height: 1.08;
@@ -44,13 +44,29 @@
   .hero-actions a:hover {
     color: var(--signal);
   }
-  .hero-actions .primary-link {
-    padding: 0.65rem 1rem;
-    border-radius: 6px;
-    background: var(--signal);
-    color: var(--signal-ink);
-  }
-  .hero-actions .primary-link:hover {
-    background: var(--signal-hover);
+  @media (min-width: 64rem) {
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(16rem, 0.77fr) minmax(0, 1.23fr);
+      grid-template-rows: 1fr auto 1fr;
+      column-gap: clamp(2rem, 4vw, 4rem);
+      padding-block: clamp(3rem, 6vw, 6rem);
+      align-items: start;
+    }
+    h1 {
+      grid-column: 1;
+      grid-row: 2;
+      margin: 0;
+    }
+    .hero :global(.command-workbench) {
+      grid-column: 2;
+      grid-row: 1 / 4;
+      align-self: center;
+    }
+    .hero-actions {
+      grid-column: 1;
+      grid-row: 3;
+      align-self: start;
+    }
   }
 </style>

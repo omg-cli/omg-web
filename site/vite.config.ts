@@ -35,8 +35,11 @@ export default defineConfig({
             lang,
             themes: { light: 'github-light', dark: 'github-dark' },
           });
+          const className = code.trimEnd().includes('\n')
+            ? 'docs-code'
+            : 'docs-code single-command';
           return (
-            '<div class="docs-code" data-copy-container><div class="code-actions"><span data-copy-status role="status"></span><button type="button" data-copy-code>Copy code</button></div>' +
+            `<div class="${className}" data-copy-container><div class="code-actions"><span data-copy-status role="status"></span><button type="button" data-copy-code>Copy code</button></div>` +
             html.replaceAll('{', '&#123;').replaceAll('}', '&#125;') +
             '</div>'
           );

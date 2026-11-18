@@ -11,6 +11,7 @@ export const GET: RequestHandler = async () => {
         schemaVersion: 1,
         origin: SITE_ORIGIN,
         releaseBaseline: 'v0.1.224',
+        mcp: `${SITE_ORIGIN}/mcp`,
         verification:
           'Source-reviewed. Published release behavior is distinguished from development changes. Examples were not executed on every supported host.',
         search: `${SITE_ORIGIN}/docs/search.json?q={query}`,

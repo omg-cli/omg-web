@@ -58,6 +58,8 @@ describe('documentation search', () => {
       ).toBe(false);
     }
     const node = await searchDocumentation('omg use node 22');
+    const packages = await searchDocumentation('omg search ripgrep');
+    expect(packages.results[0]?.href).toBe('/docs/packages/#find-a-package-and-its-source');
     expect(node.results[0]?.href).toMatch(/^\/docs\/(getting-started|shell)\/#/u);
     expect(node.results[0]?.excerpt).toContain('omg use node 22');
   });

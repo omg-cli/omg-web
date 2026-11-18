@@ -110,7 +110,7 @@
 </script>
 
 <SeoHead
-  title="Security, in the open — OMG"
+  title="Security updates — OMG"
   description="Follow OMG security improvements as they land. Repository commit history, installation protections and verifiable changes across OMG and OMG-Web."
   path="/security/"
   {structuredData}
@@ -128,17 +128,15 @@
 <main id="main-content" class="security-shell">
   <header class="hero">
     <div>
-      <p class="eyebrow"><span class="signal-dot" aria-hidden="true"></span> OMG / security</p>
-      <h1>Security,<br /><span>in the open.</span></h1>
+      <h1>Security updates</h1>
       <p class="intro">
-        Safer installation defaults, with fewer security settings to assemble yourself. Follow the
-        protections and the code behind them.
+        See how OMG verifies packages, limits what runs during installation, and records changes.
       </p>
-      <a class="hero-link" href="#updates">Explore the updates <span aria-hidden="true">↓</span></a>
+      <a class="hero-link" href="#updates">View recent commits <span aria-hidden="true">↓</span></a>
     </div>
     <aside class="activity" aria-label="Security commit activity">
       <div class="activity-heading">
-        <span>Always improving</span><span class="mono">28 days</span>
+        <span>Security commits</span><span class="mono">28 days</span>
       </div>
       <div class="activity-grid" aria-label="Daily security commits over the last 28 days">
         {#each activity as day (day.day)}
@@ -160,24 +158,24 @@
 
   <section class="principles" aria-label="Security priorities">
     <article>
-      <span class="index">01 / BEFORE INSTALL</span>
-      <h2>Check what comes in.</h2>
+      <span class="index">Before installation</span>
+      <h2>Package verification</h2>
       <p>
         Managed npm tool installs check signatures before activation. Python tool installs require
         wheels by default, keeping source-build execution an explicit exception.
       </p>
     </article>
     <article>
-      <span class="index">02 / DURING INSTALL</span>
-      <h2>Limit what runs.</h2>
+      <span class="index">During installation</span>
+      <h2>Build isolation</h2>
       <p>
         Managed installers use controlled configuration and Linux privilege restrictions. AUR builds
         use a separate Bubblewrap policy with a private home and no build network by default.
       </p>
     </article>
     <article>
-      <span class="index">03 / AFTER INSTALL</span>
-      <h2>Keep the evidence.</h2>
+      <span class="index">After installation</span>
+      <h2>Installation receipts</h2>
       <p>
         Managed-tool receipts record policy and executable hashes. Staged replacements and
         activation rollback help preserve a working tool when an update fails.
@@ -199,10 +197,7 @@
 
   <section id="updates" class="updates" aria-labelledby="updates-heading">
     <div class="section-heading">
-      <div>
-        <p class="eyebrow">The ongoing work</p>
-        <h2 id="updates-heading">A record you can read.</h2>
-      </div>
+      <h2 id="updates-heading">Recent commits</h2>
       <a href="https://github.com/omg-cli/omg/pull/399"
         >Release hardening PR <span aria-hidden="true">↗</span></a
       >
@@ -292,8 +287,7 @@
 
   <section class="reporting" aria-labelledby="reporting-heading">
     <div>
-      <p class="eyebrow">Keep the conversation open</p>
-      <h2 id="reporting-heading">Found something?<br />Tell us privately.</h2>
+      <h2 id="reporting-heading">Private security reports</h2>
     </div>
     <div>
       <p>
@@ -308,7 +302,7 @@
 
 <style>
   .security-shell {
-    width: min(calc(100% - 2rem), 80rem);
+    width: var(--site-width);
     margin-inline: auto;
   }
   .hero {
@@ -316,9 +310,8 @@
     grid-template-columns: 1.5fr 1fr;
     gap: 4rem;
     align-items: end;
-    padding-block: clamp(4rem, 8vw, 8rem);
+    padding-block: clamp(3rem, 6vw, 5rem);
   }
-  .eyebrow,
   .index,
   .mono,
   .entry-meta,
@@ -328,16 +321,6 @@
   .filters,
   .commit-link {
     font-family: var(--font-mono);
-  }
-  .eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    color: var(--signal);
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin: 0 0 1.75rem;
   }
   .signal-dot {
     display: inline-block;
@@ -351,17 +334,14 @@
     background: var(--ink-muted);
   }
   h1 {
-    font-size: clamp(4rem, 8.5vw, 7.5rem);
+    font-size: var(--page-title);
     font-weight: 650;
-    line-height: 0.94;
-    letter-spacing: -0.07em;
+    line-height: 1.05;
+    letter-spacing: -0.05em;
     margin: 0;
   }
-  h1 span {
-    color: var(--ink-muted);
-  }
   .intro {
-    max-width: 32ch;
+    max-width: 48ch;
     color: var(--ink-muted);
     font-size: 1.2rem;
     line-height: 1.7;
@@ -480,12 +460,9 @@
     gap: 2rem;
     margin-bottom: 2rem;
   }
-  .section-heading .eyebrow {
-    margin-bottom: 1rem;
-  }
   .section-heading h2,
   .reporting h2 {
-    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-size: clamp(1.65rem, 3vw, 2.35rem);
     line-height: 1.05;
     letter-spacing: -0.055em;
     font-weight: 550;
@@ -664,7 +641,7 @@
     padding: 3rem 0 5rem;
     border-top: 1px solid var(--rule);
   }
-  .reporting p:not(.eyebrow) {
+  .reporting p {
     color: var(--ink-muted);
     max-width: 45ch;
     line-height: 1.8;

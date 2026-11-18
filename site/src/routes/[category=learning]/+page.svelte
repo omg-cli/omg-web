@@ -95,13 +95,13 @@
 
 <style>
   .learning-index {
-    width: min(100% - clamp(2.5rem, 8vw, 8rem), 75rem);
+    width: var(--site-width);
     margin-inline: auto;
     padding-block: clamp(3rem, 7vw, 6rem);
   }
   h1 {
     max-width: 18ch;
-    font-size: clamp(2.5rem, 5vw, 3.75rem);
+    font-size: var(--page-title);
     line-height: 1.05;
     letter-spacing: -0.035em;
   }
