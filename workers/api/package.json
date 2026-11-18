@@ -2,6 +2,7 @@
   "name": "omg-saas-workers",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "packageManager": "npm@12.0.2",
   "engines": {
     "node": ">=24"

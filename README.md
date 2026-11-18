@@ -2,6 +2,8 @@
 
 Website, documentation site, and web workers for OMG.
 
+Licensed under the [MIT License](LICENSE).
+
 ## Structure
 
 - `site/` - SvelteKit public, account, and operator application
