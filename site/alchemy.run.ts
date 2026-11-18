@@ -23,7 +23,8 @@ export const Website = Cloudflare.Website.SvelteKit(
         notFoundHandling: '404-page' as const,
       },
       assets: {
-        runWorkerFirst: true,
+        runWorkerFirst:
+          stage === 'prod' ? ['/*', '!/', '!/_app/immutable/*', '!/terminal/*'] : true,
       },
       cache: {
         enabled: false,

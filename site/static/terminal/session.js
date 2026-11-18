@@ -1,25 +1,20 @@
-import recording from './terminal-recordings.json';
+// @ts-check
+import recording from './recordings.json' with { type: 'json' };
 
-type Package = keyof typeof recording.install;
-type NodeRequest = keyof typeof recording.node;
-type Search = (typeof recording.search)[keyof typeof recording.search];
-
-export type TerminalPrompt =
-  { kind: 'install'; package: Package; tip: string } | { kind: 'search'; search: Search };
-
-export interface TerminalOutput {
-  text: string;
-  prompt?: TerminalPrompt;
-  nextCommand?: string;
-  frames?: readonly { text: string; duration: number }[];
-}
+/** @typedef {keyof typeof recording.install} Package */
+/** @typedef {keyof typeof recording.node} NodeRequest */
+/** @typedef {(typeof recording.search)[keyof typeof recording.search]} Search */
+/** @typedef {{kind: 'install', package: Package, tip: string} | {kind: 'search', search: Search}} TerminalPrompt */
+/** @typedef {{text: string, prompt?: TerminalPrompt}} TerminalOutput */
+/** @typedef {{node: string, explicit: ReadonlySet<Package>}} Environment */
 
 const searches = new Map(Object.entries(recording.search));
 const information = new Map(Object.entries(recording.info));
 const hashes = new Map(Object.entries(recording.environment.hashes));
 const styles = new Map(Object.entries(recording.styles));
 
-export function terminalRuns(text: string) {
+/** @param {string} text */
+export function terminalRuns(text) {
   const [plain, ...parts] = text.split('\x1b[');
   return [
     { text: plain ?? '', style: undefined },
@@ -32,22 +27,21 @@ export function terminalRuns(text: string) {
 
 const outsideRecording =
   'This command is outside the recorded Arch session. Open Commands to see what you can run.';
-const packages: readonly Package[] = ['ripgrep', 'ripgrep-all'];
-const requests: readonly NodeRequest[] = ['20', '22', '20.0.0', '22.0.0'];
-
-interface Environment {
-  node: string;
-  explicit: ReadonlySet<Package>;
-}
+/** @type {readonly Package[]} */
+const packages = ['ripgrep', 'ripgrep-all'];
+/** @type {readonly NodeRequest[]} */
+const requests = ['20', '22', '20.0.0', '22.0.0'];
 
 // The recording starts with Node 20 selected and an existing omg.lock.
 export class TerminalSession {
-  #current: Environment = { node: recording.node['20'].version, explicit: new Set() };
+  /** @type {Environment} */
+  #current = { node: recording.node['20'].version, explicit: new Set() };
   #lock = this.#current;
   #nodes = new Set([this.#current.node]);
   #showTip = true;
 
-  run(input: string): TerminalOutput {
+  /** @param {string} input @returns {TerminalOutput} */
+  run(input) {
     const command = input.trim().split(/\s+/u).join(' ');
     switch (command) {
       case 'clear':
@@ -65,7 +59,7 @@ export class TerminalSession {
         return { text: `omg ${recording.release}` };
       case 'node -v':
       case 'node --version':
-        return { text: `v${this.#current.node}`, nextCommand: 'omg env check' };
+        return { text: `v${this.#current.node}` };
       case 'omg env capture': {
         const mask =
           Number(this.#current.explicit.has('ripgrep')) +
@@ -74,7 +68,6 @@ export class TerminalSession {
         if (!hash) throw new Error('Missing recorded environment fingerprint');
         this.#lock = this.#current;
         return {
-          nextCommand: 'omg env check',
           text: recording.environment.capture
             .replace('{hash}', hash)
             .replace(
@@ -83,13 +76,8 @@ export class TerminalSession {
             ),
         };
       }
-      case 'omg env check': {
-        const text = this.#checkEnvironment();
-        return {
-          text,
-          nextCommand: text === recording.environment.sync ? 'omg use node 22' : 'omg env capture',
-        };
-      }
+      case 'omg env check':
+        return { text: this.#checkEnvironment() };
     }
 
     const [program, verb, arg, ...options] = command.split(' ');
@@ -103,7 +91,7 @@ export class TerminalSession {
           };
       }
       if (verb === 'info' && !options.length && information.has(arg))
-        return { text: this.#info(arg), nextCommand: 'omg env check' };
+        return { text: this.#info(arg) };
       const pkg = packages.find(name => name === arg);
       if ((verb === 'install' || verb === 'i') && pkg && !options.length) {
         const tip = this.#showTip ? recording.confirmation.tip + '\n\n' : '';
@@ -122,8 +110,6 @@ export class TerminalSession {
           this.#current = { ...this.#current, node: version.version };
           return {
             text: cached ? version.cached : version.first,
-            nextCommand: 'node --version',
-            frames: cached ? [] : version.frames,
           };
         }
       }
@@ -131,7 +117,8 @@ export class TerminalSession {
     return { text: outsideRecording };
   }
 
-  confirm(prompt: Extract<TerminalPrompt, { kind: 'install' }>, yes: boolean): TerminalOutput {
+  /** @param {Extract<TerminalPrompt, {kind: 'install'}>} prompt @param {boolean} yes @returns {TerminalOutput} */
+  confirm(prompt, yes) {
     if (!yes) return { text: prompt.tip + recording.confirmation.cancel };
     const pkg = prompt.package;
     const transaction = recording.install[pkg];
@@ -141,14 +128,11 @@ export class TerminalSession {
     const lead = prompt.tip + recording.confirmation.yes + '\n\n';
     return {
       text: lead + (cached ? transaction.repeat : transaction.first),
-      nextCommand: `omg info ${pkg}`,
-      frames: cached
-        ? []
-        : transaction.frames.map(frame => ({ ...frame, text: lead + frame.text })),
     };
   }
 
-  select(search: Search, index: number | null): TerminalOutput {
+  /** @param {Search} search @param {number | null} index @returns {TerminalOutput} */
+  select(search, index) {
     const label = index === null ? undefined : search.choices[index];
     if (!label) return { text: search.output };
     const name = label.split(' ')[0] ?? '';
@@ -159,7 +143,8 @@ export class TerminalSession {
     };
   }
 
-  #installed(pkg: Package) {
+  /** @param {Package} pkg */
+  #installed(pkg) {
     // Arch installs ripgrep as a dependency of ripgrep-all. A repeat install leaves it implicit.
     return (
       this.#current.explicit.has(pkg) ||
@@ -167,7 +152,8 @@ export class TerminalSession {
     );
   }
 
-  #info(name: string) {
+  /** @param {string} name */
+  #info(name) {
     const pkg = packages.find(item => item === name);
     return pkg && this.#installed(pkg)
       ? recording.installedInfo[pkg]

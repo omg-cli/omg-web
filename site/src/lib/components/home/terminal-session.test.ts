@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { TerminalSession, terminalRuns, type TerminalOutput } from './terminal-session';
+import {
+  TerminalSession,
+  terminalRuns,
+  type TerminalOutput,
+} from '../../../../static/terminal/session.js';
 
 function text(output: TerminalOutput) {
   return terminalRuns(output.text)
@@ -21,7 +25,6 @@ describe('recorded Arch terminal session', () => {
     expect(text(install(session, 'ripgrep', false))).toContain('Installation cancelled');
     expect(text(session.run('omg env check'))).toContain('No drift detected');
     const first = install(session, 'ripgrep', true);
-    expect(first.frames?.length).toBeGreaterThan(0);
     expect(text(first)).toContain('✓ Resolved 1 official · 0 AUR');
     expect(text(first)).toContain('✓ 1 package installed\n    · ripgrep');
     expect(text(install(session, 'ripgrep', true))).toContain('✓ Nothing to do');

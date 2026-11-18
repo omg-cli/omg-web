@@ -59,7 +59,7 @@ export const LEARNING_PAGES = [
   {
     category: 'runtimes',
     slug: 'go',
-    navLabel: 'Go',
+    navLabel: 'Go runtime',
     title: 'Manage Go versions with OMG',
     description:
       'Install Go, switch project versions with go.mod or .go-version, understand GOROOT and GOPATH tools, and verify toolchains on Linux, macOS, and WSL.',

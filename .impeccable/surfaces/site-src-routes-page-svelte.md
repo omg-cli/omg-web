@@ -29,9 +29,9 @@ Compact header, one product definition, then the editable terminal. The prompt i
 
 ## SIGNATURE INTERACTION
 
-The terminal uses an attended Arch x86_64 session captured on 2026-11-18 from the official OMG v0.1.224 release archive (SHA-256 `0be5ac604f868adb4d5f656eae674f3c6b0517ce450c99c9057679e87a87321e`). The starting shell has Node 20.20.2 selected and a matching lockfile with eleven explicit packages. The initial official search shows its output after dismissing the picker. Search, install confirmation, cached transactions, runtime selection, and environment reports use the released CLI's text and terminal colors. A small set of sampled progress frames plays only after a command runs. Reduced-motion visitors receive the completed output immediately.
+The terminal uses an attended Arch x86_64 session captured on 2026-11-18 from the official OMG v0.1.224 release archive (SHA-256 `0be5ac604f868adb4d5f656eae674f3c6b0517ce450c99c9057679e87a87321e`). The starting shell has Node 20.20.2 selected and a matching lockfile with eleven explicit packages. Search, install confirmation, cached transactions, runtime selection, and environment reports use the released CLI's text and terminal colors. A blank editable prompt accepts typed commands. Results appear immediately when submitted.
 
-A visitor runs commands against a simulated Arch session. Installed packages and the active Node version can diverge from a captured lockfile. Enter, Run, touch suggestions and keyboard history operate on the same session. A complete initial search and a command reference link remain readable without JavaScript.
+A visitor runs commands against a simulated Arch session. Installed packages and the active Node version can diverge from a captured lockfile. Enter submits a command or a confirmation. Suggestions insert editable text. A first command and the reference link remain readable without JavaScript.
 
 ## PATH AND CONSTRAINTS
 

@@ -181,34 +181,73 @@ test('terminal commands change the environment in one visit', async ({ page }) =
   await page.goto('/');
   const input = page.getByRole('textbox', { name: 'Terminal command' });
   const log = page.getByRole('log', { name: 'Terminal output' });
+  const respond = page.getByRole('textbox', { name: 'Installation response' });
+  const enter = async (command: string) => {
+    await input.fill(command);
+    await input.press('Enter');
+  };
+  await expect(input).toHaveValue('');
+  await page.getByText('Commands', { exact: true }).click();
+  await page.getByRole('button', { name: 'omg install ripgrep', exact: true }).click();
   await expect(input).toHaveValue('omg install ripgrep');
+  await expect(page.locator('[role=log]')).toBeEmpty();
   await input.press('Enter');
-  await expect(log).toContainText('Proceed with installation of 1 package(s)? (y/n) › no');
-  await expect(page.getByRole('button', { name: 'No N' })).toBeFocused();
-  await page.keyboard.press('Enter');
+  await expect(respond).toBeFocused();
+  await respond.press('Enter');
   await expect(log).toContainText('Installation cancelled');
-  await input.fill('omg install ripgrep');
-  await input.press('Enter');
-  await page.keyboard.press('y');
+  await enter('omg install ripgrep');
+  await respond.fill('y');
+  await respond.press('Enter');
   await expect(log).toContainText('1 package installed');
-  await page.getByRole('button', { name: 'omg info ripgrep', exact: true }).click();
+  await enter('omg info ripgrep');
   await expect(log).toContainText('Installed: yes');
-  await page.getByRole('button', { name: 'omg env check', exact: true }).click();
+  await enter('omg env check');
   await expect(log).toContainText('Extra Packages (not in lockfile):');
-  await expect(log).toContainText('+ ripgrep');
-  await page.getByRole('button', { name: 'omg env capture', exact: true }).click();
-  await page.getByRole('button', { name: 'omg env check', exact: true }).click();
+  await enter('omg env capture');
+  await enter('omg env check');
   await expect(log).toContainText('Environment is in sync');
-  await input.fill('node --version');
-  await page.getByRole('button', { name: 'omg use node 22', exact: true }).click();
+  await enter('omg use node 22');
   await expect(log).toContainText('Now using Node.js 22.23.5');
-  await expect(page.getByRole('button', { name: 'node --version', exact: true })).toBeVisible();
-  await input.press('Enter');
+  await enter('node --version');
   await expect(log).toContainText('v22.23.5');
   await input.press('ArrowUp');
   await expect(input).toHaveValue('node --version');
   await input.press('ArrowDown');
   await expect(input).toHaveValue('');
+});
+
+test('the terminal accepts commands before the app hydrates and keeps them through hydration', async ({
+  page,
+}) => {
+  let resume = () => {};
+  const paused = new Promise<void>(resolve => {
+    resume = resolve;
+  });
+  await page.route('**/*', async route => {
+    const request = route.request();
+    if (
+      request.resourceType() === 'script' &&
+      !new URL(request.url()).pathname.startsWith('/terminal/')
+    ) {
+      await paused;
+    }
+    await route.continue();
+  });
+  try {
+    await page.goto('/', { waitUntil: 'commit' });
+    const input = page.getByRole('textbox', { name: 'Terminal command' });
+    await input.fill('omg use node 22');
+    await input.press('Enter');
+    await expect(page.getByRole('log')).toContainText('Now using Node.js 22.23.5');
+    resume();
+    await page.waitForLoadState('networkidle');
+    await input.fill('node --version');
+    await input.press('Enter');
+    await expect(page.getByRole('log')).toContainText('v22.23.5');
+    await expect(page.getByRole('log')).toContainText('Now using Node.js 22.23.5');
+  } finally {
+    resume();
+  }
 });
 
 test('the Arch search picker opens package details and dismisses with Escape', async ({ page }) => {
@@ -273,8 +312,10 @@ test('the terminal prompt is in the opening mobile viewport', async ({ page }) =
   await page.goto('/');
   const input = page.getByRole('textbox', { name: 'Terminal command' });
   await expect(input).toBeInViewport({ ratio: 1 });
-  await page.getByRole('button', { name: 'Run', exact: true }).click();
-  await page.getByRole('button', { name: 'Yes Y' }).click();
+  await input.fill('omg install ripgrep');
+  await page.getByRole('button', { name: 'Run command' }).click();
+  await page.getByRole('textbox', { name: 'Installation response' }).fill('y');
+  await page.getByRole('button', { name: 'Run command' }).click();
   await expect(page.getByRole('log')).toContainText('1 package installed');
 });
 
@@ -297,7 +338,7 @@ test.describe('dark mode without JavaScript', () => {
   test('keeps the complete Arch demo readable', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(16, 16, 16)');
-    await expect(page.getByRole('log')).toContainText('ripgrep 15.2.0-1');
+    await expect(page.locator('.fallback')).toContainText('omg search ripgrep');
     await expect(page.getByRole('textbox', { name: 'Terminal command' })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Read the command reference' })).toBeVisible();
   });

@@ -47,6 +47,7 @@ export default defineConfig({
       },
       remarkPlugins: [documentationHeadings],
       svelteKitOptions: {
+        inlineStyleThreshold: 20_000,
         adapter: makeCloudflareAdapter({ fallback: 'plaintext', notFoundHandling: '404-page' }),
         csp: {
           mode: 'auto',
