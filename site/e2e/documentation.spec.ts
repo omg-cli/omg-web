@@ -214,7 +214,7 @@ test('the docs index copies prompt-free examples and exposes agent resources wit
   await firstGroup.getByRole('button', { name: 'Copy code' }).click();
   await expect(firstGroup.getByRole('status')).toHaveText('Code copied.');
   expect((await page.evaluate(() => navigator.clipboard.readText())).replaceAll('\r\n', '\n')).toBe(
-    'omg search ripgrep\nomg info ripgrep\nomg install ripgrep\nomg update'
+    'omg search ripgrep'
   );
   const withoutJavaScript = await browser.newContext({
     javaScriptEnabled: false,
@@ -240,6 +240,7 @@ test('the docs index copies prompt-free examples and exposes agent resources wit
   const endpoint = new URL(await agents.locator('pre code').first().innerText());
   expect(['https://getomg.dev', new URL(reader.url()).origin]).toContain(endpoint.origin);
   expect(endpoint.pathname).toBe('/mcp');
+  await agents.locator('summary').click();
   await expect(agents.locator('pre code').nth(1)).toHaveText(
     `curl -H 'Accept: text/markdown' ${endpoint.origin}/docs/environments/`
   );
@@ -251,6 +252,10 @@ test('the docs index copies prompt-free examples and exposes agent resources wit
   ]) {
     await expect(agents.locator(`a[href="${href}"]`)).toBeVisible();
   }
+  await reader.getByRole('searchbox').fill('omg env check');
+  await reader.getByRole('searchbox').press('Enter');
+  await expect(reader).toHaveURL(/\/docs\/search\/\?q=omg\+env\+check/u);
+  await expect(reader.locator('main')).toContainText('drift');
   await withoutJavaScript.close();
 });
 

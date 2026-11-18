@@ -3,7 +3,15 @@
   import { page } from '$app/state';
   import { DOCS_TOPICS, docsTopicHref } from '../../docs/topics';
   import DocsSearchForm from './DocsSearchForm.svelte';
-  let { children, query = '' }: { children: Snippet; query?: string } = $props();
+  let {
+    children,
+    query = '',
+    searchInContent = false,
+  }: {
+    children: Snippet;
+    query?: string;
+    searchInContent?: boolean;
+  } = $props();
   const navigation = $derived(
     page.data.documentationNavigation ??
       DOCS_TOPICS.map(topic => ({
@@ -42,8 +50,8 @@
 {/snippet}
 
 <main id="main-content" class="docs-reader">
-  <aside class="docs-sidebar">
-    <DocsSearchForm {query} />
+  <aside class="docs-sidebar" class:index-sidebar={searchInContent}>
+    {#if !searchInContent}<DocsSearchForm {query} />{/if}
     <div class="desktop-topics">{@render topicLinks()}</div>
     <details class="mobile-topics">
       <summary>Browse documentation</summary>{@render topicLinks()}
@@ -72,6 +80,9 @@
   }
   nav {
     margin-top: 1.5rem;
+  }
+  .index-sidebar nav {
+    margin-top: 0;
   }
   .docs-home {
     display: inline-flex;
@@ -188,6 +199,15 @@
     }
     .reader-content {
       padding-top: 2rem;
+    }
+    .index-sidebar {
+      padding-block: 0.25rem;
+    }
+    .index-sidebar .mobile-topics {
+      margin-top: 0;
+    }
+    .index-sidebar + .reader-content {
+      padding-top: 1.25rem;
     }
   }
 </style>

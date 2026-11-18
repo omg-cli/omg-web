@@ -175,7 +175,7 @@ test.describe('Svelte public surfaces', () => {
       'href',
       'https://github.com/omg-cli/omg/releases/tag/v0.1.224'
     );
-    await page.getByRole('link', { name: 'Browse project updates.' }).click();
+    await page.getByRole('link', { name: 'Browse project updates' }).click();
     await expect(page).toHaveURL(/\/updates\/$/);
     await page.waitForLoadState('load');
     await expect(page.getByRole('heading', { name: 'Release notes', exact: true })).toBeVisible();
@@ -281,12 +281,17 @@ test.describe('Svelte public surfaces', () => {
 
     await expect(page.getByRole('heading', { name: 'OMG documentation' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Install OMG' })).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: 'Manage Node.js, Python, Go, and Rust versions' })
-    ).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: 'Capture and compare project environments' })
-    ).toBeVisible();
+    await expect(page.getByRole('link', { name: /Switch Node.js versions/ })).toHaveAttribute(
+      'href',
+      '/docs/getting-started/#select-a-runtime'
+    );
+    await expect(page.getByRole('link', { name: /Check environment drift/ })).toHaveAttribute(
+      'href',
+      '/docs/environments/#detect-drift-without-repairing-it'
+    );
+    await page.getByRole('link', { name: 'Try in the browser' }).click();
+    await expect(page.getByRole('heading', { name: 'Try OMG' })).toBeInViewport();
+    await page.goBack();
     for (const topicSlug of [
       'installation',
       'cli',

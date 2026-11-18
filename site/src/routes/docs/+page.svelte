@@ -4,10 +4,9 @@
   import SeoHead from '../../lib/components/SeoHead.svelte';
   import { serializeJsonLd, SITE_ORIGIN } from '../../../../shared/public-site';
   import DocsReader from '../../lib/components/docs/DocsReader.svelte';
-  import DocsOutline from '../../lib/components/docs/DocsOutline.svelte';
+  import DocsSearchForm from '../../lib/components/docs/DocsSearchForm.svelte';
+  import Icon from '../../lib/components/Icon.svelte';
   import DocsCode from '../../lib/components/docs/DocsCode.svelte';
-  import type { PageData } from './$types';
-  let { data }: { data: PageData } = $props();
   import { DOCS_TOPICS, docsTopicHref } from '../../lib/docs/topics';
   import { release, repository } from '../../lib/docs/source-review.json';
 
@@ -41,393 +40,347 @@
     ],
   });
 
-  const commandGroups = [
-    {
-      title: 'Install and manage system packages',
-      description:
-        'Search, inspect, install, update, and remove packages through the native backend.',
-      commands: ['omg search ripgrep', 'omg info ripgrep', 'omg install ripgrep', 'omg update'],
-    },
-    {
-      title: 'Manage Node.js, Python, Go, and Rust versions',
-      description: 'Install and select language versions without learning another version manager.',
-      commands: ['omg use node 22', 'omg use python 3.12', 'omg use rust stable'],
-    },
-    {
-      title: 'Capture and compare project environments',
-      description:
-        'On Arch, Debian, and Ubuntu, capture supported package and runtime state, check drift, and fetch a shared lockfile for comparison.',
-      commands: ['omg env capture', 'omg env check', 'omg env sync <share-url>'],
-    },
-  ] as const;
+  const tasks = [
+    [
+      'Find a package and its source',
+      'omg search ripgrep',
+      '/docs/packages/#find-a-package-and-its-source',
+    ],
+    ['Switch Node.js versions', 'omg use node 22', '/docs/getting-started/#select-a-runtime'],
+    [
+      'Check environment drift',
+      'omg env check',
+      '/docs/environments/#detect-drift-without-repairing-it',
+    ],
+    ['Diagnose a setup problem', 'omg doctor', '/docs/troubleshooting/'],
+  ];
 </script>
 
 <SeoHead
   title="OMG Documentation - Install, Commands, and Platforms"
-  description="Install OMG, learn its package and runtime commands, capture supported system state, check drift, and browse the curated handbook."
+  description="Install OMG, find a command, troubleshoot your setup, or connect your agent to the versioned documentation."
   path="/docs/"
   markdownPath="/docs/index.md"
   {structuredData}
 />
 
-<DocsReader>
-  <header class="docs-hero">
+<DocsReader searchInContent>
+  <header class="masthead">
     <h1>OMG documentation</h1>
-    <nav class="task-links" aria-label="Common documentation tasks">
-      <a href="/docs/packages/#find-a-package-and-its-source">Find a package</a>
-      <a href="/docs/getting-started/#select-a-runtime">Switch Node.js versions</a>
-      <a href="/docs/environments/#detect-drift-without-repairing-it">Check environment drift</a>
-      <a href="#agents">Use docs with an agent</a>
+    <DocsSearchForm />
+    <nav aria-label="Common documentation tasks" class="task-links">
+      <a href="#install">Install OMG <Icon name="down" size={14} /></a>
+      <a href="/docs/cli/">Command reference <Icon name="right" size={14} /></a>
+      <a href="#agents">Use docs with an agent <Icon name="down" size={14} /></a>
     </nav>
   </header>
 
-  <article>
-    <DocsOutline
-      headings={[
-        { id: 'install', title: 'Install' },
-        { id: 'quick-start', title: 'Quick start' },
-        { id: 'platforms', title: 'Platforms' },
-        { id: 'agents', title: 'Use docs with an agent' },
-        { id: 'guides', title: 'Guides by task' },
-        { id: 'reference', title: 'Handbook' },
-      ]}
-    />
-    <section id="install" class="docs-section">
+  <div class="first-run">
+    <section id="install">
       <h2>Install OMG</h2>
-      <p class="section-copy">
-        The universal installer detects Linux or macOS and downloads the matching release. On
-        Windows, run it inside WSL2. The GitHub CLI (gh) is required to verify the release
-        attestation.
+      <p>
+        Run from Bash with <code>curl</code> and the GitHub CLI (<code>gh</code>) installed. On
+        Windows, open your WSL2 terminal.
       </p>
       <DocsCode code={installCommand} />
-      <p class="install-note">
-        <a href="/install.sh">Read install.sh</a> before running it, or download a release directly:
-        <a href="https://github.com/omg-cli/omg/releases">Download release binaries on GitHub</a>.
-      </p>
-      <p class="install-note">
-        The handbook and operational guides describe <a
-          href={`https://github.com/${repository}/releases/tag/${release.version}`}
-          >release {release.version}</a
-        >. Newer development-only behavior is labeled separately. Check the source and review date
-        on each page. <a href="/updates/">Browse project updates.</a>
-      </p>
-    </section>
-
-    <section id="quick-start" class="docs-section">
-      <h2>Quick start</h2>
-      <p class="section-copy">
-        Package operations, runtime selection, and environment state use the same command surface.
-      </p>
-      <div class="command-groups">
-        {#each commandGroups as group (group.title)}
-          <section class="command-group">
-            <div>
-              <h3>{group.title}</h3>
-              <p>{group.description}</p>
-            </div>
-            <DocsCode code={group.commands.join('\n')} />
-          </section>
-        {/each}
+      <div class="link-line">
+        <a href="/install.sh">Read install.sh</a>
+        <a href="#platforms">Supported platforms</a>
       </div>
     </section>
-
-    <section id="platforms" class="docs-section">
-      <h2>Platforms: Arch, Debian, Ubuntu, Fedora, and macOS</h2>
-      <dl class="platform-list">
-        <div>
-          <dt>Linux</dt>
-          <dd>
-            Arch (pacman/AUR), Debian 12/13 and Ubuntu 24.04/26.04 (APT/DEB), and Fedora (DNF/RPM).
-            RHEL and CentOS-family hosts receive a Fedora-artifact fallback; that is not a
-            compatibility guarantee.
-          </dd>
-        </div>
-        <div>
-          <dt>macOS</dt>
-          <dd>Apple Silicon through the universal installer; system packages use Homebrew.</dd>
-        </div>
-        <div>
-          <dt>Windows</dt>
-          <dd>Use OMG inside WSL with a supported Linux guest. Native Windows is not supported.</dd>
-        </div>
-        <div>
-          <dt>Architecture</dt>
-          <dd>
-            x86_64 Linux and WSL guests; Apple Silicon on macOS. Linux ARM64 and Intel macOS
-            releases are not published.
-          </dd>
-        </div>
-      </dl>
+    <section id="quick-start">
+      <h2>Try a command</h2>
+      <p>Search the package index for ripgrep. Use your own shell or the browser terminal.</p>
+      <DocsCode code="omg search ripgrep" />
+      <div class="link-line">
+        <a href="/#terminal-title">Try in the browser <Icon name="right" size={14} /></a>
+        <a href="/docs/getting-started/">Getting started guide</a>
+      </div>
     </section>
+  </div>
 
-    <section id="agents" class="docs-section">
-      <h2>Use docs with an agent</h2>
-      <p class="section-copy">
-        Add this URL to your client's MCP settings and choose Streamable HTTP. Ask it to find the
-        environment drift procedure or read a specific section. Public documentation is available
-        without an API key.
-      </p>
-      <DocsCode code={`${docsOrigin}/mcp`} />
-      <p class="section-copy">
-        Give your agent the <a href="/llms.txt">documentation index</a> to find a page, or request its
-        Markdown directly.
+  <section id="guides">
+    <h2>Common tasks</h2>
+    <ul class="task-list">
+      {#each tasks as [label, command, href] (href)}
+        <li>
+          <a {href}><span>{label}</span><code>{command}</code><Icon name="right" size={16} /></a>
+        </li>
+      {/each}
+    </ul>
+    <div class="link-line">
+      <a href="/guides/">All guides</a><a href="/runtimes/">Runtime guides</a><a href="/compare/"
+        >Comparisons</a
+      >
+    </div>
+  </section>
+
+  <section id="reference">
+    <h2>Handbook</h2>
+    <div class="edition">
+      <a href={`https://github.com/${repository}/releases/tag/${release.version}`}
+        >release {release.version}</a
+      >
+      <a href="/updates/">Browse project updates</a>
+    </div>
+    <ul class="handbook">
+      {#each DOCS_TOPICS as topic (topic.slug)}
+        <li>
+          <a href={docsTopicHref(topic.slug)}>{topic.navLabel}<Icon name="right" size={14} /></a>
+        </li>
+      {/each}
+    </ul>
+    <a class="source-link" href={sourceDocsUrl}
+      >Upstream documentation <Icon name="external" size={14} /></a
+    >
+  </section>
+
+  <section id="agents">
+    <h2>Use docs with an agent</h2>
+    <p>
+      Add this URL as a <strong>Streamable HTTP</strong> MCP server in your client. No API key is required.
+    </p>
+    <DocsCode code={`${docsOrigin}/mcp`} />
+    <p class="example">Try asking “How do I check an environment for drift?”</p>
+    <details>
+      <summary>Markdown and JSON access</summary>
+      <p>
+        Start with the <a href="/llms.txt">documentation index</a> or
+        <a href="/llms-full.txt">download all pages as text</a>. For section-level access, use the
+        <a href="/docs/manifest.json">versioned manifest</a>
+        or <a href="/docs/search.json?q=env+check">search as JSON</a>.
       </p>
       <DocsCode code={`curl -H 'Accept: text/markdown' ${docsOrigin}/docs/environments/`} />
-      <p class="section-copy">
-        <a href="/docs/manifest.json">Get versioned sources and sections</a>,
-        <a href="/docs/search.json?q=env+check">search for env check as JSON</a>, or
-        <a href="/llms-full.txt">read the entire documentation set as text</a>.
-      </p>
-      <p class="section-copy">
-        Each search result includes a <code>markdownHref</code> for the matching part of the guide.
-        <a href="/markdown/docs/environments/?section=detect-drift-without-repairing-it"
-          >Read the drift-check procedure as Markdown</a
-        >.
-      </p>
-    </section>
-    <section id="guides" class="docs-section reference-section">
-      <h2>Guides by task</h2>
-      <p class="section-copy">
-        Browse <a href="/runtimes/">runtime setup guides</a> or learn to
-        <a href="/guides/node-npm-pnpm/">use Node.js, npm, and pnpm together</a>.
-      </p>
-      <ul class="reference-list">
-        {#each data.documentationNavigation.filter(entry => entry.section === 'Start here' || entry.section === 'Guides') as entry (entry.href)}
-          <li>
-            <a href={entry.href}
-              ><span class="reference-label">{entry.label}</span
-              >{#if entry.label !== entry.title}<span class="reference-summary">{entry.title}</span
-                >{/if}</a
-            >
-          </li>
-        {/each}
-      </ul>
-    </section>
-    <section id="reference" class="docs-section reference-section">
-      <h2>Handbook</h2>
-      <p class="section-copy">
-        Eight concise topics answer common tasks on this site. Each topic links to its pinned
-        upstream reference. The pages were checked against the CLI code and documentation at that
-        commit. For the complete set of guides, including AUR builds, task detection, migration,
-        containers, and release operations, browse the <a
-          href={sourceDocsUrl}
-          target="_blank"
-          rel="noopener noreferrer">OMG source documentation</a
-        >.
-      </p>
-      <ul class="reference-list">
-        {#each DOCS_TOPICS as topic (topic.slug)}
-          <li>
-            <a href={docsTopicHref(topic.slug)}>
-              <span class="reference-label">{topic.navLabel}</span>
-              <span class="reference-summary">{topic.summary}</span>
-            </a>
-          </li>
-        {/each}
-      </ul>
-    </section>
-  </article>
+    </details>
+  </section>
+
+  <section id="platforms">
+    <h2>Supported platforms</h2>
+    <dl>
+      <div>
+        <dt>Linux</dt>
+        <dd>x86_64 on Arch, Debian 12/13, Ubuntu 24.04/26.04, and Fedora.</dd>
+      </div>
+      <div>
+        <dt>macOS</dt>
+        <dd>Apple Silicon. System packages use Homebrew.</dd>
+      </div>
+      <div>
+        <dt>Windows</dt>
+        <dd>WSL2 with a supported x86_64 Linux distribution.</dd>
+      </div>
+    </dl>
+    <a class="source-link" href="/docs/installation/"
+      >Installation requirements and platform details <Icon name="right" size={14} /></a
+    >
+    <div class="link-line">
+      <a href="https://github.com/omg-cli/omg/releases">Download release binaries on GitHub</a>
+    </div>
+  </section>
 </DocsReader>
 
 <style>
-  .docs-hero {
-    display: grid;
-    align-items: end;
-    gap: 1.25rem 2.5rem;
-    padding-block: 0.25rem 0;
-  }
-
-  .docs-hero h1 {
+  h1,
+  h2 {
     margin: 0;
     font-family: var(--font-display);
-    font-size: var(--page-title);
     font-weight: 650;
     letter-spacing: -0.035em;
-    line-height: 1.1;
-    text-wrap: balance;
+    line-height: 1.12;
   }
-
-  .task-links {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 1rem;
+  h1 {
+    font-size: clamp(2rem, 4.5vw, 3.5rem);
   }
-
-  .task-links a {
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+  }
+  .masthead {
+    padding-bottom: 1rem;
+  }
+  .masthead :global(form) {
+    margin-top: 1.3rem;
+  }
+  .masthead :global(input) {
+    font-size: 1rem;
+  }
+  .masthead :global(button) {
+    padding-inline: 1.25rem;
+    font-size: 0.875rem;
+  }
+  .task-links,
+  .link-line,
+  .edition {
     display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.4rem;
+  }
+  .task-links {
+    margin-top: 0.4rem;
+  }
+  .task-links a,
+  .link-line a,
+  .source-link,
+  .edition a {
+    display: inline-flex;
     align-items: center;
+    gap: 0.45rem;
     min-height: 2.75rem;
     font-size: 0.875rem;
     text-decoration-color: var(--rule-strong);
-    text-underline-offset: 0.25em;
+    text-underline-offset: 0.23em;
   }
-
-  .task-links a:hover {
+  .task-links a {
+    font-weight: 600;
+    text-decoration: none;
+  }
+  a:hover,
+  summary:hover {
     color: var(--signal);
-    text-decoration-color: currentColor;
   }
-
-  .reference-list {
-    padding: 0;
-    list-style: none;
+  section {
+    padding-block: clamp(1.5rem, 3.5vw, 2.5rem);
+    border-top: 1px solid var(--rule);
   }
-
-  article {
-    min-width: 0;
+  section,
+  #quick-start {
+    scroll-margin-top: 1.5rem;
   }
-
-  .docs-section {
-    padding-block: clamp(1.5rem, 3vw, 2.5rem);
-    border-bottom: 1px solid var(--rule);
-    scroll-margin-top: 2rem;
-  }
-
-  .docs-section h2 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.5rem, 3vw, 2rem);
-    font-weight: 650;
-    letter-spacing: -0.035em;
-    line-height: 1.2;
-    text-wrap: balance;
-  }
-
-  .section-copy {
-    max-width: 42rem;
-    margin: 1rem 0 0;
+  section p {
+    margin: 0.65rem 0 0;
+    max-width: 65ch;
     color: var(--ink-muted);
-    line-height: 1.7;
+    line-height: 1.6;
   }
-
-  .docs-section :global(.docs-code pre) {
+  section :global(.docs-code) {
+    margin-block: 0.875rem 0;
+  }
+  section :global(.docs-code pre) {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
-
-  .install-note {
-    margin: 1.25rem 0 0;
-    color: var(--ink-muted);
-    font-size: 0.875rem;
+  @media (min-width: 72rem) {
+    .first-run {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 1.75rem;
+      border-top: 1px solid var(--rule);
+    }
+    .first-run section {
+      display: grid;
+      grid-template-rows: subgrid;
+      grid-row: span 4;
+      align-content: start;
+      gap: 0;
+      min-width: 0;
+      border: 0;
+    }
+    .first-run h2 {
+      font-size: 1.6rem;
+    }
+    .first-run .link-line {
+      align-self: start;
+    }
   }
-
-  .install-note a {
-    color: var(--ink);
-    overflow-wrap: anywhere;
+  .task-list,
+  .handbook,
+  dl {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
   }
-
-  .command-groups {
-    margin-top: 2.5rem;
-  }
-
-  .command-group {
-    display: grid;
-    gap: 1.25rem;
-    padding-block: 2rem;
+  .task-list li,
+  .handbook li,
+  dl div {
     border-top: 1px solid var(--rule);
   }
-
-  .command-group h3 {
-    margin: 0.75rem 0 0;
-    font-family: var(--font-display);
-    font-size: 1.5rem;
-    font-weight: 650;
-    letter-spacing: -0.035em;
-  }
-
-  .command-group p {
-    max-width: 24rem;
-    margin: 0.75rem 0 0;
-    color: var(--ink-muted);
-    font-size: 0.875rem;
-    line-height: 1.7;
-  }
-
-  .platform-list {
+  .task-list a,
+  .handbook a {
     display: grid;
-    margin: 0;
-  }
-
-  .platform-list > div {
-    padding-block: 1.5rem;
-    border-top: 1px solid var(--rule);
-  }
-
-  .platform-list dt {
-    font-weight: 650;
-  }
-
-  .platform-list dd {
-    margin: 0.5rem 0 0;
-    color: var(--ink-muted);
-    font-size: 0.875rem;
-    line-height: 1.7;
-  }
-
-  .reference-section {
-    border-bottom: 0;
-  }
-
-  .reference-list {
-    display: grid;
-    margin-top: 2.5rem;
-  }
-
-  .reference-list li {
-    border-top: 1px solid var(--rule);
-  }
-
-  .reference-list a {
-    display: grid;
-    gap: 0.375rem;
-    padding-block: 1.25rem;
+    align-items: center;
+    gap: 0.4rem 1rem;
+    padding-block: 0.9rem;
+    min-height: 2.75rem;
     text-decoration: none;
+    font-weight: 550;
   }
-
-  .reference-label {
-    font-size: 0.875rem;
-    font-weight: 600;
+  .task-list a {
+    grid-template-columns: 1fr auto auto;
   }
-
-  .reference-summary {
+  .task-list code,
+  .edition a {
     color: var(--ink-muted);
     font-size: 0.8125rem;
-    line-height: 1.6;
   }
-
-  .reference-list a:hover,
-  .reference-list a:hover .reference-label {
-    color: var(--signal);
+  .handbook {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2rem;
   }
-
-  @media (min-width: 40rem) {
-    .task-links {
-      display: flex;
-      flex-wrap: wrap;
-      grid-column: 1 / -1;
-      gap: 0 2.25rem;
-    }
-
-    .command-group {
-      grid-template-columns: 0.7fr 1.3fr;
-    }
-
-    .platform-list,
-    .reference-list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .platform-list > div:nth-child(odd),
-    .reference-list li:nth-child(odd) {
-      padding-right: 2rem;
-    }
-
-    .platform-list > div:nth-child(even),
-    .reference-list li:nth-child(even) {
-      padding-left: 2rem;
-    }
+  .handbook a {
+    grid-template-columns: 1fr auto;
   }
-
-  article :global(.page-outline) {
-    margin-bottom: 0;
+  .task-list :global(svg),
+  .handbook :global(svg) {
+    color: var(--ink-muted);
+  }
+  .task-list a:hover span,
+  .handbook a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .edition {
+    margin-top: 0.25rem;
+  }
+  .handbook {
+    margin-top: 0.25rem;
+  }
+  .example {
+    font-size: 0.875rem;
+  }
+  details {
+    margin-top: 1rem;
+    border-top: 1px solid var(--rule);
+  }
+  summary {
+    padding-block: 0.8rem;
+    min-height: 2.75rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  dl div {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: 0.75rem;
+    padding-block: 0.85rem;
+  }
+  dt {
+    font-weight: 600;
+  }
+  dd {
+    margin: 0;
+    color: var(--ink-muted);
+    line-height: 1.5;
+  }
+  @media (max-width: 40rem) {
+    .task-links,
+    .link-line {
+      gap: 0 1rem;
+    }
+    .task-list a {
+      grid-template-columns: 1fr auto;
+    }
+    .task-list code {
+      grid-row: 2;
+    }
+    .task-list :global(svg) {
+      grid-column: 2;
+      grid-row: 1 / 3;
+    }
+    .handbook {
+      column-gap: 1rem;
+    }
+    dl div {
+      grid-template-columns: 4.5rem 1fr;
+    }
   }
 </style>
