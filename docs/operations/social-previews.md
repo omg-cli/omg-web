@@ -16,7 +16,7 @@ In another terminal, use a new filename for each published replacement:
 npm run social:capture --prefix site -- --url http://127.0.0.1:4173 --output static/og/omg-social-YYYYMMDD.png
 ```
 
-The tool uses the installed Playwright Chromium, a 1600 × 840 CSS viewport and 0.75 device scale to produce exactly 1200 × 630 pixels. It selects the site's dark theme, waits for self-hosted fonts and the completed Arch package demo, and freezes animation for capture. It hides the following language strip only in the capture so text does not straddle the image's bottom edge. It does not change the website layout or invent terminal output.
+The tool captures the homepage in its dark theme after the self-hosted fonts load and the terminal prompt is visible. The opening transcript shows an Arch package search. Playwright Chromium captures a 1600 × 840 CSS viewport at 0.75 device scale to produce the 1200 × 630 image.
 
 Compatibility URLs `/og/omg-og.png` and `/og/omg-og.svg` receive the same snapshot; the SVG embeds the PNG so it also works without external image requests. The dated PNG is the canonical sharing image. Update `SOCIAL_CARD.path`, the metadata expectations in the existing tests, and the alt description if the content changes. Run the site checks and production build, inspect the image at full and thumbnail sizes, then deploy with Wrangler.
 

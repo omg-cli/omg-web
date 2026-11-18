@@ -183,20 +183,50 @@ test('terminal commands change the environment in one visit', async ({ page }) =
   const log = page.getByRole('log', { name: 'Terminal output' });
   await expect(input).toHaveValue('omg install ripgrep');
   await input.press('Enter');
-  await expect(log).toContainText('Installed ripgrep 15.2.0-1');
+  await expect(log).toContainText('Proceed with installation of 1 package(s)? (y/n) › no');
+  await expect(page.getByRole('button', { name: 'No N' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(log).toContainText('Installation cancelled');
+  await input.fill('omg install ripgrep');
+  await input.press('Enter');
+  await page.keyboard.press('y');
+  await expect(log).toContainText('1 package installed');
   await page.getByRole('button', { name: 'omg env check', exact: true }).click();
-  await expect(log).toContainText('+ ripgrep (extra package)');
+  await expect(log).toContainText('Extra Packages (not in lockfile):');
+  await expect(log).toContainText('+ ripgrep');
   await page.getByRole('button', { name: 'omg env capture', exact: true }).click();
   await page.getByRole('button', { name: 'omg env check', exact: true }).click();
   await expect(log).toContainText('Environment is in sync');
   await input.fill('node --version');
   await page.getByRole('button', { name: 'omg use node 22', exact: true }).click();
+  await expect(log).toContainText('Now using Node.js 22.23.5');
   await input.press('Enter');
-  await expect(log).toContainText('v22.0.0');
+  await expect(log).toContainText('v22.23.5');
   await input.press('ArrowUp');
   await expect(input).toHaveValue('node --version');
   await input.press('ArrowDown');
   await expect(input).toHaveValue('');
+});
+
+test('the Arch search picker opens package details and dismisses with Escape', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByRole('textbox', { name: 'Terminal command' });
+  const log = page.getByRole('log', { name: 'Terminal output' });
+  await input.fill('omg search ripgrep --no-aur');
+  await input.press('Enter');
+  const picker = page.getByRole('listbox', { name: 'Select a package for details' });
+  await expect(picker).toBeFocused();
+  await picker.press('ArrowDown');
+  await expect(picker.getByRole('option', { selected: true })).toContainText('ripgrep-all');
+  await picker.press('Enter');
+  await expect(log).toContainText('Name: ripgrep-all');
+  await expect(input).toBeFocused();
+  await input.fill('omg search ripgrep');
+  await input.press('Enter');
+  await expect(picker.getByRole('option', { name: /^ripgrep-git / })).toBeVisible();
+  await picker.press('Escape');
+  await expect(picker).toHaveCount(0);
+  await expect(input).toBeFocused();
 });
 
 test('dark mode follows the system and remembers a manual choice across pages', async ({
@@ -241,7 +271,8 @@ test('the terminal prompt is in the opening mobile viewport', async ({ page }) =
   const input = page.getByRole('textbox', { name: 'Terminal command' });
   await expect(input).toBeInViewport({ ratio: 1 });
   await page.getByRole('button', { name: 'Run', exact: true }).click();
-  await expect(page.getByRole('log')).toContainText('Installed ripgrep');
+  await page.getByRole('button', { name: 'Yes Y' }).click();
+  await expect(page.getByRole('log')).toContainText('1 package installed');
 });
 
 test('dark mode remains reachable from the compact mobile menu', async ({ page }) => {
