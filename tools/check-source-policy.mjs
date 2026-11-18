@@ -10,7 +10,7 @@ const workspaceRoot = new URL('../', import.meta.url);
 const requireFromSite = createRequire(new URL('../site/package.json', import.meta.url));
 const ts = requireFromSite('typescript');
 
-const runtimeSourceDirectories = ['shared', 'site/src', 'workers/api/src'];
+const runtimeSourceDirectories = ['shared', 'site/src', 'site/static/terminal', 'workers/api/src'];
 const consumerSourceDirectories = [
   ...runtimeSourceDirectories,
   'site/e2e',
@@ -20,6 +20,7 @@ const consumerSourceDirectories = [
 ];
 const frameworkEntryPoints = new Set([
   'site/worker.js',
+  'site/static/terminal/prompt.js',
   // SveltePress resolves its custom page layout from the Vite theme configuration.
   'site/src/lib/components/docs/SveltePressPage.svelte',
   'site/src/hooks.server.ts',
@@ -352,6 +353,7 @@ if (!alchemyDeploymentSource.includes('redirects: [WWW_SITE_HOSTNAME]')) {
 const knownRepositoryFiles = new Set([
   ...(await allFiles('shared')),
   ...(await allFiles('site/src')),
+  ...(await allFiles('site/static/terminal')),
   ...(await allFiles('site/e2e')),
   ...(await allFiles('site/tests')),
   ...(await allFiles('site/tools')),
