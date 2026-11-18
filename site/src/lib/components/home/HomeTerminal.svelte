@@ -100,6 +100,7 @@
     border-bottom: 1px solid var(--terminal-rule);
   }
   h2 {
+    scroll-margin-block-start: 5rem;
     margin: 0;
     font-size: 1.375rem;
     font-weight: 650;
@@ -260,8 +261,10 @@
     margin: 0;
   }
   omg-terminal:defined .fallback,
-  omg-terminal:not(:defined) form,
-  omg-terminal:not(:defined) .suggestions {
+  omg-terminal:not(:defined) form {
     display: none;
+  }
+  omg-terminal:not(:defined) .suggestions {
+    visibility: hidden;
   }
 </style>
