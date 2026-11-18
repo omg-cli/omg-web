@@ -148,7 +148,7 @@ test.describe('Svelte public surfaces', () => {
       await expect(page.getByRole('status')).toHaveText(
         'Could not copy. Select and copy the install command above.'
       );
-      await expect(page.locator('#install code').first()).toContainText(
+      await expect(page.locator('#install pre code')).toContainText(
         `curl -fsSL ${SITE_ORIGIN}/install.sh | bash`
       );
       await expect(copy).toBeEnabled();
@@ -171,7 +171,11 @@ test.describe('Svelte public surfaces', () => {
   }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto('/docs/', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('link', { name: 'Read release notes and updates.' }).click();
+    await expect(page.getByRole('link', { name: 'release v0.1.224' })).toHaveAttribute(
+      'href',
+      'https://github.com/omg-cli/omg/releases/tag/v0.1.224'
+    );
+    await page.getByRole('link', { name: 'Browse project updates.' }).click();
     await expect(page).toHaveURL(/\/updates\/$/);
     await page.waitForLoadState('load');
     await expect(page.getByRole('heading', { name: 'What changed.' })).toBeVisible();
@@ -214,7 +218,7 @@ test.describe('Svelte public surfaces', () => {
     );
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
       'content',
-      `${SITE_ORIGIN}/og/omg-social-20261113.png`
+      `${SITE_ORIGIN}/og/omg-social-20261118.png`
     );
     await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
       'content',
@@ -235,15 +239,10 @@ test.describe('Svelte public surfaces', () => {
     expect(
       structuredData['@graph'].find(entry => entry['@type'] === 'SoftwareApplication')?.offers
     ).toEqual({ '@type': 'Offer', price: '0', priceCurrency: 'USD' });
-    await expect(
-      page.getByText(
-        'Meet OMG. Search and install system packages, switch language versions, and check your environment from one open-source CLI.',
-        { exact: true }
-      )
-    ).toBeVisible();
+    await expect(page.getByText('Simulated Arch Linux', { exact: true })).toBeVisible();
     expect(() => JSON.parse(structuredDataText)).not.toThrow();
 
-    const socialImage = await page.request.get('/og/omg-social-20261113.png');
+    const socialImage = await page.request.get('/og/omg-social-20261118.png');
     expect(socialImage.ok()).toBe(true);
     expect(socialImage.headers()['content-type']).toBe('image/png');
   });
@@ -254,24 +253,19 @@ test.describe('Svelte public surfaces', () => {
 
     await expect(
       page.getByRole('heading', {
-        name: 'A simpler way to manage packages and runtimes.',
+        name: 'One CLI for system packages and language runtimes.',
         level: 1,
       })
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: /Your system packages\.\s*A consistent interface\./ })
+      page.getByRole('heading', { name: 'Which package manager does OMG use?' })
     ).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: 'Open source. Open to inspection.' })
-    ).toBeVisible();
-    await page.getByText('What about performance?', { exact: true }).click();
+    await page.getByText('Package search benchmarks', { exact: true }).click();
     await expect(page.getByRole('link', { name: 'Inspect the benchmark record' })).toHaveAttribute(
       'href',
       'https://github.com/omg-cli/omg/tree/fe72b92b6e61c13a19f00627d22f3d1bc5713347/benchmarks/records/20260903_015949-5c43ddcc'
     );
-    await expect(
-      page.getByRole('heading', { name: 'Install OMG. Try it on your setup.' })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Install OMG' })).toBeVisible();
     await expect
       .poll(() =>
         page.evaluate(
@@ -285,7 +279,7 @@ test.describe('Svelte public surfaces', () => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto('/docs/', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.getByRole('heading', { name: 'Learn the parts you need.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'OMG documentation' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Install OMG' })).toBeVisible();
     await expect(
       page.getByRole('heading', { name: 'Manage Node.js, Python, Go, and Rust versions' })
@@ -517,7 +511,7 @@ test.describe('Svelte public surfaces', () => {
     );
     await recovery.getByRole('link', { name: 'Read the docs', exact: true }).click();
     await expect(page).toHaveURL(/\/docs\/$/);
-    await expect(page.getByRole('heading', { name: 'Learn the parts you need.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'OMG documentation' })).toBeVisible();
   });
 
   test('renders legal pages and the crawler policy', async ({ page }) => {

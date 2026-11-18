@@ -4,6 +4,7 @@
   import type { MarkdownDocumentMetadata } from '../../docs/markdown-document';
   import SeoHead from '../SeoHead.svelte';
   import DocsReader from './DocsReader.svelte';
+  import DocsOutline from './DocsOutline.svelte';
   import DocsPagination from './DocsPagination.svelte';
   import DocActions from './DocActions.svelte';
   let {
@@ -40,19 +41,12 @@
       <h1>{metadata.title}</h1>
       <p class="description">{metadata.description}</p>
       <p class="applicability">
-        Release {metadata.release} · Reviewed
+        Release {metadata.release} Â· Reviewed
         <time datetime={metadata.source.reviewedAt}>{metadata.source.reviewedAt}</time>
       </p>
       <DocActions markdownHref={`/markdown${path}`} {sourceHref} />
     </header>
-    <details class="page-outline">
-      <summary>On this page</summary>
-      <ul>
-        {#each headings.filter(heading => heading.depth === 2) as heading (heading.id)}<li>
-            <a href={`#${heading.id}`}>{heading.title}</a>
-          </li>{/each}
-      </ul>
-    </details>
+    <DocsOutline headings={headings.filter(heading => heading.depth === 2)} />
     <div class="markdown-body">{@render children()}</div>
     <footer>
       <p>
@@ -101,31 +95,6 @@
   a:hover {
     color: var(--signal);
   }
-  .page-outline {
-    margin-block: 1.5rem 2.5rem;
-    padding-block: 0.75rem;
-    border-block: 1px solid var(--rule);
-  }
-  summary {
-    min-height: 2.75rem;
-    padding-block: 0.65rem;
-    cursor: pointer;
-    font-size: 0.8125rem;
-    font-weight: 600;
-  }
-  .page-outline ul {
-    columns: 2;
-    margin: 0.5rem 0;
-    padding-left: 1.25rem;
-  }
-  .page-outline a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.75rem;
-    padding-block: 0.4rem;
-    font-size: 0.8125rem;
-    text-decoration: none;
-  }
   footer {
     margin-top: 3rem;
     padding-top: 1.5rem;
@@ -139,7 +108,7 @@
   }
   .markdown-body :global(h2) {
     margin: 3rem 0 1rem;
-    scroll-margin-top: 2rem;
+    scroll-margin-top: 3.5rem;
     font-size: clamp(1.5rem, 3vw, 2rem);
     font-weight: 650;
     line-height: 1.2;
@@ -147,7 +116,7 @@
   }
   .markdown-body :global(h3) {
     margin: 2rem 0 0.75rem;
-    scroll-margin-top: 2rem;
+    scroll-margin-top: 3.5rem;
     font-size: 1.125rem;
     font-weight: 650;
   }
@@ -212,11 +181,6 @@
   @media (prefers-color-scheme: dark) {
     :global(:root:not([data-theme])) .markdown-body :global(.shiki span) {
       color: var(--shiki-dark) !important;
-    }
-  }
-  @media (max-width: 35rem) {
-    .page-outline ul {
-      columns: 1;
     }
   }
 </style>

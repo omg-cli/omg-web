@@ -25,11 +25,11 @@ Category-standard developer-tool site played straight, code-led. Neutral white/c
 
 ## FIRST VIEWPORT
 
-Compact header. Two-column introduction: a direct two-line product definition and short explanation/actions. Below it one full-width command explorer, with a light command-selection rail and a neutral charcoal Arch terminal. This replaces the rejected tall split hero. A compact language guide band closes the introduction. Narrow screens read title, explanation/actions, command choices, transcript.
+Compact header, one product definition, then the editable terminal. The prompt is visible on a compact phone. Install and docs links follow it.
 
 ## SIGNATURE INTERACTION
 
-The command explorer types a real source-reviewed Arch example and reveals its normal output. Command choices carry readable command previews; pause/replay remain operable, reduced motion and no-JS show the complete transcript. No looping or entrance animation.
+A visitor runs commands against a simulated Arch session. Installed packages and the active Node version can diverge from a captured lockfile. Enter, Run, touch suggestions and keyboard history operate on the same session. A complete initial search and a command reference link remain readable without JavaScript.
 
 ## PATH AND CONSTRAINTS
 
@@ -43,7 +43,7 @@ OWN-WORLD: Neutral white and charcoal surfaces, restrained orange controls, Arch
 
 STORY: Understand the package/runtime scope, inspect commands, check platform support, then install and open the quickstart.
 
-FIRST VIEWPORT: Compact header; product definition left and explanation/actions right; full-width command rail and Arch transcript below; language guides close the introduction.
+FIRST VIEWPORT: Product definition, simulated Arch output and an editable prompt. Installation and docs follow the terminal.
 
 FORM: Familiar CLI-tool website, explicitly pinned by user references Bun and ripgrep.dev; canon overrides seed 06f61a97 assigned index 7. Code-led.
 

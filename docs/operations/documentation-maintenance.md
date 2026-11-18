@@ -173,6 +173,16 @@ required for the offline review workflow.
 
 ## Verify a published correction
 
+Check representation selection on the same canonical URL in sequence. Request HTML, then Markdown, then HTML again. The negotiated response varies on `Accept`. Clients with fixed headers can fetch the corresponding `.md` URL. Search JSON returns a `markdownHref` for each result. Fetch it directly and compare its canonical heading with the HTML result. An unknown section ID must return 404.
+
+```sh
+curl -fsS -H 'Accept: text/html' https://getomg.dev/docs/environments/
+curl -fsS -H 'Accept: text/markdown' https://getomg.dev/docs/environments/
+curl -fsS -H 'Accept: text/html' https://getomg.dev/docs/environments/
+curl -fsS 'https://getomg.dev/docs/search.json?q=omg%20env%20check'
+curl -fsS 'https://getomg.dev/docs/environments.md?section=detect-drift-without-repairing-it'
+```
+
 A new `/health` version proves which Worker is active. Separately inspect the normal canonical URL for the changed text, Markdown and manifest. Read `CF-Cache-Status`, `Age` and `Cache-Control`; a successful deployment can coexist with old cached HTML.
 
 Use the project's Wrangler configuration for deployments. If cached canonical HTML is stale, use the established targeted URL purge for the changed pages and verify those same URLs again. A cache-busting query is diagnostic evidence only: it does not prove ordinary readers receive the correction. Do not assume a zone purge clears every adapter cache layer; verify the rendered content after invalidation or expiry.

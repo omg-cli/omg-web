@@ -10,7 +10,7 @@ describe('public discovery contracts', () => {
   it('gives release links a complete social preview on the canonical origin', () => {
     const { head } = render(Updates);
     expect(head).toContain(
-      'property="og:image" content="https://getomg.dev/og/omg-social-20261113.png"'
+      'property="og:image" content="https://getomg.dev/og/omg-social-20261118.png"'
     );
     expect(head).toContain('property="og:image:width" content="1200"');
     expect(head).toContain('property="og:image:height" content="630"');
@@ -29,7 +29,7 @@ describe('public discovery contracts', () => {
   });
 
   it('advertises the real 1200x630 snapshot as the default social image', async () => {
-    const png = await readFile(new URL('../../static/og/omg-social-20261113.png', import.meta.url));
+    const png = await readFile(new URL('../../static/og/omg-social-20261118.png', import.meta.url));
     expect(png.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
     expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
     const { head } = render(DocsTopicPage, {
@@ -39,13 +39,13 @@ describe('public discovery contracts', () => {
       ]),
     });
     expect(head).toContain(
-      'property="og:image" content="https://getomg.dev/og/omg-social-20261113.png"'
+      'property="og:image" content="https://getomg.dev/og/omg-social-20261118.png"'
     );
     expect(head).toContain(
-      'name="twitter:image" content="https://getomg.dev/og/omg-social-20261113.png"'
+      'name="twitter:image" content="https://getomg.dev/og/omg-social-20261118.png"'
     );
     expect(head).toContain('property="article:modified_time"');
-    expect(head).toContain('"image":"https://getomg.dev/og/omg-social-20261113.png"');
+    expect(head).toContain('"image":"https://getomg.dev/og/omg-social-20261118.png"');
   });
 
   it('makes authored runtime and workflow pages discoverable with truthful dates', async () => {

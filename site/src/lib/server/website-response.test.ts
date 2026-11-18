@@ -52,6 +52,87 @@ describe('outer website response policy', () => {
     expect(response.headers.get('Content-Security-Policy')).toBe("default-src 'none'");
   });
 
+  it.each([
+    ['text/markdown', true],
+    ['text/markdown, */*', true],
+    ['text/html;q=0.5, text/markdown;q=0.9', true],
+    ['text/markdown;q=0.1, text/*;q=0.8', false],
+    ['text/markdown;q=0, */*', false],
+    ['text/html, */*;q=0.8', false],
+    ['*/*', false],
+  ] as const)('negotiates %s before the adapter cache lookup', async (accept, markdown) => {
+    const response = await websiteFetch(
+      new Request('https://example.test/docs/installation/', { headers: { Accept: accept } }),
+      async request => {
+        expect(new URL(request.url).pathname).toBe(
+          markdown ? '/markdown/docs/installation/' : '/docs/installation/'
+        );
+        return new Response(markdown ? '# Install' : '<h1>Install</h1>', {
+          headers: {
+            'Content-Type': markdown ? 'text/markdown' : 'text/html',
+            Vary: 'Accept-Encoding',
+          },
+        });
+      },
+      'prod'
+    );
+    expect(response.headers.get('Vary')).toBe('Accept-Encoding, Accept');
+    expect(response.headers.get('Link')).toContain('rel="describedby"');
+    expect(response.headers.get('Link')).toContain(
+      markdown ? 'rel="canonical"' : 'rel="alternate"'
+    );
+    expect(await response.text()).toBe(markdown ? '# Install' : '<h1>Install</h1>');
+  });
+
+  it('keeps a missing Markdown section out of caches shared with HTML', async () => {
+    const response = await websiteFetch(
+      new Request('https://example.test/docs/cli/?section=missing', {
+        headers: { Accept: 'text/markdown' },
+      }),
+      async () => new Response('Section not found', { status: 404 }),
+      'prod'
+    );
+    expect(response.status).toBe(404);
+    expect(response.headers.get('Vary')).toContain('Accept');
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(response.headers.get('Cloudflare-CDN-Cache-Control')).toBe('no-store');
+  });
+
+  it('preserves requested sections and HEAD semantics for Markdown aliases', async () => {
+    const response = await websiteFetch(
+      new Request('https://example.test/docs/cli.md?section=packages&ref=home', { method: 'HEAD' }),
+      async request => {
+        expect(request.url).toBe('https://example.test/markdown/docs/cli/?section=packages');
+        expect(request.method).toBe('GET');
+        return new Response('## Packages', { headers: { 'Content-Type': 'text/markdown' } });
+      },
+      'prod'
+    );
+    expect(response.headers.get('Content-Location')).toBe('/markdown/docs/cli/?section=packages');
+    expect(response.headers.get('Link')).toContain('</docs/cli/#packages>; rel="canonical"');
+    expect(await response.text()).toBe('');
+  });
+
+  it.each(['/dashboard/', '/api/analytics/', '/docs/search/', '/docs/invented.md'])(
+    'leaves %s with its own handler and policies',
+    async path => {
+      const request = new Request(`https://example.test${path}`, {
+        headers: { Accept: 'text/markdown' },
+      });
+      const original = new Response(null, { status: 404 });
+      expect(
+        await websiteFetch(
+          request,
+          async received => {
+            expect(received).toBe(request);
+            return original;
+          },
+          'prod'
+        )
+      ).toBe(original);
+    }
+  );
+
   it('preserves the sitemap discovery exception on staging', async () => {
     const response = await websiteFetch(
       new Request('https://example.test/sitemap.xml'),

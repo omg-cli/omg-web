@@ -1,413 +1,276 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import Icon from '../Icon.svelte';
-  import { terminalChoices, terminalExamples } from './terminal-examples';
+  import { onMount, tick } from 'svelte';
+  import { TerminalSession } from './terminal-session';
 
-  type Phase =
-    | { kind: 'typing'; characters: number }
-    | { kind: 'output'; lines: number }
-    | { kind: 'complete' };
-  let selected = $state<(typeof terminalChoices)[number]>('Packages');
-  let example = $derived(terminalExamples[selected]);
-  let phase = $state<Phase>({ kind: 'complete' });
-  let paused = $state(false);
-  let reducedMotion = $state(true);
-  let hidden = $state(false);
-  let mounted = $state(false);
-  let command = $derived(
-    phase.kind === 'typing' ? example.command.slice(0, phase.characters) : example.command
-  );
-  let lines = $derived(
-    phase.kind === 'complete'
-      ? example.output
-      : phase.kind === 'output'
-        ? example.output.slice(0, phase.lines)
-        : []
-  );
-  let running = $derived(phase.kind !== 'complete' && !paused && !hidden);
-
-  function replay(): void {
-    paused = false;
-    phase = reducedMotion ? { kind: 'complete' } : { kind: 'typing', characters: 0 };
-  }
-
-  function choose(choice: (typeof terminalChoices)[number]): void {
-    selected = choice;
-    replay();
-  }
+  const session = new TerminalSession();
+  const firstCommand = 'omg search ripgrep';
+  const suggestions = ['omg env check', 'omg use node 22', 'omg env capture', 'help'];
+  const history = [firstCommand];
+  const historyLimit = 50;
+  let position = history.length;
+  let draft = '';
+  let entries = $state.raw([{ command: firstCommand, output: session.run(firstCommand) }]);
+  let command = $state('omg install ripgrep');
+  let ready = $state(false);
+  let log: HTMLDivElement;
+  let input = $state<HTMLInputElement>();
 
   onMount(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const syncMotion = () => {
-      reducedMotion = media.matches;
-      if (reducedMotion) phase = { kind: 'complete' };
-    };
-    const syncVisibility = () => {
-      hidden = document.hidden;
-    };
-    syncMotion();
-    syncVisibility();
-    mounted = true;
-    replay();
-    media.addEventListener('change', syncMotion);
-    document.addEventListener('visibilitychange', syncVisibility);
-    return () => {
-      media.removeEventListener('change', syncMotion);
-      document.removeEventListener('visibilitychange', syncVisibility);
-    };
+    ready = true;
   });
 
-  $effect(() => {
-    if (!mounted || reducedMotion || paused || hidden || phase.kind === 'complete') return;
-    const current = phase;
-    const demo = example;
-    const delay = current.kind === 'typing' ? (current.characters === 0 ? 300 : 42) : 150;
-    const timer = window.setTimeout(() => {
-      if (current.kind === 'typing') {
-        phase =
-          current.characters < demo.command.length
-            ? { kind: 'typing', characters: current.characters + 1 }
-            : { kind: 'output', lines: 0 };
-      } else {
-        phase =
-          current.lines < demo.output.length
-            ? { kind: 'output', lines: current.lines + 1 }
-            : { kind: 'complete' };
-      }
-    }, delay);
-    return () => window.clearTimeout(timer);
-  });
+  async function run(value: string): Promise<void> {
+    const submitted = value.trim();
+    if (!submitted) return;
+    if (submitted === 'clear') entries = [];
+    else
+      entries = [
+        ...entries.slice(1 - historyLimit),
+        { command: submitted, output: session.run(submitted) },
+      ];
+    history.push(submitted);
+    if (history.length > historyLimit) history.shift();
+    position = history.length;
+    await tick();
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function submit(event: SubmitEvent): void {
+    event.preventDefault();
+    void run(command);
+    command = '';
+    input?.focus({ preventScroll: true });
+  }
+
+  function recall(event: KeyboardEvent): void {
+    if (event.isComposing || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+    event.preventDefault();
+    if (position === history.length) draft = command;
+    position = Math.max(0, Math.min(history.length, position + (event.key === 'ArrowUp' ? -1 : 1)));
+    command = history[position] ?? draft;
+  }
 </script>
 
-<div class="command-workbench">
-  <div class="workbench-toolbar">
-    <div class="terminal-title">
-      <Icon name="terminal" size={16} /><span>dev@arch: ~/project</span>
-    </div>
-    <span class="shell-label">Arch Linux · x86_64</span>
-  </div>
-  <div class="workbench-content">
-    <div class="example-switcher" role="group" aria-label="Choose a command example">
-      {#each terminalChoices as choice (choice)}
-        <button
-          type="button"
-          aria-label={choice}
-          aria-pressed={selected === choice}
-          onclick={() => choose(choice)}
-          ><span>{choice}</span><code>{terminalExamples[choice].command}</code></button
-        >
+<section class="command-workbench" aria-labelledby="terminal-title">
+  <header>
+    <h2 id="terminal-title">Try OMG<span aria-hidden="true">/</span></h2>
+    <span class="system">Simulated Arch Linux</span>
+  </header>
+  <div class="screen">
+    <p class="location">dev@arch <span>~/project</span></p>
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (keyboard access to scrollback) -->
+    <div class="transcript" bind:this={log} role="log" aria-label="Terminal output" tabindex="0">
+      {#each entries as entry (entry)}
+        <div class="entry">
+          <p class="echo"><span aria-hidden="true">$</span> {entry.command}</p>
+          <pre>{entry.output}</pre>
+        </div>
       {/each}
     </div>
-    <div class="terminal-screen">
-      <div class="terminal-body">
-        <div aria-hidden="true">
-          <p class="terminal-comment"># {example.context}</p>
-          <p class="command">
-            <span class="prompt">$</span><code
-              >{command}<span
-                class="caret"
-                class:blinking={running && phase.kind === 'typing'}
-                class:invisible={phase.kind !== 'typing'}
-              ></span></code
-            >
-          </p>
-          <div class="terminal-output">
-            {#each lines as line, index (`${selected}-${index}`)}<p
-                class:success={line.startsWith('✓')}
-                class:output-heading={index === 0}
-              >
-                {line || ' '}
-              </p>{/each}
-          </div>
-          {#if phase.kind === 'complete'}<p class="next-prompt">
-              <span class="prompt">$</span><span class="idle-caret"></span>
-            </p>{/if}
-        </div>
-        <pre class="sr-only" aria-live="polite" aria-atomic="true">{example.command +
-            '\n' +
-            example.output.join('\n')}</pre>
-      </div>
-      <div class="playback-bar">
-        <p>Example output · {reducedMotion ? 'Motion reduced' : 'Arch Linux demo'}</p>
-        <div class="playback-controls">
-          {#if !reducedMotion && phase.kind !== 'complete'}<button
-              type="button"
-              aria-label={paused ? 'Resume terminal demo' : 'Pause terminal demo'}
-              title={paused ? 'Resume demo' : 'Pause demo'}
-              onclick={() => (paused = !paused)}
-              ><Icon name={paused ? 'play' : 'pause'} size={15} /></button
-            >{/if}
-          <button
-            type="button"
-            aria-label="Replay terminal demo"
-            title="Replay demo"
-            disabled={!mounted || reducedMotion}
-            onclick={replay}><Icon name="replay" size={15} /></button
-          >
-        </div>
-      </div>
-      <a class="terminal-guide" href={example.href}>{example.link}<Icon name="right" size={16} /></a
-      >
+    <div class="prompt-area">
+      <form onsubmit={submit} class:pending={!ready} inert={!ready}>
+        <label for="terminal-command"
+          ><span aria-hidden="true">$</span><span class="sr-only">Terminal command</span></label
+        >
+        <input
+          id="terminal-command"
+          bind:this={input}
+          bind:value={command}
+          onkeydown={recall}
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"
+          enterkeyhint="go"
+          maxlength="160"
+          placeholder="Type a command"
+        />
+        <button type="submit">Run</button>
+      </form>
+      {#if !ready}
+        <p class="fallback"><a href="/docs/cli/">Read the command reference</a></p>
+      {/if}
     </div>
   </div>
-</div>
+  <div
+    class="suggestions"
+    class:pending={!ready}
+    inert={!ready}
+    role="group"
+    aria-label="Run a suggested command"
+  >
+    <span>Try</span>
+    {#each suggestions as suggestion (suggestion)}
+      <button type="button" onclick={() => run(suggestion)}>{suggestion}</button>
+    {/each}
+  </div>
+</section>
 
 <style>
   .command-workbench {
+    --terminal-bg: #171717;
+    --terminal-ink: #ededed;
+    --terminal-muted: #ababab;
+    --terminal-rule: #383838;
+    --terminal-accent: #ff936e;
     min-width: 0;
-    overflow: hidden;
     border: 1px solid var(--rule-strong);
     border-radius: 12px;
-    background: var(--paper-raised);
+    overflow: hidden;
+    background: var(--terminal-bg);
+    color: var(--terminal-ink);
   }
-  .workbench-toolbar {
+  header,
+  .suggestions {
     display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-inline: clamp(0.875rem, 3vw, 1.75rem);
+  }
+  header {
     justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.8rem 1.25rem;
-    border-bottom: 1px solid var(--rule);
+    gap: 0.5rem 1rem;
+    padding-block: 0.875rem;
+    border-bottom: 1px solid var(--terminal-rule);
   }
-  .terminal-title {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--ink);
-  }
-  .shell-label {
-    font-size: 0.75rem;
-    color: var(--ink-muted);
-    white-space: nowrap;
-  }
-  .workbench-content {
-    display: grid;
-    grid-template-columns: 17rem minmax(0, 1fr);
-  }
-  .example-switcher {
-    display: flex;
-    flex-direction: column;
-    padding: 0.75rem;
-    gap: 0.5rem;
-  }
-  .example-switcher button {
-    display: grid;
-    gap: 0.5rem;
-    width: 100%;
-    min-height: 5.5rem;
-    padding: 1rem;
-    text-align: left;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--ink-muted);
-    cursor: pointer;
-  }
-  .example-switcher button span {
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-  .example-switcher button code {
-    color: var(--ink-muted);
-    font-size: 0.6875rem;
-    line-height: 1.6;
-  }
-  .example-switcher button:hover {
-    background: var(--paper);
-    color: var(--ink);
-  }
-  .example-switcher button[aria-pressed='true'] {
-    background: var(--paper);
-    border-color: var(--rule);
-    color: var(--signal);
-  }
-  .terminal-screen {
-    min-width: 0;
-    background: #171717;
-    color: #ededed;
-  }
-  .terminal-screen :global(:focus-visible) {
-    outline-color: #ff936e;
-    outline-offset: -4px;
-  }
-  .terminal-body {
-    height: 17rem;
-    overflow-y: auto;
-    padding: 1.5rem 2rem;
-    scrollbar-color: #666666 #171717;
-  }
-  .terminal-body p {
+  h2 {
     margin: 0;
+    font-size: 1.375rem;
+    font-weight: 650;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
   }
-  .terminal-comment {
-    min-height: 2.5rem;
-    color: #ababab;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    line-height: 1.7;
+  h2 span,
+  .echo span,
+  label {
+    color: var(--terminal-accent);
   }
-  .command {
-    display: flex;
-    gap: 0.75rem;
-    align-items: baseline;
-    min-height: 1.5rem;
+  .system,
+  .suggestions > span {
+    color: var(--terminal-muted);
+    font-size: 0.8125rem;
   }
-  code {
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    overflow-wrap: anywhere;
-    color: #ffffff;
+  .screen {
+    padding: 1rem clamp(0.875rem, 3vw, 1.75rem);
   }
-  .prompt {
-    color: #ff936e;
-    font-family: var(--font-mono);
+  .prompt-area {
+    display: grid;
   }
-  .caret,
-  .idle-caret {
-    display: inline-block;
-    width: 0.5em;
-    height: 1.1em;
-    margin-left: 0.2rem;
-    vertical-align: -0.15em;
-    background: #ff936e;
+  .prompt-area > * {
+    grid-area: 1 / 1;
   }
-  .invisible {
+  .pending {
     visibility: hidden;
   }
-  .blinking {
-    animation: cursor-blink 900ms step-end infinite;
+  .fallback {
+    align-self: center;
+    margin: 0;
   }
-  .terminal-output {
-    margin-top: 1rem;
-    color: #d6d6d6;
+  @media (scripting: none) {
+    .pending {
+      display: none;
+    }
+  }
+  .location,
+  .transcript,
+  label,
+  input,
+  .suggestions button {
     font-family: var(--font-mono);
+  }
+  .location {
+    margin: 0 0 0.75rem;
+    color: var(--terminal-muted);
     font-size: 0.8125rem;
-    line-height: 1.85;
+  }
+  .location span {
+    margin-left: 0.25rem;
+    color: var(--terminal-ink);
+  }
+  .transcript {
+    height: 8rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: #666666 var(--terminal-bg);
+    font-size: clamp(0.8125rem, 1.2vw, 0.9375rem);
+    line-height: 1.6;
+  }
+  .entry + .entry {
+    margin-top: 0.75rem;
+  }
+  .echo,
+  pre {
+    margin: 0;
+    font: inherit;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
-  .terminal-output .success,
-  .terminal-output .output-heading {
-    color: #a9cfff;
+  pre {
+    color: #d6d6d6;
   }
-  .next-prompt {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    padding-top: 1rem;
-  }
-  .playback-bar {
-    display: flex;
-    justify-content: space-between;
+  form {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.5rem;
-    padding: 0 0.75rem 0 2rem;
+    padding: 0.2rem 0.25rem 0.2rem 0.75rem;
+    border: 1px solid #777;
+    border-radius: 6px;
+  }
+  form:focus-within {
+    border-color: var(--terminal-accent);
+  }
+  input {
+    width: 100%;
+    min-width: 0;
     min-height: 2.75rem;
-  }
-  .playback-bar > p {
-    margin: 0;
-    color: #ababab;
-    font-size: 0.6875rem;
-  }
-  .playback-controls {
-    display: flex;
-  }
-  .playback-controls button {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    width: 2.75rem;
-    height: 2.75rem;
     border: 0;
-    border-radius: 4px;
     background: transparent;
-    color: #cccccc;
+    color: var(--terminal-ink);
+    caret-color: var(--terminal-accent);
+    font-size: 1rem;
+  }
+  input::placeholder {
+    color: var(--terminal-muted);
+  }
+  button {
     cursor: pointer;
   }
-  .playback-controls button:hover {
-    background: #303030;
-    color: #ffffff;
+  form button {
+    padding: 0.5rem 1rem;
+    min-height: 2.75rem;
+    border: 0;
+    border-radius: 4px;
+    background: var(--terminal-ink);
+    color: var(--terminal-bg);
+    font: 600 0.875rem var(--font-body);
   }
-  .playback-controls button:disabled {
-    opacity: 0.4;
-    cursor: default;
+  form button:hover {
+    background: var(--terminal-accent);
+  }
+  .suggestions {
+    gap: 0 1rem;
+    border-top: 1px solid var(--terminal-rule);
+  }
+  .suggestions button,
+  .fallback a {
+    color: var(--terminal-ink);
+    text-decoration: underline;
+    text-decoration-color: var(--terminal-muted);
+    text-underline-offset: 0.25em;
+  }
+  .suggestions button {
+    min-height: 2.75rem;
+    padding: 0;
+    border: 0;
     background: transparent;
+    font-size: 0.8125rem;
   }
-  .terminal-guide {
-    display: flex;
-    min-height: 3rem;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 2rem;
-    border-top: 1px solid #383838;
-    color: #ededed;
-    font-size: 0.75rem;
-    text-decoration: none;
+  .suggestions button:hover,
+  .fallback a:hover {
+    color: var(--terminal-accent);
   }
-  .terminal-guide:hover {
-    background: #252525;
-    color: #ff936e;
-  }
-  @keyframes cursor-blink {
-    50% {
-      opacity: 0;
-    }
-  }
-  @media (max-width: 55rem) {
-    .workbench-content {
-      grid-template-columns: 14rem minmax(0, 1fr);
-    }
-    .terminal-body {
-      padding-inline: 1.25rem;
-    }
-  }
-  @media (max-width: 40rem) {
-    .workbench-content {
-      grid-template-columns: 1fr;
-    }
-    .example-switcher {
-      flex-direction: row;
-      gap: 0.25rem;
-      padding: 0.4rem;
-    }
-    .example-switcher button {
-      display: block;
-      min-height: 2.75rem;
-      width: auto;
-      flex: 1;
-      padding: 0.65rem 0.35rem;
-      text-align: center;
-    }
-    .example-switcher button span {
-      font-size: 0.75rem;
-    }
-    .example-switcher button code {
-      display: none;
-    }
-    .terminal-body {
-      height: 18rem;
-      padding: 1.25rem;
-    }
-    .workbench-toolbar {
-      padding: 0.875rem;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    .terminal-title,
-    .shell-label {
-      font-size: 0.6875rem;
-    }
-    .playback-bar {
-      padding-left: 1.25rem;
-    }
-    .terminal-guide {
-      padding-inline: 1.25rem;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .blinking {
-      animation: none;
-    }
+  .command-workbench :global(:focus-visible) {
+    outline: 2px solid var(--terminal-accent);
+    outline-offset: -2px;
   }
 </style>

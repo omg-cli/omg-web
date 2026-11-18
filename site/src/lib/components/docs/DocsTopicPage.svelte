@@ -6,6 +6,7 @@
   import { DOCS_TOPICS, docsTopicHref, docsSourceHref } from '../../docs/topics';
   import DocsBlocks from './DocsBlocks.svelte';
   import DocsReader from './DocsReader.svelte';
+  import DocsOutline from './DocsOutline.svelte';
   import DocActions from './DocActions.svelte';
 
   let { topic }: { topic: DocsTopic } = $props();
@@ -74,24 +75,25 @@
       <h1>{topic.title}</h1>
       <p class="topic-summary">{topic.summary}</p>
       <p class="applicability">
-        Release v0.1.224 · Reviewed <time datetime={topic.source.reviewedAt}
+        Release v0.1.224 Â· Reviewed <time datetime={topic.source.reviewedAt}
           >{topic.source.reviewedAt}</time
         >
       </p>
       <DocActions markdownHref={`/markdown/docs/${topic.slug}/`} {sourceHref} />
     </header>
-    <details class="page-outline">
-      <summary>On this page</summary>
-      <ul>
-        {#each topic.sections as section (section.id)}<li>
-            <a href={`#${section.id}`}>{section.heading}</a>
-          </li>{/each}
-      </ul>
-    </details>
+    <DocsOutline
+      headings={topic.sections.map(section => ({ id: section.id, title: section.heading }))}
+    />
     {#each topic.sections as section (section.id)}
       <section id={section.id} class="topic-section">
-        <h2>{section.heading}</h2>
-        {#each section.blocks as block}<DocsBlocks {block} />{/each}
+        <h2 aria-label={section.heading}>
+          {section.heading}<a
+            class="heading-link"
+            href={`#${section.id}`}
+            aria-label={`Link to ${section.heading}`}>#</a
+          >
+        </h2>
+        {#each section.blocks as block (block)}<DocsBlocks {block} />{/each}
       </section>
     {/each}
     <footer class="topic-provenance">
@@ -152,35 +154,10 @@
     color: var(--ink-muted);
     font-size: 0.75rem;
   }
-  .page-outline {
-    margin-block: 1.5rem 2.5rem;
-    padding-block: 0.75rem;
-    border-block: 1px solid var(--rule);
-  }
-  summary {
-    min-height: 2.75rem;
-    padding-block: 0.65rem;
-    cursor: pointer;
-    font-size: 0.8125rem;
-    font-weight: 600;
-  }
-  .page-outline ul {
-    columns: 2;
-    margin: 0.5rem 0;
-    padding-left: 1.25rem;
-  }
-  .page-outline a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.75rem;
-    padding-block: 0.4rem;
-    font-size: 0.8125rem;
-    text-decoration: none;
-  }
   .topic-section {
     margin-top: 3rem;
     padding-top: 1rem;
-    scroll-margin-top: 2rem;
+    scroll-margin-top: 3.5rem;
   }
   .topic-section h2 {
     margin: 0;
@@ -214,10 +191,5 @@
   }
   a:hover {
     color: var(--signal);
-  }
-  @media (max-width: 35rem) {
-    .page-outline ul {
-      columns: 1;
-    }
   }
 </style>

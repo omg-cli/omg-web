@@ -1,5 +1,31 @@
 import { expect, test } from '@playwright/test';
 
+test('one documentation URL serves a browser or a Markdown reader', async ({ request }) => {
+  const path = '/docs/environments/';
+  const section = 'detect-drift-without-repairing-it';
+  for (const accept of ['text/html', 'text/markdown', 'text/html']) {
+    const response = await request.get(path, { headers: { Accept: accept }, maxRedirects: 0 });
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toContain(accept);
+    expect(response.headers()['vary']?.toLowerCase()).toContain('accept');
+    expect(response.headers()['link']).toContain('rel="describedby"');
+    expect(await response.text()).toContain(accept === 'text/html' ? '<h1' : '## Detect drift');
+  }
+  const alias = `/docs/environments.md?section=${section}`;
+  const result = await request.get(alias, { maxRedirects: 0 });
+  expect(result.status()).toBe(200);
+  expect(result.headers()['content-type']).toContain('text/markdown');
+  expect(await result.text()).toContain(`Canonical: https://getomg.dev${path}#${section}`);
+  const head = await request.head(alias);
+  expect(head.status()).toBe(200);
+  expect(await head.text()).toBe('');
+  const missing = await request.get(`${path}?section=nonexistent`, {
+    headers: { Accept: 'text/markdown' },
+  });
+  expect(missing.status()).toBe(404);
+  expect(missing.headers()['cache-control']).toContain('no-store');
+});
+
 test('security headers cover dynamic and prerendered pages for GET and HEAD', async ({
   request,
 }) => {
@@ -151,26 +177,26 @@ test('public sitemap, raw HTML and Markdown agree on published guides', async ({
   expect((await request.get('/guides/node/')).status()).toBe(404);
 });
 
-test('command explorer changes examples and their documentation destination', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/', { waitUntil: 'networkidle' });
-  const choices = page.getByRole('group', { name: 'Choose a command example' });
-  await expect(page.locator('.command code')).toHaveText('omg search ripgrep --no-aur');
-  const runtime = choices.getByRole('button', { name: 'Runtimes', exact: true });
-  await runtime.focus();
-  await runtime.press('Enter');
-  await expect(runtime).toHaveAttribute('aria-pressed', 'true');
-  await expect(choices.getByRole('button', { name: 'Packages', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'false'
-  );
-  await expect(page.locator('.command code')).toHaveText('omg use node 22.0.0');
-  await expect(page.locator('.terminal-guide')).toHaveAttribute('href', '/docs/runtimes/');
-  await choices.getByRole('button', { name: 'Environments', exact: true }).click();
-  await expect(page.locator('.command code')).toHaveText('omg env check');
-  await expect(page.locator('.terminal-guide')).toHaveAttribute('href', '/docs/cli/');
-  await page.locator('.terminal-guide').click();
-  await expect(page).toHaveURL(/\/docs\/cli\/$/);
+test('terminal commands change the environment in one visit', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByRole('textbox', { name: 'Terminal command' });
+  const log = page.getByRole('log', { name: 'Terminal output' });
+  await expect(input).toHaveValue('omg install ripgrep');
+  await input.press('Enter');
+  await expect(log).toContainText('Installed ripgrep 15.2.0-1');
+  await page.getByRole('button', { name: 'omg env check', exact: true }).click();
+  await expect(log).toContainText('+ ripgrep (extra package)');
+  await page.getByRole('button', { name: 'omg env capture', exact: true }).click();
+  await page.getByRole('button', { name: 'omg env check', exact: true }).click();
+  await expect(log).toContainText('Environment is in sync');
+  await input.fill('node --version');
+  await page.getByRole('button', { name: 'omg use node 22', exact: true }).click();
+  await input.press('Enter');
+  await expect(log).toContainText('v22.0.0');
+  await input.press('ArrowUp');
+  await expect(input).toHaveValue('node --version');
+  await input.press('ArrowDown');
+  await expect(input).toHaveValue('');
 });
 
 test('dark mode follows the system and remembers a manual choice across pages', async ({
@@ -208,40 +234,14 @@ test('theme switching works when browser storage is blocked', async ({ page }) =
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
 
-test('terminal types, reveals Arch output, pauses, and replays', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.clock.install({ time: new Date('2026-11-11T18:00:00Z') });
-  await page.clock.pauseAt(new Date('2026-11-11T18:00:01Z'));
-  await page.goto('/', { waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: 'Replay terminal demo' }).click();
-  await expect(page.locator('.command code')).toHaveText('');
-  await page.clock.runFor(600);
-  const partial = await page.locator('.command code').innerText();
-  expect(partial.length).toBeGreaterThan(0);
-  expect(partial.length).toBeLessThan('omg search ripgrep --no-aur'.length);
-  await page.getByRole('button', { name: 'Pause terminal demo' }).click();
-  await page.clock.runFor(2_000);
-  await expect(page.locator('.command code')).toHaveText(partial);
-  await page.getByRole('button', { name: 'Resume terminal demo' }).click();
-  await page.clock.runFor(5_000);
-  await expect(page.locator('.terminal-output')).toContainText('ripgrep 15.2.0-1');
-  await expect(page.locator('.terminal-output')).toContainText('Official');
-  await expect(page.getByText('Arch Linux · x86_64', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Replay terminal demo' }).click();
-  await expect(page.locator('.command code')).toHaveText('');
-});
-
-test('reduced motion shows the complete terminal transcript without typing', async ({ page }) => {
+test('the terminal prompt is in the opening mobile viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/', { waitUntil: 'networkidle' });
-  await expect(page.locator('.command code')).toHaveText('omg search ripgrep --no-aur');
-  await expect(page.locator('.terminal-output')).toContainText('ripgrep 15.2.0-1');
-  await expect(page.getByRole('button', { name: 'Pause terminal demo' })).toHaveCount(0);
-  await page
-    .getByRole('group', { name: 'Choose a command example' })
-    .getByRole('button', { name: 'Environments', exact: true })
-    .click();
-  await expect(page.locator('.terminal-output')).toContainText('Environment is in sync');
+  await page.goto('/');
+  const input = page.getByRole('textbox', { name: 'Terminal command' });
+  await expect(input).toBeInViewport({ ratio: 1 });
+  await page.getByRole('button', { name: 'Run', exact: true }).click();
+  await expect(page.getByRole('log')).toContainText('Installed ripgrep');
 });
 
 test('dark mode remains reachable from the compact mobile menu', async ({ page }) => {
@@ -263,9 +263,9 @@ test.describe('dark mode without JavaScript', () => {
   test('keeps the complete Arch demo readable', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(16, 16, 16)');
-    await expect(page.locator('.command code')).toHaveText('omg search ripgrep --no-aur');
-    await expect(page.locator('.terminal-output')).toContainText('ripgrep 15.2.0-1');
-    await expect(page.getByRole('button', { name: 'Replay terminal demo' })).toBeDisabled();
+    await expect(page.getByRole('log')).toContainText('ripgrep 15.2.0-1');
+    await expect(page.getByRole('textbox', { name: 'Terminal command' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Read the command reference' })).toBeVisible();
   });
 });
 

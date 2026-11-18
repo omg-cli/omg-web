@@ -9,6 +9,7 @@ interface SearchSection {
   readonly category: string;
   readonly href: string;
   readonly body: string;
+  readonly leadCommand: string | undefined;
 }
 
 function plainText(markdown: string): string {
@@ -22,20 +23,26 @@ function plainText(markdown: string): string {
 
 function sections(entry: DocumentationEntry): SearchSection[] {
   const occurrences = new Map<string, number>();
-  return markdownSections(entry.markdown).map((block, index) => {
+  return markdownSections(entry.markdown).flatMap((block, index) => {
     const heading = block.title ?? entry.title;
     const occurrence = occurrences.get(heading) ?? 0;
-    occurrences.set(heading, occurrence + 1);
-    const section = entry.sections.filter(item => item.title === heading)[occurrence];
-    const href = section === undefined ? entry.href : `${entry.href}#${section.id}`;
-    return {
-      id: `${entry.href}:${index}`,
-      title: entry.title,
-      heading,
-      category: entry.category,
-      href,
-      body: plainText(block.body),
-    };
+    const section =
+      block.title === null
+        ? undefined
+        : entry.sections.filter(item => item.title === heading)[occurrence];
+    if (block.title !== null) occurrences.set(heading, occurrence + 1);
+    if (block.title !== null && !section) return [];
+    return [
+      {
+        id: `${entry.href}:${index}`,
+        title: entry.title,
+        heading,
+        category: entry.category,
+        href: section ? `${entry.href}#${section.id}` : entry.href,
+        body: section ? plainText(block.body) : entry.description,
+        leadCommand: block.leadCommand,
+      },
+    ];
   });
 }
 
@@ -61,23 +68,38 @@ export function createDocumentationSearch(entries: readonly DocumentationEntry[]
   });
   index.addAll(documents);
   return (query: string) => {
-    const matches = index.search(query);
-    const results = matches.slice(0, 20).flatMap(match => {
+    const phrase = query.trim().toLowerCase().replace(/\s+/gu, ' ');
+    const firstWord = phrase.split(' ')[0] ?? '';
+    const matches = index.search(phrase).flatMap(match => {
       const document = byId.get(String(match.id));
       if (document === undefined) return [];
-      const firstWord = query.toLowerCase().split(/\s+/u)[0] ?? '';
-      const position = document.body.toLowerCase().indexOf(firstWord);
-      const start = Math.max(0, position - 65);
-      const excerpt = `${start > 0 ? '…' : ''}${document.body.slice(start, start + 230)}${document.body.length > start + 230 ? '…' : ''}`;
+      const body = document.body.toLowerCase();
+      const exact = body.indexOf(phrase);
+      const leads = document.leadCommand === phrase || document.leadCommand === `omg ${phrase}`;
       return [
         {
-          title: document.title,
-          heading: document.heading,
-          category: document.category,
-          href: document.href,
-          excerpt,
-        } satisfies DocumentationSearchResult,
+          document,
+          position: exact >= 0 ? exact : body.indexOf(firstWord),
+          leads,
+          exact: exact >= 0,
+        },
       ];
+    });
+    if (/\s|^--/u.test(phrase)) {
+      matches.sort(
+        (a, b) => Number(b.leads) - Number(a.leads) || Number(b.exact) - Number(a.exact)
+      );
+    }
+    const results = matches.slice(0, 20).map(({ document, position }) => {
+      const start = Math.max(0, position - 65);
+      const excerpt = `${start > 0 ? '…' : ''}${document.body.slice(start, start + 230)}${document.body.length > start + 230 ? '…' : ''}`;
+      return {
+        title: document.title,
+        heading: document.heading,
+        category: document.category,
+        href: document.href,
+        excerpt,
+      } satisfies DocumentationSearchResult;
     });
     return { total: matches.length, results };
   };

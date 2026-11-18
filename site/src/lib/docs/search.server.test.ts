@@ -43,4 +43,22 @@ describe('documentation search', () => {
     await expect(searchDocumentation('x'.repeat(161))).rejects.toThrow('160');
     expect((await searchDocumentation('install')).results.length).toBeLessThanOrEqual(20);
   });
+
+  it('leads command searches with the task that demonstrates the command', async () => {
+    for (const query of ['omg env check', 'env check']) {
+      const { results } = await searchDocumentation(query);
+      expect(results[0]?.href).toBe('/docs/environments/#detect-drift-without-repairing-it');
+      expect(results[0]?.excerpt).toContain('omg env check');
+      expect(results.some(result => result.excerpt.includes('Canonical:'))).toBe(false);
+      expect(
+        results.some(
+          result =>
+            result.heading === 'Sources and verification' || result.heading === 'Related pages'
+        )
+      ).toBe(false);
+    }
+    const node = await searchDocumentation('omg use node 22');
+    expect(node.results[0]?.href).toMatch(/^\/docs\/(getting-started|shell)\/#/u);
+    expect(node.results[0]?.excerpt).toContain('omg use node 22');
+  });
 });

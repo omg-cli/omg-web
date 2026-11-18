@@ -4,6 +4,8 @@
   root.dataset.docCopy = 'ready';
   document.addEventListener('click', async event => {
     if (!(event.target instanceof Element)) return;
+    const outlineLink = event.target.closest('.page-outline a[href^="#"]');
+    if (outlineLink) outlineLink.closest('details')?.removeAttribute('open');
     const button = event.target.closest('button[data-copy-code], button[data-copy-page]');
     if (!(button instanceof HTMLButtonElement) || button.disabled) return;
     const container = button.closest('[data-copy-container]');

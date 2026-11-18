@@ -126,6 +126,17 @@
     min-width: 0;
     padding-block: 2.5rem 4rem;
   }
+  .reader-content :global(.heading-link) {
+    padding-inline: 0.4rem;
+    color: var(--ink-muted);
+    font-size: 0.75em;
+    text-decoration: none;
+  }
+  .reader-content :global(.heading-link:hover),
+  .reader-content :global(.heading-link:focus-visible) {
+    color: var(--signal);
+    text-decoration: underline;
+  }
   .mobile-topics {
     display: none;
   }

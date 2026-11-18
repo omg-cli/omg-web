@@ -1,4 +1,5 @@
 import { headSafeFetch } from './head-safe-fetch';
+import { documentationResponse } from './documentation-response';
 
 /** Apply stage policy after adapter cache hits and prerendered asset responses. */
 export async function websiteFetch(
@@ -6,7 +7,8 @@ export async function websiteFetch(
   fetch: Parameters<typeof headSafeFetch>[1],
   deploymentStage: string | undefined
 ): Promise<Response> {
-  const response = await headSafeFetch(request, fetch);
+  const read = (resource: Request) => headSafeFetch(resource, fetch);
+  const response = await documentationResponse(request, () => read(request), read);
   if (
     deploymentStage === 'prod' ||
     (response.headers.get('Content-Type') ?? '').includes('application/xml')

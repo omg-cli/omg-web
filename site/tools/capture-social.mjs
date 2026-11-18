@@ -27,9 +27,7 @@ try {
   const response = await page.goto(url.href, { waitUntil: 'networkidle' });
   if (response?.status() !== 200) throw new Error('Homepage did not return HTTP 200.');
   await page.evaluate(() => document.fonts.ready);
-  await page.locator('.command-workbench .next-prompt').waitFor({ state: 'visible' });
-  // Frame the completed homepage demo; the next section otherwise straddles the image edge.
-  await page.addStyleTag({ content: '.runtime-strip { visibility: hidden; }' });
+  await page.getByRole('textbox', { name: 'Terminal command' }).waitFor();
   await page.screenshot({ path: output, animations: 'disabled', caret: 'hide' });
   const png = await readFile(output);
   if (png.readUInt32BE(16) !== 1200 || png.readUInt32BE(20) !== 630)

@@ -137,7 +137,9 @@ test('copy controls use the visible code and full canonical Markdown, with a rec
   const expectedCode = await firstCode.locator('pre code').textContent();
   await firstCode.getByRole('button', { name: 'Copy code' }).click();
   await expect(firstCode.getByRole('status')).toHaveText('Code copied.');
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(expectedCode);
+  expect((await page.evaluate(() => navigator.clipboard.readText())).replaceAll('\r\n', '\n')).toBe(
+    expectedCode
+  );
   await page.getByRole('button', { name: 'Copy page', exact: true }).click();
   await expect(page.locator('.page-actions').getByRole('status')).toHaveText(
     'Page copied as Markdown.'
@@ -156,6 +158,85 @@ test('copy controls use the visible code and full canonical Markdown, with a rec
     'Copy unavailable. Select the code to copy it.'
   );
   await expect(firstCode.getByRole('button', { name: 'Copy code' })).toBeEnabled();
+});
+
+test('the docs index copies prompt-free examples and exposes agent resources without JavaScript', async ({
+  page,
+  context,
+  browser,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/docs/');
+  const firstGroup = page.locator('#quick-start .docs-code').first();
+  await firstGroup.getByRole('button', { name: 'Copy code' }).click();
+  await expect(firstGroup.getByRole('status')).toHaveText('Code copied.');
+  expect((await page.evaluate(() => navigator.clipboard.readText())).replaceAll('\r\n', '\n')).toBe(
+    'omg search ripgrep\nomg info ripgrep\nomg install ripgrep\nomg update'
+  );
+  const withoutJavaScript = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 390, height: 844 },
+  });
+  const reader = await withoutJavaScript.newPage();
+  await reader.goto('/docs/');
+  expect((await reader.getByRole('searchbox').boundingBox())?.y).toBeLessThan(250);
+  const tasks = reader.getByRole('navigation', { name: 'Common documentation tasks' });
+  for (const link of await tasks.getByRole('link').all()) await expect(link).toBeInViewport();
+  await tasks.getByRole('link', { name: 'Use docs with an agent' }).click();
+  await expect(reader).toHaveURL(/#agents$/u);
+  await expect(reader.getByRole('heading', { name: 'Use docs with an agent' })).toBeInViewport();
+  await expect(reader.locator('#install pre code')).toHaveText(
+    'curl -fsSL https://getomg.dev/install.sh | bash'
+  );
+  expect(
+    await reader.locator('#install pre').evaluate(pre => pre.scrollWidth <= pre.clientWidth)
+  ).toBe(true);
+  await expect(reader.locator('#install button')).toBeHidden();
+  const agents = reader.locator('#agents');
+  await expect(agents.locator('pre code')).toHaveText(
+    "curl -H 'Accept: text/markdown' https://getomg.dev/docs/environments/"
+  );
+  for (const href of [
+    '/llms.txt',
+    '/docs/manifest.json',
+    '/docs/search.json?q=env+check',
+    '/llms-full.txt',
+  ]) {
+    await expect(agents.locator(`a[href="${href}"]`)).toBeVisible();
+  }
+  await withoutJavaScript.close();
+});
+
+test('phone readers can change sections while reading and use a direct heading link', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/docs/cli/#environments');
+  const outline = page.locator('.page-outline');
+  await expect(outline.locator('summary')).toBeInViewport();
+  await outline.locator('summary').click();
+  await outline.getByRole('link', { name: 'Package management' }).click();
+  await expect(page).toHaveURL(/#packages$/u);
+  await expect(outline).not.toHaveAttribute('open', '');
+  const link = page.getByRole('link', { name: 'Link to Package management' });
+  await expect(link).toBeInViewport();
+  await expect(link).toHaveAttribute('href', '#packages');
+  await page.goto('/docs/getting-started/#select-a-runtime');
+  await expect(page.getByRole('link', { name: 'Link to Select a runtime' })).toHaveAttribute(
+    'href',
+    '#select-a-runtime'
+  );
+});
+
+test('the environment guide renders shell commands and lockfiles as inline code', async ({
+  page,
+}) => {
+  await page.goto('/guides/reproducible-dev-environments/#capture-and-check');
+  const sentence = page.locator('#capture-and-check p').filter({ hasText: 'with the live system' });
+  await expect(sentence.locator('code')).toHaveText(['omg env check', 'omg.lock']);
+  await expect(sentence).toContainText(
+    'Run omg env check to compare omg.lock with the live system'
+  );
 });
 
 for (const theme of ['light', 'dark']) {

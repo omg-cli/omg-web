@@ -14,6 +14,7 @@ export const GET: RequestHandler = async () => {
         verification:
           'Source-reviewed. Published release behavior is distinguished from development changes. Examples were not executed on every supported host.',
         search: `${SITE_ORIGIN}/docs/search.json?q={query}`,
+        sectionMarkdown: '{markdownHref}?section={section.id}',
         fullText: `${SITE_ORIGIN}/llms-full.txt`,
         pages: entries.map(({ markdown: _markdown, ...entry }) => ({
           ...entry,

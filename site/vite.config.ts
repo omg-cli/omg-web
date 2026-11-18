@@ -2,7 +2,7 @@ import { makeCloudflareAdapter } from '@alchemy.run/frontend-frameworks/svelteki
 import { sveltepress } from '@sveltepress/vite';
 import { codeToHtml } from 'shiki';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
+import { defineConfig, normalizePath } from 'vite';
 import documentationHeadings from './tools/documentation-remark.ts';
 import { documentationOnlyPlugins } from './tools/sveltepress-scope.ts';
 
@@ -18,8 +18,10 @@ export default defineConfig({
       theme: {
         name: 'omg',
         globalLayout: '',
-        pageLayout: fileURLToPath(
-          new URL('./src/lib/components/docs/SveltePressPage.svelte', import.meta.url)
+        pageLayout: normalizePath(
+          fileURLToPath(
+            new URL('./src/lib/components/docs/SveltePressPage.svelte', import.meta.url)
+          )
         ),
         vitePlugins: documentationOnlyPlugins,
         highlighter: async (code: string, language: string) => {

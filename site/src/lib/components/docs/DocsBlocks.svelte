@@ -1,43 +1,35 @@
 <script lang="ts">
   import type { DocsBlock } from '../../docs/topic';
   import DocsDiagram from './DocsDiagram.svelte';
+  import DocsCode from './DocsCode.svelte';
 
   let { block }: { block: DocsBlock } = $props();
   const titleId = $props.id();
 </script>
 
+{#snippet prose(text: string)}
+  {#each text.split(/`([^`\n]+)`/u) as part, index (index)}{#if index % 2 === 1}<code>{part}</code
+      >{:else}{part}{/if}{/each}
+{/snippet}
+
 {#if block.kind === 'paragraphs'}
   <div class="paragraphs">
-    {#each block.paragraphs as paragraph}
-      <p>{paragraph}</p>
+    {#each block.paragraphs as paragraph, index (index)}
+      <p>{@render prose(paragraph)}</p>
     {/each}
   </div>
 {:else if block.kind === 'commands'}
   <section class="commands-block">
     <h3>{block.title}</h3>
-    <div class="docs-code" data-copy-container>
-      <div class="code-actions">
-        <span data-copy-status role="status"></span><button type="button" data-copy-code
-          >Copy code</button
-        >
-      </div>
-      <pre><code>{block.commands.join('\n')}</code></pre>
-    </div>
+    <DocsCode code={block.commands.join('\n')} />
   </section>
 {:else if block.kind === 'steps'}
   <ol class="steps-block">
-    {#each block.steps as step}
+    {#each block.steps as step (step)}
       <li>
-        <p>{step.text}</p>
+        <p>{@render prose(step.text)}</p>
         {#if step.command}
-          <div class="docs-code" data-copy-container>
-            <div class="code-actions">
-              <span data-copy-status role="status"></span><button type="button" data-copy-code
-                >Copy code</button
-              >
-            </div>
-            <pre><code>{step.command}</code></pre>
-          </div>
+          <DocsCode code={step.command} />
         {/if}
       </li>
     {/each}
@@ -50,15 +42,15 @@
       <table>
         <thead>
           <tr>
-            <th scope="col">{block.columns[0]}</th>
-            <th scope="col">{block.columns[1]}</th>
+            <th scope="col">{@render prose(block.columns[0])}</th>
+            <th scope="col">{@render prose(block.columns[1])}</th>
           </tr>
         </thead>
         <tbody>
-          {#each block.rows as row}
+          {#each block.rows as row (row)}
             <tr>
-              <td>{row[0]}</td>
-              <td>{row[1]}</td>
+              <td>{@render prose(row[0])}</td>
+              <td>{@render prose(row[1])}</td>
             </tr>
           {/each}
         </tbody>
@@ -67,19 +59,25 @@
   </section>
 {:else if block.kind === 'bullets'}
   <ul class="bullets-block">
-    {#each block.items as item}
-      <li>{item}</li>
+    {#each block.items as item, index (index)}
+      <li>{@render prose(item)}</li>
     {/each}
   </ul>
 {:else if block.kind === 'diagram'}
   <DocsDiagram diagram={block.diagram} />
 {:else}
   <aside class="note note-{block.tone}">
-    <p>{block.text}</p>
+    <p>{@render prose(block.text)}</p>
   </aside>
 {/if}
 
 <style>
+  code {
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+  }
   .paragraphs p {
     max-width: 46rem;
     margin: 1rem 0 0;
@@ -94,23 +92,6 @@
     font-size: 1.25rem;
     font-weight: 650;
     letter-spacing: -0.03em;
-  }
-
-  pre {
-    margin: 1rem 0 0;
-    padding: 1rem 1.25rem;
-    overflow-x: auto;
-    background: var(--paper-raised);
-    border: 1px solid var(--rule);
-    color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    line-height: 1.8;
-  }
-
-  code {
-    font-family: var(--font-mono);
-    overflow-wrap: anywhere;
   }
 
   .steps-block {
@@ -130,10 +111,6 @@
     color: var(--signal);
     font-family: var(--font-mono);
     font-size: 0.8125rem;
-  }
-
-  .steps-block pre {
-    margin-block: 0.5rem;
   }
 
   .table-block {

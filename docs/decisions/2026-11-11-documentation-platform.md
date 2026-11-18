@@ -1,6 +1,6 @@
 # Documentation platform
 
-Date: 2026-11-11. Status: implemented on the documentation-upgrade branch; not published.
+Decision recorded 2026-11-11. The published site uses this stack. The [2026-11-18 documentation experience audit](../audits/2026-11-18-documentation-experience.md) compares current alternatives and records the reader and agent retrieval changes.
 
 OMG keeps SvelteKit and uses **SveltePress 1.10.0** for new Markdown pages. The existing handbook and learning content stay in their typed block format, preserving their URLs, diagrams and escaping guarantees. Each document has one editable source. A server catalog derives search, Markdown exports, the manifest and agent indexes from those sources.
 

@@ -39,7 +39,7 @@
       rel="alternate"
       type="text/markdown"
       href={`${SITE_ORIGIN}${markdownPath}`}
-    />{/if}
+    /><link rel="describedby" type="text/plain" href={`${SITE_ORIGIN}/llms.txt`} />{/if}
   <link rel="canonical" href={canonical} />
   <meta property="og:type" content={type} />
   <meta property="og:title" content={title} />

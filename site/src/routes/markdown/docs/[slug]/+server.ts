@@ -1,11 +1,13 @@
 import { error } from '@sveltejs/kit';
-import { agentResponse, documentationEntries } from '../../../../lib/docs/documentation.server';
+import { documentationEntries } from '../../../../lib/docs/documentation.server';
+import { markdownExport } from '../../../../lib/docs/section-markdown.server';
 import type { RequestHandler } from './$types';
 
 export const prerender = false;
-export const GET: RequestHandler = async ({ params }) => {
+export const trailingSlash = 'always';
+export const GET: RequestHandler = async ({ params, url }) => {
   const entries = await documentationEntries();
   const entry = entries.find(item => item.href === `/docs/${params.slug}/`);
   if (entry === undefined) error(404, 'Documentation not found');
-  return agentResponse(entry.markdown);
+  return markdownExport(entry, url.searchParams.get('section'));
 };

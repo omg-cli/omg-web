@@ -34,7 +34,16 @@ export function assignHeadingIds(tree: Root): DocumentationHeading[] {
     used.set(base, count + 1);
     const id = count === 0 ? base : `${base}-${count}`;
     node.data = { ...node.data, hProperties: { id } };
-    if (node.depth === 2 || node.depth === 3) headings.push({ id, title, depth: node.depth });
+    if (node.depth === 2 || node.depth === 3) {
+      headings.push({ id, title, depth: node.depth });
+      node.data = { ...node.data, hProperties: { id, ariaLabel: title } };
+      node.children.push({
+        type: 'link',
+        url: `#${id}`,
+        data: { hProperties: { className: 'heading-link', ariaLabel: `Link to ${title}` } },
+        children: [{ type: 'text', value: '#' }],
+      });
+    }
   }
   return headings;
 }
@@ -48,16 +57,28 @@ export function markdownHeadings(markdown: string): DocumentationHeading[] {
 /** Split only real H2s: headings inside code examples remain in their containing section. */
 export function markdownSections(markdown: string) {
   const tree = parser.parse(markdown);
-  const starts = tree.children.flatMap(node =>
-    node.type === 'heading' && node.depth === 2 && node.position !== undefined
-      ? [{ title: text(node), offset: node.position.start.offset }]
-      : []
-  );
-  return [
-    { title: null, body: markdown.slice(0, starts[0]?.offset) },
-    ...starts.map((section, index) => ({
-      title: section.title,
-      body: markdown.slice(section.offset, starts[index + 1]?.offset),
-    })),
-  ];
+  const starts: { title: string | null; offset: number; leadCommand?: string }[] = [];
+  let section: (typeof starts)[number] = { title: null, offset: 0 };
+  starts.push(section);
+  for (const node of tree.children) {
+    if (node.type === 'heading' && node.depth === 2 && node.position?.start.offset !== undefined) {
+      section = { title: text(node), offset: node.position.start.offset };
+      starts.push(section);
+    }
+    if (
+      node.type === 'code' &&
+      !section.leadCommand &&
+      ['sh', 'bash', 'shell'].includes(node.lang ?? '')
+    ) {
+      const first = node.value
+        .split('\n')
+        .find(line => line.trim() && !line.trimStart().startsWith('#'));
+      if (first) section.leadCommand = first.trim().toLowerCase();
+    }
+  }
+  return starts.map((item, index) => ({
+    title: item.title,
+    body: markdown.slice(item.offset, starts[index + 1]?.offset),
+    leadCommand: item.leadCommand,
+  }));
 }

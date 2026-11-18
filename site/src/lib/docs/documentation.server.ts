@@ -170,9 +170,11 @@ export function documentationNavigation() {
 
 export function agentResponse(
   body: string,
-  contentType = 'text/markdown; charset=utf-8'
+  contentType = 'text/markdown; charset=utf-8',
+  status = 200
 ): Response {
   return new Response(body, {
+    status,
     headers: {
       'Content-Type': contentType,
       'Cache-Control': 'public, max-age=0, must-revalidate',

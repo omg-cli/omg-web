@@ -1,8 +1,10 @@
-import { building } from '$app/env';
+import { building, dev } from '$app/env';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle } from '@sveltejs/kit/hooks';
 import { createShadowAuth, enforceAuthMutationRateLimit } from './lib/server/auth.server';
 import { withPublicHtmlCache, withSiteHeaders } from './lib/server/public-files';
+import { documentationResponse } from './lib/server/documentation-response';
+import { headSafeFetch } from './lib/server/head-safe-fetch';
 
 const AUTH_PATH_PREFIX = '/api/auth/';
 const ORGANIZATION_PLUGIN_PATH_PREFIX = '/api/auth/organization/';
@@ -12,7 +14,7 @@ const PRIVATE_ORGANIZATION_ROUTE_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
 } as const;
 
-export const handle: Handle = async ({ event, resolve }) => {
+const handleSite: Handle = async ({ event, resolve }) => {
   const platform = event.platform;
   const isAuthPath = event.url.pathname.startsWith(AUTH_PATH_PREFIX);
   let response: Response;
@@ -52,3 +54,13 @@ export const handle: Handle = async ({ event, resolve }) => {
   const securedResponse = withSiteHeaders(response, platform?.env.DEPLOYMENT_STAGE);
   return withPublicHtmlCache(securedResponse, event.request.method, event.url.pathname);
 };
+
+// In production the outer Worker also covers prerendered responses served by the adapter.
+export const handle: Handle = dev
+  ? input =>
+      documentationResponse(
+        input.event.request,
+        async () => handleSite(input),
+        req => headSafeFetch(req, input.event.fetch)
+      )
+  : handleSite;

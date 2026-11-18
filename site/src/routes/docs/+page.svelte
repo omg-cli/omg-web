@@ -2,9 +2,11 @@
   import SeoHead from '../../lib/components/SeoHead.svelte';
   import { serializeJsonLd, SITE_ORIGIN } from '../../../../shared/public-site';
   import DocsSearchForm from '../../lib/components/docs/DocsSearchForm.svelte';
+  import DocsCode from '../../lib/components/docs/DocsCode.svelte';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
   import { DOCS_TOPICS, docsTopicHref } from '../../lib/docs/topics';
+  import { release, repository } from '../../lib/docs/source-review.json';
 
   const canonicalUrl = `${SITE_ORIGIN}/docs/`;
   const sourceDocsUrl = `https://github.com/omg-cli/omg/tree/${DOCS_TOPICS[0].source.reviewedCommit}/docs`;
@@ -56,38 +58,46 @@
   ] as const;
 </script>
 
+<svelte:head><script src="/docs.js" defer></script></svelte:head>
+
 <SeoHead
   title="OMG Documentation - Install, Commands, and Platforms"
   description="Install OMG, learn its package and runtime commands, capture supported system state, check drift, and browse the curated handbook."
   path="/docs/"
+  markdownPath="/docs/index.md"
   {structuredData}
 />
 
 <main id="main-content" class="docs-shell">
   <header class="docs-hero">
-    <div>
-      <h1>Learn the parts you need.</h1>
-    </div>
-    <p class="hero-copy">
-      Start with a task, search for a command, or open the reference when you need exact behavior.
-      Browse <a href="/runtimes/">runtime setup guides</a>
-      or learn to
-      <a href="/guides/node-npm-pnpm/">use Node.js, npm, and pnpm together</a>.
-      <a href="/updates/">Read release notes and updates.</a>
-    </p>
+    <h1>OMG documentation</h1>
+    <DocsSearchForm />
+    <nav class="task-links" aria-label="Common documentation tasks">
+      <a href="/docs/packages/#find-a-package-and-its-source">Find a package</a>
+      <a href="/docs/getting-started/#select-a-runtime">Switch Node.js versions</a>
+      <a href="/docs/environments/#detect-drift-without-repairing-it">Check environment drift</a>
+      <a href="#agents">Use docs with an agent</a>
+    </nav>
   </header>
 
   <div class="docs-layout">
     <aside class="docs-aside">
       <nav class="section-nav" aria-label="Documentation sections">
-        <DocsSearchForm />
-        <ul>
-          <li><a href="#install">Install</a></li>
-          <li><a href="#quick-start">Quick start</a></li>
-          <li><a href="#platforms">Platforms</a></li>
-          <li><a href="#guides">Guides by task</a></li>
-          <li><a href="#reference">Handbook</a></li>
-        </ul>
+        {#snippet sections()}
+          <ul>
+            <li><a href="#install">Install</a></li>
+            <li><a href="#quick-start">Quick start</a></li>
+            <li><a href="#platforms">Platforms</a></li>
+            <li><a href="#agents">Use docs with an agent</a></li>
+            <li><a href="#guides">Guides by task</a></li>
+            <li><a href="#reference">Handbook</a></li>
+          </ul>
+        {/snippet}
+        <details class="mobile-index">
+          <summary>On this page</summary>
+          {@render sections()}
+        </details>
+        <div class="desktop-index">{@render sections()}</div>
       </nav>
     </aside>
 
@@ -99,15 +109,18 @@
           Windows, run it inside WSL2. The GitHub CLI (gh) is required to verify the release
           attestation.
         </p>
-        <pre class="install-command"><code><span>$ </span>{installCommand}</code></pre>
+        <DocsCode code={installCommand} />
         <p class="install-note">
           <a href="/install.sh">Read install.sh</a> before running it, or download a release
           directly:
           <a href="https://github.com/omg-cli/omg/releases">Download release binaries on GitHub</a>.
         </p>
         <p class="install-note">
-          The handbook and operational guides describe release v0.1.224. Newer development-only
-          behavior is labeled separately. Check the source and review date on each page.
+          The handbook and operational guides describe <a
+            href={`https://github.com/${repository}/releases/tag/${release.version}`}
+            >release {release.version}</a
+          >. Newer development-only behavior is labeled separately. Check the source and review date
+          on each page. <a href="/updates/">Browse project updates.</a>
         </p>
       </section>
 
@@ -123,7 +136,7 @@
                 <h3>{group.title}</h3>
                 <p>{group.description}</p>
               </div>
-              <pre><code>{group.commands.map(command => `$ ${command}`).join('\n')}</code></pre>
+              <DocsCode code={group.commands.join('\n')} />
             </section>
           {/each}
         </div>
@@ -160,11 +173,31 @@
         </dl>
       </section>
 
+      <section id="agents" class="docs-section">
+        <h2>Use docs with an agent</h2>
+        <p class="section-copy">
+          Give your agent the <a href="/llms.txt">documentation index</a> to find a page, or request its
+          Markdown directly.
+        </p>
+        <DocsCode code={`curl -H 'Accept: text/markdown' ${SITE_ORIGIN}/docs/environments/`} />
+        <p class="section-copy">
+          <a href="/docs/manifest.json">Get versioned sources and sections</a>,
+          <a href="/docs/search.json?q=env+check">search for env check as JSON</a>, or
+          <a href="/llms-full.txt">read the entire documentation set as text</a>.
+        </p>
+        <p class="section-copy">
+          Each search result includes a <code>markdownHref</code> for the matching part of the
+          guide.
+          <a href="/markdown/docs/environments/?section=detect-drift-without-repairing-it"
+            >Read the drift-check procedure as Markdown</a
+          >.
+        </p>
+      </section>
       <section id="guides" class="docs-section reference-section">
         <h2>Guides by task</h2>
         <p class="section-copy">
-          Start with an outcome. Each guide states the release, prerequisites, supported backends,
-          and recovery steps.
+          Browse <a href="/runtimes/">runtime setup guides</a> or learn to
+          <a href="/guides/node-npm-pnpm/">use Node.js, npm, and pnpm together</a>.
         </p>
         <ul class="reference-list">
           {#each data.documentationNavigation.filter(entry => entry.section !== 'Reference') as entry (entry.href)}
@@ -177,13 +210,6 @@
             </li>
           {/each}
         </ul>
-        <p class="section-copy">
-          For tools and agents: <a href="/llms.txt">Documentation index</a>,
-          <a href="/llms-full.txt">complete text</a>,
-          <a href="/docs/manifest.json">structured manifest</a>, and
-          <a href="/docs/search.json?q=env%20capture">JSON search</a>. Every handbook and guide has
-          a Markdown representation.
-        </p>
       </section>
       <section id="reference" class="docs-section reference-section">
         <h2>Handbook</h2>
@@ -220,29 +246,40 @@
 
   .docs-hero {
     display: grid;
-    gap: 2.5rem;
-    padding: clamp(3rem, 6vw, 5rem) 0;
+    align-items: end;
+    gap: 1.25rem 2.5rem;
+    padding: clamp(1.5rem, 4vw, 3rem) 0 1rem;
     border-bottom: 1px solid var(--rule-strong);
   }
 
   .docs-hero h1 {
-    max-width: 17ch;
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(2.5rem, 5vw, 3.75rem);
+    font-size: clamp(1.875rem, 4.25vw, 3.25rem);
     font-weight: 650;
     letter-spacing: -0.035em;
     line-height: 1.1;
     text-wrap: balance;
   }
 
-  .hero-copy {
-    max-width: 28rem;
-    margin: 0;
-    align-self: end;
-    color: var(--ink-muted);
-    font-size: 1rem;
-    line-height: 1.7;
+  .task-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 1rem;
+  }
+
+  .task-links a {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    font-size: 0.875rem;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.25em;
+  }
+
+  .task-links a:hover {
+    color: var(--signal);
+    text-decoration-color: currentColor;
   }
 
   .docs-layout {
@@ -251,8 +288,19 @@
   }
 
   .docs-aside {
-    padding: 1.25rem 0;
     border-bottom: 1px solid var(--rule);
+  }
+
+  .mobile-index summary {
+    min-height: 2.75rem;
+    padding-block: 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .desktop-index {
+    display: none;
   }
 
   .section-nav a {
@@ -269,7 +317,6 @@
   .section-nav ul {
     display: grid;
     gap: 0.0625rem;
-    margin-top: 1rem;
   }
 
   .section-nav a {
@@ -289,7 +336,7 @@
   }
 
   .docs-section {
-    padding: clamp(2rem, 5vw, 3rem) clamp(1.25rem, 4vw, 3rem);
+    padding-block: clamp(2rem, 5vw, 3rem);
     border-bottom: 1px solid var(--rule);
     scroll-margin-top: 2rem;
   }
@@ -311,30 +358,9 @@
     line-height: 1.7;
   }
 
-  pre {
-    margin: 0;
-    overflow-x: auto;
-    background: var(--paper-raised);
-    color: var(--ink);
-    font-family: var(--font-mono);
-  }
-
-  code {
-    font-family: var(--font-mono);
-  }
-
-  .install-command {
-    margin-top: 2rem;
-    padding: 1.25rem;
-    border: 1px solid var(--rule-strong);
-    font-size: clamp(0.75rem, 2vw, 0.875rem);
-    line-height: 1.7;
-    overflow-wrap: anywhere;
+  .docs-section :global(.docs-code pre) {
     white-space: pre-wrap;
-  }
-
-  .install-command span {
-    color: var(--signal);
+    overflow-wrap: anywhere;
   }
 
   .install-note {
@@ -373,12 +399,6 @@
     color: var(--ink-muted);
     font-size: 0.875rem;
     line-height: 1.7;
-  }
-
-  .command-group pre {
-    padding: 1.25rem;
-    font-size: 0.875rem;
-    line-height: 2;
   }
 
   .platform-list {
@@ -439,8 +459,15 @@
   }
 
   @media (min-width: 40rem) {
-    .docs-aside {
-      padding: 2rem;
+    .docs-hero {
+      grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
+    }
+
+    .task-links {
+      display: flex;
+      flex-wrap: wrap;
+      grid-column: 1 / -1;
+      gap: 0 2.25rem;
     }
 
     .command-group {
@@ -464,8 +491,16 @@
   }
 
   @media (min-width: 64rem) {
-    .docs-hero {
-      grid-template-columns: 1.25fr 0.75fr;
+    .mobile-index {
+      display: none;
+    }
+
+    .desktop-index {
+      display: block;
+    }
+
+    .docs-section {
+      padding-inline: 3rem;
     }
 
     .docs-layout {
