@@ -59,9 +59,11 @@ async function decodeResponse<S extends Schema.Schema.AnyNoContext>(
   return Schema.decodeUnknownSync(schema)(await response.json());
 }
 
-const TEST_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
-MC4CAQAwBQYDK2VwBCIEIIx/ifT0yOyJ/SykVkxxVR4zdDCep94lm3xLOyNn83kM
------END PRIVATE KEY-----`;
+const testSigningKey = await crypto.subtle.generateKey('Ed25519', true, ['sign', 'verify']);
+if (!('privateKey' in testSigningKey)) throw new Error('Expected an Ed25519 signing key pair');
+const testPrivateKeyBytes = await crypto.subtle.exportKey('pkcs8', testSigningKey.privateKey);
+if (!(testPrivateKeyBytes instanceof ArrayBuffer)) throw new Error('Expected PKCS8 key bytes');
+const TEST_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----\n${Buffer.from(new Uint8Array(testPrivateKeyBytes)).toString('base64')}\n-----END PRIVATE KEY-----`;
 const TEST_EMAIL = 'validate-license@example.com';
 const TEST_KEY = 'lic-validate-key';
 const TEST_CUSTOMER = 'validate-cust';
@@ -132,7 +134,7 @@ function postJson(serializedBody: string): Request {
 
 describe('POST /api/validate-license', () => {
   beforeEach(async () => {
-    env.JWT_SECRET = 'test-jwt-secret';
+    env.JWT_SECRET = crypto.randomUUID();
     env.JWT_PRIVATE_KEY = TEST_PRIVATE_KEY;
     await ensureSchema();
   });
@@ -251,7 +253,7 @@ describe('POST /api/validate-license', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ license_key: TEST_KEY }),
       }),
-      { ...env, DEPLOYMENT_STAGE: 'staging', STRIPE_SECRET_KEY: 'sk_test_fixture' },
+      { ...env, DEPLOYMENT_STAGE: 'staging', STRIPE_SECRET_KEY: `sk_test_${crypto.randomUUID()}` },
       ctx
     );
     await waitOnExecutionContext(ctx);

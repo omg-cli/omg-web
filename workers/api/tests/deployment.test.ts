@@ -67,7 +67,7 @@ describe('staging deployment boundary', () => {
       ...env,
       DEPLOYMENT_STAGE: 'staging',
       BILLING_ENABLED: flag,
-      STRIPE_SECRET_KEY: 'sk_test_example',
+      STRIPE_SECRET_KEY: `sk_test_${crypto.randomUUID()}`,
     });
     expect(response.status).toBe(503);
   });
@@ -133,7 +133,7 @@ describe('staging deployment boundary', () => {
     }
   );
 
-  it.each(['sk_test_example', 'rk_test_example'])(
+  it.each([`sk_test_${crypto.randomUUID()}`, 'rk_test_example'])(
     'serves staging health and preflight only with a test key: %s',
     async key => {
       for (const method of ['GET', 'OPTIONS']) {
@@ -157,7 +157,7 @@ describe('staging deployment boundary', () => {
       ...env,
       DEPLOYMENT_STAGE: 'stagign',
       BILLING_ENABLED: 'false',
-      STRIPE_SECRET_KEY: 'sk_test_example',
+      STRIPE_SECRET_KEY: `sk_test_${crypto.randomUUID()}`,
     });
     expect(response.status).toBe(503);
   });

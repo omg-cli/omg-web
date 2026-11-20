@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-11-20T07:41:07.884183+00:00",
+  "sourceRevision": "8cc345641981c4840ad3c9af87e278b3c52a8916",
+  "snykCliVersion": "1.1309.0",
+  "code": {
+    "totalIssues": 0,
+    "includeIgnores": true,
+    "severityThreshold": null,
+    "sarifSha256": "1d9d04769d676a867604d8b9705f8f2af050dc32b9c0f12b203dd4e4b5d4ef88"
+  },
+  "dependencies": {
+    "projects": [
+      {
+        "name": "omg-web",
+        "vulnerabilities": 0,
+        "ok": true
+      },
+      {
+        "name": "omg-site",
+        "vulnerabilities": 0,
+        "ok": true
+      },
+      {
+        "name": "omg-saas-workers",
+        "vulnerabilities": 0,
+        "ok": true
+      }
+    ],
+    "reportSha256": "3c849c2c437d67d0f5c67a5f69020009ff93037708f0c1139b0285bdca9baef3",
+    "scope": "Production dependencies only; --dev was omitted. Superseded for full-toolchain assurance by the later development-inclusive scan."
+  },
+  "verification": {
+    "rootCheck": "passed",
+    "siteTests": 446,
+    "apiTests": 425,
+    "releaseTests": 22,
+    "docsToolTests": 15,
+    "browserTestsPassed": 45,
+    "browserTestsSkipped": 3,
+    "browserSkipReason": "deployed-only auth checks require an external environment"
+  },
+  "newSnykIgnores": false,
+  "productionDeployed": false
+}

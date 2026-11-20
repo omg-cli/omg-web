@@ -1,6 +1,11 @@
 import { readFile } from 'node:fs/promises';
 
-const LOCKFILES = ['package-lock.json', 'site/package-lock.json', 'workers/api/package-lock.json'];
+const LOCKFILES = [
+  'package-lock.json',
+  'site/package-lock.json',
+  'site/vendor/yaml-frontmatter/package-lock.json',
+  'workers/api/package-lock.json',
+];
 
 const failures = [];
 for (const path of LOCKFILES) {
@@ -12,6 +17,26 @@ for (const path of LOCKFILES) {
   const scriptPolicy = manifest.allowScripts ?? {};
   for (const [packagePath, entry] of Object.entries(document.packages ?? {})) {
     if (packagePath.length === 0 || entry.link === true || entry.inBundle === true) continue;
+    if (path === 'site/package-lock.json' && packagePath === 'vendor/yaml-frontmatter') {
+      const adapter = JSON.parse(
+        await readFile(
+          new URL('../site/vendor/yaml-frontmatter/package.json', import.meta.url),
+          'utf8'
+        )
+      );
+      if (
+        document.packages['node_modules/gray-matter']?.link !== true ||
+        document.packages['node_modules/gray-matter'].resolved !== packagePath ||
+        manifest.dependencies['gray-matter'] !== `file:${packagePath}` ||
+        entry.name !== adapter.name ||
+        entry.version !== adapter.version ||
+        JSON.stringify(entry.dependencies) !== JSON.stringify(adapter.dependencies) ||
+        Object.keys(adapter.scripts ?? {}).length > 0
+      ) {
+        failures.push(`${path}: invalid tracked YAML frontmatter adapter`);
+      }
+      continue;
+    }
     if (entry.resolved === undefined || entry.integrity === undefined) {
       failures.push(`${path}: ${packagePath} lacks resolved registry integrity`);
       continue;

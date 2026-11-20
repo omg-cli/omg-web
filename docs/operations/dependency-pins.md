@@ -9,7 +9,8 @@ All dependency versions and overrides are exact. Renovate must not automerge cha
 
 ## `site/package.json`
 
-- `better-auth` `1.7.7` supplies purpose-separated OAuth proxy keys and fixes state/profile confusion. Its [release notes](https://github.com/better-auth/better-auth/releases/tag/v1.7.7) require coordinated upgrades and restarting pending OAuth flows, with no database migration. Production and staging must use the same tested version during the broker cutover. Re-run `oauth-proxy.server.test.ts` and the complete site suite before upgrades; production must never register proxy profile completion endpoints.
+- `better-auth` `1.7.26` includes the origin and authorization proxy fixes from `1.7.16`. Use the same tested version in production and staging. Re-run `oauth-proxy.server.test.ts` and the complete site suite before upgrading. Production must never register proxy profile completion endpoints. [Better Auth advisory](https://github.com/better-auth/better-auth/security/advisories/GHSA-4wq4-2ppv-q3hg)
+- `@farming-labs/docs` uses the tracked `site/vendor/yaml-frontmatter` adapter in place of registry `gray-matter`. The adapter exposes the Markdown body and YAML metadata and rejects other frontmatter languages. The lockfile checker verifies the local link. Remove the override and adapter when the docs package uses a data-only parser. [Snyk advisory](https://security.snyk.io/vuln/SNYK-JS-GRAYMATTER-20532010)
 - `effect` `4.0.2` is the application boundary and expected-failure runtime. Changes require strict Svelte diagnostics, TypeScript checks, focused boundary tests, browser verification, and a successful shadow deployment.
 - `@sveltejs/kit` under `better-auth` is a package-scoped peer override for the exact-tested SvelteKit 3 prerelease. Remove it when Better Auth declares compatibility with the installed SvelteKit release.
 - `@hono/node-server`, `hono`, `lodash`, and `valibot` are security floors for Alchemy's non-optional Prisma development dependency chain. Remove them when Alchemy makes that chain optional or resolves audited versions itself.
@@ -44,3 +45,11 @@ path. Main's PR #131 updates Alchemy and its frontend package to `2.0.0-beta.78`
 removing that vulnerable path while retaining Alchemy 2. This branch incorporates
 that update and its Effect `4.0.2` dependencies. All three npm audits now report
 zero vulnerabilities. The audit gate remains enforced.
+
+## Undici security floors, 2026-11-20
+
+Root and API Miniflare resolve Undici `7.30.2`; the site's `@effect/platform-node` resolves `8.12.4`. These scoped overrides stay on each consumer's existing major version and address the six advisories reported by Snyk across the three projects. [Upstream fixes](https://github.com/nodejs/undici/releases/tag/v8.12.4).
+
+Use `npm run audit:snyk` with an authenticated Snyk CLI session to scan code and **all** dependency projects with development dependencies included. The pinned CLI is downloaded through npm's cache; this command does not add it to the application dependency graph. Unapproved license findings fail the command. The owner-approved, version-specific repository exceptions are documented in [the license review](./snyk-license-review-2026-11-20.md); security advisories remain fully checked. Do not represent a scan that omits `--dev` as a full tooling audit.
+
+The local YAML frontmatter adapter has its own integrity-pinned lockfile so Snyk can analyze its manifest from a clean checkout without a separate install. The lockfile checker validates all four lockfiles.

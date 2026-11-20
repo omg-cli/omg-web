@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import readFrontmatter from 'gray-matter';
 import { checkUpstreamReview } from './check-upstream-review.mjs';
 
 const directories = [];
@@ -23,6 +24,28 @@ const script = fileURLToPath(new URL('./check-upstream-review.mjs', import.meta.
 
 afterEach(() => {
   for (const path of directories.splice(0)) rmSync(path, { recursive: true, force: true });
+});
+
+test('the docs frontmatter dependency accepts YAML mappings and plain Markdown', () => {
+  assert.deepEqual(readFrontmatter('--- yaml\r\ntitle: Install OMG\r\n---\r\n## Start\r\n'), {
+    data: { title: 'Install OMG' },
+    content: '## Start\r\n',
+  });
+  assert.deepEqual(readFrontmatter('## Start\n'), { data: {}, content: '## Start\n' });
+  assert.throws(() => readFrontmatter('---toml\ntitle = "Install"\n---\n'), /Only YAML/u);
+  assert.throws(() => readFrontmatter('---\n- Install\n---\n'), /must be a mapping/u);
+});
+
+test('the docs frontmatter dependency refuses executable languages and YAML aliases', () => {
+  for (const language of ['js', 'javascript', 'coffee', 'json']) {
+    assert.throws(
+      () => readFrontmatter(`---${language}\n(() => { throw new Error('executed'); })()\n---\n`),
+      /Only YAML/u
+    );
+  }
+  assert.throws(() => readFrontmatter('---\nvalue: !!js/function "function () {}"\n---\n'));
+  assert.throws(() => readFrontmatter('---\nfirst: &value [one, two]\nsecond: *value\n---\n'));
+  assert.throws(() => readFrontmatter('---\ntitle: incomplete\n'), /Unclosed/u);
 });
 
 function fixture() {

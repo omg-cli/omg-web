@@ -9,6 +9,7 @@ const CACHE_TTL_SECONDS = 120;
 const STALE_TTL_SECONDS = 3600;
 const GITHUB_COMMIT_ACTIVITY_URL =
   'https://api.github.com/repos/PyRo1121/omg/stats/commit_activity';
+const GITHUB_STATS_CACHE_URL = 'https://omg-api.latham.cloud/api/github-stats';
 const RETRY_AFTER_SECONDS = 60;
 /** Internal header recording when a response entered the edge cache. */
 const STORED_AT_HEADER = 'X-OMG-Stored-At';
@@ -52,12 +53,9 @@ export async function handleGitHubProxy(
   }
 
   const cache = caches.default;
-  // Cache key ignores the query string: arbitrary attacker-controlled query
-  // params would otherwise fragment the cache and multiply upstream calls.
-  const cacheKey = new Request(originUrl.origin + originUrl.pathname, {
-    method: 'GET',
-    headers: request.headers,
-  });
+  // Every caller reads the same public JSON under one key per Worker cache.
+  // Caller hosts, query strings, Range and conditional headers cannot change it.
+  const cacheKey = new Request(GITHUB_STATS_CACHE_URL);
 
   const cachedResponse = await cache.match(cacheKey);
 
