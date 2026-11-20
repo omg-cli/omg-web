@@ -79,6 +79,9 @@
     --terminal-muted: #ababab;
     --terminal-rule: #383838;
     --terminal-accent: #ff936e;
+    display: flex;
+    flex-direction: column;
+    height: 34rem;
     min-width: 0;
     border: 1px solid var(--rule-strong);
     border-radius: 7px;
@@ -96,6 +99,7 @@
     padding-inline: clamp(0.875rem, 3vw, 1.75rem);
   }
   header {
+    flex-shrink: 0;
     padding-block: 0.875rem;
     border-bottom: 1px solid var(--terminal-rule);
   }
@@ -113,9 +117,16 @@
     font-size: 0.8125rem;
   }
   omg-terminal {
-    display: block;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
   }
   .screen {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
     padding: clamp(1rem, 3vw, 1.75rem);
   }
   .location,
@@ -126,6 +137,7 @@
     font-family: var(--font-mono);
   }
   .location {
+    flex-shrink: 0;
     margin: 0 0 0.75rem;
     color: var(--terminal-muted);
     font-size: 0.8125rem;
@@ -134,18 +146,14 @@
     color: var(--terminal-ink);
   }
   .transcript {
-    max-height: clamp(12rem, 38dvh, 26rem);
+    flex: 1;
+    min-height: 0;
+    margin-bottom: 0.85rem;
     overflow: auto;
     overscroll-behavior: contain;
     scrollbar-color: #666 var(--terminal-bg);
     font-size: clamp(0.8125rem, 1.2vw, 0.9375rem);
     line-height: 1.6;
-  }
-  .transcript:empty {
-    display: none;
-  }
-  .transcript:not(:empty) {
-    margin-bottom: 0.85rem;
   }
   .transcript :global(pre),
   .transcript :global(p) {
@@ -178,6 +186,7 @@
     font-weight: 700;
   }
   form {
+    flex-shrink: 0;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
@@ -228,10 +237,9 @@
     background: transparent;
   }
   .suggestions {
+    position: relative;
+    flex-shrink: 0;
     border-top: 1px solid var(--terminal-rule);
-  }
-  .suggestions details[open] {
-    flex-basis: 100%;
   }
   summary {
     min-height: 2.75rem;
@@ -239,9 +247,19 @@
     color: var(--terminal-ink);
   }
   .command-list {
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    left: 0;
     display: flex;
     flex-wrap: wrap;
     gap: 0 1rem;
+    max-height: 18rem;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 0.75rem clamp(0.875rem, 3vw, 1.75rem);
+    border: 1px solid var(--terminal-rule);
+    background: var(--terminal-bg);
   }
   .command-list button {
     min-height: 2.75rem;
@@ -266,5 +284,10 @@
   }
   omg-terminal:not(:defined) .suggestions {
     visibility: hidden;
+  }
+  @media (max-width: 40rem) {
+    .command-workbench {
+      height: 32rem;
+    }
   }
 </style>
