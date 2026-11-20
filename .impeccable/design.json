@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-20T11:06:57.584577+00:00",
+  "generatedAt": "2026-11-20T11:21:41.798522+00:00",
   "title": "Design System: OMG",
   "extensions": {
     "colorMeta": {
@@ -710,6 +710,11 @@
         "name": "Content grouping",
         "body": "Use spacing and neutral backgrounds to group content. Keep borders around controls and the terminal. Do not add horizontal rules between homepage sections.",
         "section": "elevation"
+      },
+      {
+        "name": "Mobile documentation code",
+        "body": "Below 48rem, put copy controls above the code. Use 14px monospace text, preserve lines and indentation, and scroll long lines inside the block. Keep keyboard focus visible and show copy feedback.",
+        "section": "typography"
       }
     ],
     "dos": [

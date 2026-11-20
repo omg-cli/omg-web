@@ -472,6 +472,8 @@ button[data-copy-page] {
   display: inline-flex;
 }
 .docs-code {
+  min-width: 0;
+  max-width: 100%;
   margin-block: 1rem;
   overflow: hidden;
   border: 1px solid var(--rule);
@@ -488,6 +490,8 @@ button[data-copy-page] {
 }
 .docs-code button {
   align-items: center;
+  flex-shrink: 0;
+  gap: 0.4rem;
   min-height: 2.75rem;
   padding: 0.5rem 0.75rem;
   border: 0;
@@ -516,8 +520,10 @@ button[data-copy-page] {
   border: 0 !important;
   border-radius: 0 !important;
 }
+.docs-code pre:focus-visible {
+  outline-offset: -2px;
+}
 
-/* Keep a short command and its copy control on the same line, including on phones. */
 .docs-code.single-command {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -544,4 +550,43 @@ button[data-copy-page] {
 }
 html:not([data-doc-copy='ready']) .docs-code .code-actions {
   display: none;
+}
+
+@media (max-width: 47.99rem) {
+  .docs-code.single-command {
+    display: block;
+  }
+  .docs-code .code-actions,
+  .docs-code.single-command .code-actions {
+    display: flex;
+    padding: 0.25rem 0.5rem 0 0.875rem;
+  }
+  .docs-code.single-command button {
+    margin: 0;
+  }
+  .docs-code [data-copy-status],
+  .docs-code.single-command [data-copy-status] {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    font-size: 0.75rem;
+  }
+  .docs-code.single-command [data-copy-status]:empty {
+    display: block;
+  }
+  :root .docs-code[data-copy-container] pre {
+    min-width: 0;
+    max-width: 100%;
+    padding: 0.75rem 0.875rem 1rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    white-space: pre;
+    overflow-wrap: normal;
+    word-break: normal;
+    tab-size: 2;
+    font-size: 0.875rem;
+    line-height: 1.65;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule-strong) var(--paper-raised);
+  }
 }

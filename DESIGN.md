@@ -183,6 +183,8 @@ The header is 4.5rem high. Below 50rem, the full navigation and account link giv
 
 Controls generally reserve 2.75rem of height. Commands wrap. Reserve space for clipboard status and keep commands readable without JavaScript.
 
+Below 48rem, documentation code blocks place the copy button above the code. Use 14px monospace text with 1.65 line height and 14px horizontal padding. Preserve lines and indentation. Long lines scroll inside the block instead of wrapping or widening the page. Code can receive keyboard focus for scrolling. Keep copy feedback beside the button.
+
 The terminal is 34rem tall, or 32rem at widths of 40rem or less. Its height stays the same when output is empty or commands run. Output scrolls above the prompt. The command menu opens over the output and scrolls without resizing the terminal.
 
 ## Elevation & Depth
