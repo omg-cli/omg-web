@@ -54,3 +54,5 @@ Locations refer to the original scan revision; line numbers move as fixes are ap
 Snyk CLI 1.1309.0 completed fresh local scans. The dependency scan passed all three projects with zero vulnerabilities. The Code scan returned zero issues across all severity levels. The regression checks passed: 446 site tests, 425 API tests, 22 release tests and 15 docs-tool tests. The public browser suite passed 45 tests; three deployed-authentication tests were skipped because that local suite has no deployed environment. The complete root check passed, including types, formatting, lint, dependency audits, source policies, build budgets and four Wrangler deployment dry runs.
 
 These local results do not automatically replace the connected Snyk main-branch snapshot or establish a production deployment. The repository integration must scan the published commit before its dashboard can show the new state.
+
+The final Code scan included ignored findings and returned zero issues with exit code 0. Its source revision and report hashes are recorded in [the verification receipt](./snyk-review-2026-11-20.json). No findings were suppressed.
