@@ -6,105 +6,92 @@
   const installation = new InstallationView(trackInstallCommandCopied);
 </script>
 
-<section id="install" class="installation home-shell home-section" aria-labelledby="install-title">
-  <header>
-    <h2 id="install-title" class="home-section-title">Install OMG</h2>
-    <p class="home-section-intro">
-      For supported x86_64 Linux distributions and Apple Silicon macOS. In Windows, use a supported
-      WSL2 distribution.
-    </p>
-  </header>
-  <div class="install-command">
-    <p class="step-label">
-      Install GitHub CLI (<code>gh</code>) first. The installer uses it to verify the release.
-      <a href="/docs/installation/">Check prerequisites</a>.
-    </p>
-    <pre><code>{installation.command}</code></pre>
-    <div class="install-actions">
-      <button type="button" disabled={installation.pending} onclick={() => installation.copy()}
-        >Copy install command <Icon name="copy" size={16} /></button
+<section id="install" class="installation home-shell" aria-labelledby="install-title">
+  <div class="install-intro">
+    <h2 id="install-title">Install OMG</h2>
+    <p>x86_64 Linux and Apple Silicon macOS. On Windows, use a supported WSL2 distribution.</p>
+  </div>
+  <div class="install-details">
+    <div class="command-row">
+      <code>{installation.command}</code>
+      <button
+        type="button"
+        aria-label="Copy install command"
+        disabled={installation.pending}
+        onclick={() => installation.copy()}><Icon name="copy" size={16} /> Copy</button
       >
-      <a href="/install.sh">Read install.sh <Icon name="external" size={16} /></a>
+    </div>
+    <p class="prerequisite">
+      Requires GitHub CLI (<code>gh</code>) for release verification.
+      <a href="/docs/installation/">Installation guide <Icon name="right" size={14} /></a>
+    </p>
+    <div class="install-links">
+      <a href="/install.sh">Read install.sh <Icon name="external" size={14} /></a>
       <a href="https://github.com/omg-cli/omg/releases"
-        >Download from GitHub <Icon name="external" size={16} /></a
+        >GitHub releases <Icon name="external" size={14} /></a
       >
     </div>
     <p class="copy-status" role="status">{installation.message}</p>
-  </div>
-  <div class="first-command">
-    <div>
-      <h3>Search packages</h3>
-      <p>Search your package index without installing anything.</p>
-    </div>
-    <div class="first-command-action">
-      <code><span aria-hidden="true">$ </span>omg search ripgrep</code>
-      <a href="/docs/#quick-start">Quick start guide <Icon name="external" size={16} /></a>
-    </div>
   </div>
 </section>
 
 <style>
   .installation {
     display: grid;
-    padding-block: clamp(3rem, 6vw, 5rem);
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+    gap: 1.5rem 3rem;
+    padding-block: clamp(2rem, 4vw, 3rem);
     scroll-margin-top: 1.5rem;
   }
-  header {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: start;
-    gap: 1rem 3rem;
-    margin-bottom: 2rem;
-  }
-  .installation .home-section-intro {
-    max-width: 29rem;
+  h2 {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
   }
-  .install-command {
+  .install-intro p {
+    max-width: 36ch;
+    margin: 0.75rem 0 0;
+    color: var(--ink-muted);
+    font-size: 0.875rem;
+    line-height: 1.65;
+  }
+  .install-details {
     min-width: 0;
-    padding: clamp(1.25rem, 3vw, 2rem);
-    border: 1px solid var(--rule);
+  }
+  .command-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0.75rem 0.75rem 1.25rem;
     border-radius: 6px;
     background: var(--paper-raised);
   }
-  .step-label {
-    margin: 0 0 1rem;
-    color: var(--ink-muted);
-    font-size: 0.8125rem;
-    font-weight: 600;
-  }
-  pre {
-    margin: 0;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-  }
   code {
-    color: var(--ink);
     font-family: var(--font-mono);
-    font-size: clamp(0.75rem, 1.3vw, 0.9375rem);
-    line-height: 1.9;
+    color: var(--ink);
   }
-  .install-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem 1.75rem;
-    margin-top: 1.5rem;
+  .command-row > code {
+    flex: 1;
+    min-width: 0;
+    font-size: clamp(0.8125rem, 1.2vw, 0.9375rem);
+    line-height: 1.7;
+    overflow-wrap: anywhere;
   }
   button {
     display: inline-flex;
+    flex-shrink: 0;
     min-height: 2.75rem;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.65rem 1rem;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
     border: 0;
-    border-radius: 6px;
+    border-radius: 4px;
     background: var(--ink);
     color: var(--paper);
+    font: inherit;
     font-size: 0.8125rem;
-    font-weight: 500;
     cursor: pointer;
   }
   button:hover:not(:disabled) {
@@ -115,62 +102,47 @@
     opacity: 0.6;
     cursor: wait;
   }
+  .prerequisite {
+    margin: 0.75rem 0 0;
+    color: var(--ink-muted);
+    font-size: 0.8125rem;
+    line-height: 1.65;
+  }
+  .prerequisite code {
+    font-size: 0.9em;
+  }
   a {
     display: inline-flex;
     min-height: 2.75rem;
     align-items: center;
-    gap: 0.5rem;
-    color: var(--ink);
+    gap: 0.4rem;
+    color: var(--ink-muted);
     font-size: 0.8125rem;
-    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.2em;
   }
   a:hover {
     color: var(--signal);
-    text-decoration-color: var(--signal);
+  }
+  .install-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
   }
   .copy-status {
     min-height: 1.5em;
-    margin: 0.5rem 0 0;
+    margin: 0;
     color: var(--ink-muted);
     font-size: 0.75rem;
   }
-  .first-command {
-    display: grid;
-    grid-template-columns: minmax(0, 24rem) minmax(0, 24rem);
-    gap: 1.5rem 3rem;
-    align-items: center;
-    padding-top: 2.5rem;
-  }
-  .first-command h3 {
-    max-width: 32ch;
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    letter-spacing: -0.025em;
-    line-height: 1.35;
-  }
-  .first-command p {
-    max-width: 44ch;
-    margin: 0.75rem 0 0;
-    color: var(--ink-muted);
-    font-size: 0.8125rem;
-    line-height: 1.75;
-  }
-  .first-command-action {
-    display: grid;
-    gap: 0.75rem;
-    justify-items: start;
-    justify-self: start;
-  }
-  .first-command-action code {
-    font-size: clamp(0.875rem, 1.4vw, 1rem);
-  }
-  .first-command-action code span {
-    color: var(--signal);
-  }
-  @media (max-width: 44rem) {
-    .first-command {
+  @media (max-width: 50rem) {
+    .installation {
       grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 25rem) {
+    .command-row {
+      gap: 0.5rem;
+      padding-left: 0.75rem;
     }
   }
 </style>

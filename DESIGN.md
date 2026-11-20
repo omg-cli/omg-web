@@ -110,8 +110,8 @@ components:
     padding: 0.8rem 1rem
   panel-install:
     backgroundColor: '{colors.paper-raised}'
-    rounded: '{rounded.panel}'
-    padding: clamp(1.25rem, 3vw, 2rem)
+    rounded: '{rounded.control}'
+    padding: 0.75rem 0.75rem 0.75rem 1.25rem
   panel-command:
     backgroundColor: '{colors.terminal-bg}'
     textColor: '{colors.terminal-ink}'
@@ -163,8 +163,8 @@ Archivo Variable supplies display and body text, with the existing Archivo Fallb
 ### Hierarchy
 
 - **Display** is the compact homepage definition; its maximum measure is 30ch and its size scales from 2rem to 3.4rem.
-- **Headline** records package/runtime headings. The installation title uses the shared larger scale, `clamp(2.25rem, 4vw, 3.25rem)`, weight 650, line height 1.1.
-- **Title** records compact environment and source headings. First-command headings use 1.25rem with line height 1.35.
+- **Headline** records package/runtime headings. The installation title uses `clamp(1.75rem, 3vw, 2.5rem)`, weight 650, and line height 1.15.
+- **Title** records compact environment and source headings.
 - **Body** records package/runtime explanation. The introduction uses 1rem and line height 1.75; small technical notes range from 0.75rem to 0.875rem.
 - **Label** records compact technical step labels. Navigation uses 0.8125rem and weight 500; action labels use weight 600.
 - **Code** records the responsive installer scale. The transcript scales from 0.8125rem to 0.9375rem at line height 1.6. The editable command is 1rem.
@@ -177,7 +177,7 @@ The public shell is centered at `min(100% - clamp(2.5rem, 8vw, 8rem), 75rem)`. H
 
 A short product definition precedes a full-width, editable Arch terminal. Keep the prompt in the opening phone viewport. Place the install and documentation links below the terminal.
 
-The package backend definition list and runtime guidance sit side by side and stack below 40rem. A native disclosure contains the benchmark methodology. The installer keeps a download/review block and a separate first-command block, which stacks below 44rem.
+The package backend list and runtime guidance sit side by side and stack below 40rem. The homepage has no benchmark section or repeated search example. Installation pairs a short platform description with one command row and its copy button. It stacks below 50rem. The footer keeps navigation, author credit, and source links in two compact rows.
 
 The header is 4.5rem high. Below 50rem, the full navigation and account link give way to a native details menu, with the theme control inside it; the install action stays visible. The footer stacks below 40rem. Documentation uses a 16rem sidebar from 64rem; learning articles use a 15rem contents column at that breakpoint. Keep the 20rem body minimum and `min-width: 0` around code-bearing grid children.
 
@@ -193,7 +193,7 @@ Use spacing and neutral backgrounds to group content. Do not add horizontal rule
 
 ## Shapes
 
-Controls use gently rounded corners (6px). The explorer, raised runtime/source panels, and installer use container corners (12px). Login fields and documentation panels retain their existing square corners. Mobile menu links and the terminal Run control use a local 4px radius. Use inline SVG icons and preserve the existing OMG brand mark.
+Controls and the installer command row use 6px corners. Raised runtime/source panels use 12px corners. Login fields and documentation panels retain their existing square corners. Mobile menu links and the terminal Run control use a local 4px radius. Use inline SVG icons and preserve the existing OMG brand mark.
 
 ## Components
 
@@ -205,7 +205,7 @@ The global keyboard treatment is a two-pixel signal outline with a four-pixel of
 
 ### Cards / Containers
 
-A neutral panel groups the installer and its actions without a shadow. List supported package managers in a definition list without row borders. Runtime guide links lead to setup instructions for each language or runtime.
+A neutral command row places the installer command beside its copy button. Prerequisites and source links sit below it. List supported package managers in a definition list without row borders. Runtime guide links lead to setup instructions for each language or runtime.
 
 ### Inputs / Fields
 
@@ -221,7 +221,7 @@ The labeled Arch simulation opens with a completed package search and an editabl
 
 ### Installation block
 
-Show the one-line installer with a nearby source inspection link and the GitHub CLI prerequisite. The copy control has a persistent status area; provenance and platform requirements stay alongside the command. The follow-up search is read-only and links to the quick start. InstallationView continues to own clipboard state and analytics.
+Show the one-line installer with a nearby source inspection link and the GitHub CLI prerequisite. Reserve a status line for clipboard feedback. Keep the terminal's search example out of the installation section. InstallationView owns clipboard state and analytics.
 
 Smooth anchor scrolling becomes automatic under reduced motion. The editable input uses the native insertion caret.
 

@@ -89,7 +89,7 @@ test.describe('Svelte public surfaces', () => {
       ratio: 0.9,
     });
     await expect(page.locator('#install')).toContainText('WSL2');
-    await expect(page.locator('#install')).toContainText('omg search ripgrep');
+    await expect(page.locator('#install')).not.toContainText('omg search ripgrep');
     await page.getByRole('button', { name: 'Copy install command' }).click();
     await expect(page.getByRole('status')).toHaveText('Install command copied.');
     await expect
@@ -260,11 +260,7 @@ test.describe('Svelte public surfaces', () => {
     await expect(
       page.getByRole('heading', { name: 'Which package manager does OMG use?' })
     ).toBeVisible();
-    await page.getByText('Package search benchmarks', { exact: true }).click();
-    await expect(page.getByRole('link', { name: 'Inspect the benchmark record' })).toHaveAttribute(
-      'href',
-      'https://github.com/omg-cli/omg/tree/fe72b92b6e61c13a19f00627d22f3d1bc5713347/benchmarks/records/20260903_015949-5c43ddcc'
-    );
+    await expect(page.getByText('Package search benchmarks', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Install OMG' })).toBeVisible();
     await expect
       .poll(() =>

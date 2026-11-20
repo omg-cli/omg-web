@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-20T10:59:07.350142+00:00",
+  "generatedAt": "2026-11-20T11:06:57.584577+00:00",
   "title": "Design System: OMG",
   "extensions": {
     "colorMeta": {
@@ -588,8 +588,8 @@
         "value": "49.99rem"
       },
       {
-        "name": "first-command-stack",
-        "value": "44rem"
+        "name": "installation-stack",
+        "value": "50rem"
       },
       {
         "name": "explorer-and-technical-stack",
@@ -675,11 +675,11 @@
       "css": ".ds-nav{display:flex;flex-wrap:wrap;align-items:center;gap:1.5rem;margin:0;padding:0;list-style:none;font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif)}.ds-nav a{display:flex;min-height:2.75rem;align-items:center;color:var(--ink-muted, #626262);font-size:.8125rem;font-weight:500;text-decoration:none}.ds-nav a:hover,.ds-nav a[aria-current=\"page\"]{color:var(--signal, #c23b15)}.ds-nav a:focus-visible{outline:2px solid var(--signal, #c23b15);outline-offset:4px;}"
     },
     {
-      "name": "Installer container",
-      "kind": "card",
-      "description": "Raised paper groups installation instructions without a shadow.",
-      "html": "<section class=\"ds-install\"><h3>1. Install OMG</h3><pre><code>curl -fsSL https://getomg.dev/install.sh | bash</code></pre><a href=\"/install.sh\">Read install.sh</a></section>",
-      "css": ".ds-install{padding:clamp(1.25rem,3vw,2rem);border-radius:12px;background:var(--paper-raised, #f5f5f5);color:var(--ink, #171717);font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif)}.ds-install h3{margin:0 0 1rem;color:var(--ink-muted, #626262);font-size:.75rem;font-weight:500}.ds-install pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.ds-install code{font-family:var(--font-mono, 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace);font-size:clamp(.75rem,1.3vw,.9375rem);line-height:1.9}.ds-install p{margin:.5rem 0 0;color:var(--ink-muted, #626262);font-size:.75rem}",
+      "name": "Installer command row",
+      "kind": "custom",
+      "description": "One installer command with an adjacent copy button.",
+      "html": "<div class=\"ds-install\"><code>curl -fsSL https://getomg.dev/install.sh | bash</code><button type=\"button\" aria-label=\"Copy install command\">Copy</button></div>",
+      "css": ".ds-install{display:flex;align-items:center;gap:1rem;padding:.75rem .75rem .75rem 1.25rem;border-radius:6px;background:var(--paper-raised,#f5f5f5);color:var(--ink,#171717)}.ds-install code{flex:1;min-width:0;font-family:var(--font-mono,monospace);font-size:clamp(.8125rem,1.2vw,.9375rem);line-height:1.7;overflow-wrap:anywhere}.ds-install button{flex-shrink:0;min-height:2.75rem;padding:.5rem .75rem;border:0;border-radius:4px;background:var(--ink,#171717);color:var(--paper,#fff);font-size:.8125rem}",
       "refersTo": "panel-install"
     },
     {
