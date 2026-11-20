@@ -181,7 +181,9 @@ The package backend definition list and runtime guidance sit side by side and st
 
 The header is 4.5rem high. Below 50rem, the full navigation and account link give way to a native details menu, with the theme control inside it; the install action stays visible. The footer stacks below 40rem. Documentation uses a 16rem sidebar from 64rem; learning articles use a 15rem contents column at that breakpoint. Keep the 20rem body minimum and `min-width: 0` around code-bearing grid children.
 
-Interactive links and controls generally reserve 2.75rem height. Commands wrap; the terminal reserves 34rem height on desktop and 32rem at widths up to 40rem, including empty and populated states. Transcript output scrolls inside the remaining space, with the prompt anchored below it. Command suggestions open over the scrollback in a bounded, scrollable menu without resizing the terminal. Keep persistent space for clipboard status and readable commands without JavaScript.
+Controls generally reserve 2.75rem of height. Commands wrap. Reserve space for clipboard status and keep commands readable without JavaScript.
+
+The terminal is 34rem tall, or 32rem at widths of 40rem or less. Its height stays the same when output is empty or commands run. Output scrolls above the prompt. The command menu opens over the output and scrolls without resizing the terminal.
 
 ## Elevation & Depth
 
