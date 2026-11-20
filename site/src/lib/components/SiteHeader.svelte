@@ -73,7 +73,6 @@
   .site-header {
     position: relative;
     z-index: 20;
-    border-bottom: 1px solid var(--rule);
     background: var(--paper);
   }
   .header-shell {

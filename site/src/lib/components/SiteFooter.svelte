@@ -45,7 +45,6 @@
   .site-footer {
     width: var(--site-width);
     margin: 0 auto;
-    border-top: 1px solid var(--rule);
   }
   .footer-callout {
     display: flex;
@@ -95,7 +94,6 @@
     align-items: center;
     justify-content: space-between;
     padding-block: 1.25rem;
-    border-top: 1px solid var(--rule);
   }
   .footer-brand {
     color: var(--ink);
@@ -124,9 +122,6 @@
     .footer-bar {
       align-items: flex-start;
       flex-direction: column;
-    }
-    .footer-links {
-      gap: 0.25rem 1.25rem;
     }
   }
 </style>

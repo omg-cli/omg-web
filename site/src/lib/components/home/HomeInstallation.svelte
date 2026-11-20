@@ -16,7 +16,7 @@
   </header>
   <div class="install-command">
     <p class="step-label">
-      The installer uses GitHub CLI (<code>gh</code>) to verify the release.
+      Install GitHub CLI (<code>gh</code>) first. The installer uses it to verify the release.
       <a href="/docs/installation/">Check prerequisites</a>.
     </p>
     <pre><code>{installation.command}</code></pre>
@@ -33,14 +33,12 @@
   </div>
   <div class="first-command">
     <div>
-      <h3>Search for your first package</h3>
-      <p>This command searches your package index without installing anything.</p>
+      <h3>Search packages</h3>
+      <p>Search your package index without installing anything.</p>
     </div>
     <div class="first-command-action">
       <code><span aria-hidden="true">$ </span>omg search ripgrep</code>
-      <a href="/docs/#quick-start"
-        >Continue with the quick start <Icon name="external" size={16} /></a
-      >
+      <a href="/docs/#quick-start">Quick start guide <Icon name="external" size={16} /></a>
     </div>
   </div>
 </section>
@@ -48,7 +46,6 @@
 <style>
   .installation {
     display: grid;
-    gap: 0;
     padding-block: clamp(3rem, 6vw, 5rem);
     scroll-margin-top: 1.5rem;
   }
@@ -152,7 +149,7 @@
     letter-spacing: -0.025em;
     line-height: 1.35;
   }
-  .first-command p:not(.step-label) {
+  .first-command p {
     max-width: 44ch;
     margin: 0.75rem 0 0;
     color: var(--ink-muted);
@@ -174,9 +171,6 @@
   @media (max-width: 44rem) {
     .first-command {
       grid-template-columns: 1fr;
-    }
-    .first-command-action {
-      justify-self: start;
     }
   }
 </style>

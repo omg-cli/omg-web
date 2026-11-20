@@ -5,8 +5,8 @@
 <details id="benchmarks" class="benchmarks home-shell">
   <summary>Package search benchmarks</summary>
   <p>
-    OMG can use a warm local package index on Arch. A fair comparison needs the same package
-    results, sources, and limits, with daemon startup and cache preparation accounted for.
+    OMG can use a warm local package index on Arch. Compare the same package results, sources, and
+    limits. Account for daemon startup and cache preparation.
   </p>
   <p>
     A historical Arch development run returned six search lines from OMG and 458 from pacman. Those
@@ -21,7 +21,6 @@
 <style>
   .benchmarks {
     padding-block: 0.5rem;
-    border-top: 1px solid var(--rule);
   }
   p {
     max-width: 58ch;

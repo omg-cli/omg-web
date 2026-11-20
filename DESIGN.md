@@ -173,7 +173,7 @@ Headings use balanced wrapping and negative tracking. Explanatory widths vary by
 
 ## Layout
 
-The public shell is centered at `min(100% - clamp(2.5rem, 8vw, 8rem), 75rem)`. Homepage sections use `clamp(3rem, 5vw, 4.5rem)` vertical padding and thin dividing rules. Content determines grouping and density.
+The public shell is centered at `min(100% - clamp(2.5rem, 8vw, 8rem), 75rem)`. Homepage sections use `clamp(3rem, 5vw, 4.5rem)` vertical padding. Spacing and headings separate the sections. The header, footer, and package list have no decorative dividing rules.
 
 A short product definition precedes a full-width, editable Arch terminal. Keep the prompt in the opening phone viewport. Place the install and documentation links below the terminal.
 
@@ -187,9 +187,9 @@ The terminal is 34rem tall, or 32rem at widths of 40rem or less. Its height stay
 
 ## Elevation & Depth
 
-Public content is flat. Neutral tones, one-pixel rules, and spacing establish hierarchy. The command explorer has a border and no shadow. The open mobile menu alone uses the existing soft shadow (`0 12px 20px rgb(0 0 0 / 0.08)`).
+Public content uses neutral tones and spacing. Keep borders around controls and the terminal, with no shadow. The open mobile menu uses the existing soft shadow (`0 12px 20px rgb(0 0 0 / 0.08)`).
 
-**The Flat Content Rule.** Use neutral tonal grouping and thin rules for ordinary content. The command explorer is flat and bordered; reserve the existing soft shadow for the open mobile menu.
+Use spacing and neutral backgrounds to group content. Do not add horizontal rules between homepage sections.
 
 ## Shapes
 
@@ -205,7 +205,7 @@ The global keyboard treatment is a two-pixel signal outline with a four-pixel of
 
 ### Cards / Containers
 
-A raised neutral panel groups the installer and its actions. They use container corners without shadows. Backend support uses a definition list with ruled rows; the runtime guide links lead to project-specific setup. These are content-specific structures, not a repeated feature-card grid.
+A neutral panel groups the installer and its actions without a shadow. List supported package managers in a definition list without row borders. Runtime guide links lead to setup instructions for each language or runtime.
 
 ### Inputs / Fields
 

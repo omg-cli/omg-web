@@ -33,8 +33,8 @@
     </p>
     <a href="/runtimes/">Browse runtime guides <Icon name="right" size={16} /></a>
     <p>
-      On Arch, Debian, and Ubuntu, <code>omg.lock</code> also records selected runtimes and explicitly
-      installed packages so you can check another machine for drift.
+      On Arch, Debian, and Ubuntu, <code>omg.lock</code> records selected runtimes and explicitly installed
+      packages. Use it to check another machine for drift.
     </p>
     <a href="/docs/environments/">Environment guide <Icon name="right" size={16} /></a>
   </div>
@@ -86,7 +86,6 @@
     justify-content: space-between;
     gap: 1rem;
     padding-block: 0.65rem;
-    border-bottom: 1px solid var(--rule);
     font-size: 0.875rem;
   }
   dt {

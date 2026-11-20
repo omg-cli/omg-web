@@ -163,7 +163,6 @@ a {
 
 .home-section {
   padding-block: clamp(3rem, 5vw, 4.5rem);
-  border-top: 1px solid var(--rule);
 }
 
 .home-section h2,
