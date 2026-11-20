@@ -50,6 +50,6 @@ zero vulnerabilities. The audit gate remains enforced.
 
 Root and API Miniflare resolve Undici `7.30.2`; the site's `@effect/platform-node` resolves `8.12.4`. These scoped overrides stay on each consumer's existing major version and address the six advisories reported by Snyk across the three projects. [Upstream fixes](https://github.com/nodejs/undici/releases/tag/v8.12.4).
 
-Use `npm run audit:snyk` with an authenticated Snyk CLI session to scan code and **all** dependency projects with development dependencies included. The pinned CLI is downloaded through npm's cache; this command does not add it to the application dependency graph. License findings still fail the command under the current organization policy. Do not represent a scan that omits `--dev` as a full tooling audit.
+Use `npm run audit:snyk` with an authenticated Snyk CLI session to scan code and **all** dependency projects with development dependencies included. The pinned CLI is downloaded through npm's cache; this command does not add it to the application dependency graph. Unapproved license findings fail the command. The owner-approved, version-specific repository exceptions are documented in [the license review](./snyk-license-review-2026-11-20.md); security advisories remain fully checked. Do not represent a scan that omits `--dev` as a full tooling audit.
 
 The local YAML frontmatter adapter has its own integrity-pinned lockfile so Snyk can analyze its manifest from a clean checkout without a separate install. The lockfile checker validates all four lockfiles.

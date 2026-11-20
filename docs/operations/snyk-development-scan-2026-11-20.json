@@ -61,5 +61,6 @@
     "vendorManifestScannedWithoutOwnNodeModules": true
   },
   "licenseDisposition": "pending-owner-decision; no exceptions applied",
-  "productionDeployed": false
+  "productionDeployed": false,
+  "supersededBy": "snyk-license-acceptance-2026-11-20.json"
 }

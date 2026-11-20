@@ -1,5 +1,5 @@
 {
-  "status": "pending-owner-license-decision",
+  "status": "approved",
   "scope": "omg-web repository only; no organization-wide policy change",
   "securityIgnores": false,
   "sourceExclusions": false,
@@ -743,10 +743,6 @@
       ]
     }
   ],
-  "choices": {
-    "retain": "Retain installed tools and approve only the listed license/package/version findings with documented attribution and review. These are accepted license findings, not removed vulnerabilities.",
-    "remove": "Require removal of LGPL/MPL dependencies. This requires replacing or modifying the Cloudflare image simulator and Vite/SvelteKit build toolchain; supported upstream versions currently retain these licenses."
-  },
   "bundleReview": {
     "observedAt": "2026-11-20T08:11:02.496082+00:00",
     "method": "Wrangler deployment dry-run esbuild metafile input inspection",
@@ -765,5 +761,10 @@
       }
     ],
     "limitation": "Evidence concerns current Worker code bundles, not a future redistribution of node_modules or toolchain containers."
-  }
+  },
+  "approvedAt": "2026-11-20T08:38:05.213864+00:00",
+  "approval": "Keep tooling; approve listed license exceptions",
+  "approvedBy": "Repository owner in this Codex chat",
+  "policyFiles": [".snyk", "site/.snyk", "workers/api/.snyk"],
+  "matching": "Exact package version at any dependency path, scoped to the listed package project"
 }

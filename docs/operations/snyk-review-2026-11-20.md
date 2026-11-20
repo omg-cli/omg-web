@@ -17,7 +17,7 @@ Scope: the supplied November 20 report for `omg-cli/omg-web`, with 23 findings: 
 - Compare a canonical installer through bounded stdin instead of accepting a file path argument. Example: `node tools/check-installer-sync.mjs --stdin < /path/to/omg/install.sh`.
 - Restrict the historical Stripe audit PoC to loopback. It rejects credentials, remote hosts, paths, queries and fragments in its selected base URL, uses a fixed loopback connection, and returns redirects without following them. Its main guard allows transport validation without running the audit's D1 mutations. Historical finding evidence is retained in Git history.
 
-No ignore file, excluded source directory or severity threshold was added to achieve the clean scan.
+The initial code remediation added no ignores or exclusions. Following the later development-inclusive scan, the repository owner approved the exact license exceptions recorded in [the license review](./snyk-license-review-2026-11-20.md). No security advisory is ignored and no source is excluded.
 
 ## Original finding ledger
 
@@ -49,7 +49,7 @@ Locations refer to the original scan revision; line numbers move as fixes are ap
 | low      | `9086b71d-8d0f-4870-ae90-1e860c1c2b99` | `tools/release/health.test.mjs:14`                                          | Run real TLS fixture with a dedicated certificate trust root. |
 | low      | `f063c94c-3337-46e6-bacc-3002fd28726b` | `tools/check-installer-sync.mjs:14`                                         | Accept bounded installer contents on stdin.                   |
 
-## Verification
+## Initial scan verification (default dependency scope)
 
 Snyk CLI 1.1309.0 completed fresh local scans. The dependency scan passed all three projects with zero vulnerabilities. The Code scan returned zero issues across all severity levels. The regression checks passed: 446 site tests, 425 API tests, 22 release tests and 15 docs-tool tests. The public browser suite passed 45 tests; three deployed-authentication tests were skipped because that local suite has no deployed environment. The complete root check passed, including types, formatting, lint, dependency audits, source policies, build budgets and four Wrangler deployment dry runs.
 
@@ -61,6 +61,12 @@ The final Code scan included ignored findings and returned zero issues with exit
 
 The dependency scan above omitted `--dev`. Its zero-vulnerability result covered the default dependency graph and did not establish that development tooling was clear. A later `snyk test --all-projects --dev` found six unique Undici advisories repeated across three projects (18 security findings) and 54 license-policy findings. The code scan remained clear with ignored findings included.
 
-The Undici follow-up pins 7.30.2 for root/API Miniflare and 8.12.4 for the site's Effect Node platform. The first development-inclusive rescan after those pins reported no security advisories; 54 license-policy findings remained. Those license findings must remain visible until the repository owner selects a license-policy disposition or the dependencies are replaced.
+The Undici follow-up pins 7.30.2 for root/API Miniflare and 8.12.4 for the site's Effect Node platform. The first development-inclusive rescan after those pins reported no security advisories; 54 license-policy findings remained. Those findings were retained pending the repository owner’s license decision, which is recorded below.
 
-The completed development-inclusive verification is in [the follow-up receipt](./snyk-development-scan-2026-11-20.json): zero security advisories, zero code issues, and 54 unapproved license-policy findings. The fourth package manifest scans successfully from its lockfile without its own node_modules directory. License approval is still pending.
+The completed development-inclusive verification is in [the follow-up receipt](./snyk-development-scan-2026-11-20.json): zero security advisories, zero code issues, and 54 unapproved license-policy findings. The fourth package manifest scans successfully from its lockfile without its own node_modules directory. That raw scan preceded the license approval recorded below.
+
+## Approved license disposition
+
+The repository owner subsequently selected “Keep tooling; approve listed license exceptions.” Three repository-local policies accept only the listed package/license IDs at their approved versions. A fresh `snyk test --all-projects --dev` reports zero open findings across all four projects, retaining the 54 accepted license findings in its ignored-results record. Code analysis remains at zero issues with ignored code findings included.
+
+The [approval inventory](./snyk-license-approvals-2026-11-20.json) and [license review](./snyk-license-review-2026-11-20.md) record the owner decision and its scope. `npm run check:snyk-policy` rejects security ignores, source exclusions and unapproved package versions. No organization-wide Snyk policy was changed.

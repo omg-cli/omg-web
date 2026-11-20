@@ -19,4 +19,4 @@ The installed `sharp` 0.35.5 toolchain uses `@img/sharp-libvips-*` 1.3.4 platfor
 - [Upstream MPL-2.0 license](https://github.com/parcel-bundler/lightningcss/blob/master/LICENSE)
 - Retain the upstream license and source information with any redistribution of the compiler itself. Review changes to, or redistribution of, this toolchain separately.
 
-The current site and API Worker dry-run input manifests contain none of these toolchain modules. See [the package/version inventory and bundle-review hashes](./snyk-license-proposal-2026-11-20.json). This evidence is specific to the reviewed build and does not silently approve different future packaging.
+The current site and API Worker dry-run input manifests contain none of these toolchain modules. See [the package/version inventory and bundle-review hashes](./snyk-license-approvals-2026-11-20.json). This evidence is specific to the reviewed build and does not silently approve different future packaging.
