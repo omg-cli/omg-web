@@ -80,7 +80,10 @@
     "devalue": "5.9.4",
     "sharp": "0.35.5",
     "source-map-js": "1.2.2",
-    "deepmerge": "$deepmerge"
+    "deepmerge": "$deepmerge",
+    "@effect/platform-node": {
+      "undici": "8.12.4"
+    }
   },
   "allowScripts": {
     "msgpackr-extract@3.0.4": false,

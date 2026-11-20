@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-11-20T08:13:35.471276+00:00",
+  "sourceBaseRevision": "06cc57a378598a05da085a736deea21dbee82ce9",
+  "scope": "all discovered dependency projects, including development dependencies",
+  "snykCliVersion": "1.1309.0",
+  "code": {
+    "issues": 0,
+    "includeIgnores": true,
+    "sarifSha256": "ec37c8e78815a5c67ebeb0d096270c4ca378c69bbadd4dd07c925c476727aa19"
+  },
+  "dependencies": {
+    "projects": [
+      {
+        "name": "omg-web",
+        "securityFindings": 0,
+        "licenseFindings": 10,
+        "dependencyCount": 159
+      },
+      {
+        "name": "omg-site",
+        "securityFindings": 0,
+        "licenseFindings": 22,
+        "dependencyCount": 543
+      },
+      {
+        "name": "@omg-cli/yaml-frontmatter",
+        "securityFindings": 0,
+        "licenseFindings": 0,
+        "dependencyCount": 1
+      },
+      {
+        "name": "omg-saas-workers",
+        "securityFindings": 0,
+        "licenseFindings": 22,
+        "dependencyCount": 189
+      }
+    ],
+    "securityFindings": 0,
+    "licenseFindings": 54,
+    "ignoredFindings": 0,
+    "reportSha256": "8cdbc3a6af3e79a5a14079ce362b59be478541e97da94e889e1a7eef37657b82"
+  },
+  "dependencyInputSha256": {
+    "package.json": "941145f8f6f6cd59965ab6a0a25aad8e8deee3ad098bc8eb9dd05f45eee88b3a",
+    "package-lock.json": "779da79aec2f17acea090c0d7085cfa1bcd73c2971e619de405f66e8d29e53e5",
+    "site/package.json": "dd0884e2ab031f2acea34d97dbf7f902462848ca5fee1a9acbf0e6d51aa59558",
+    "site/package-lock.json": "583ffd8eaf7bd8c7d222edb6766bd515bb2535eb6b1c1f0160e2ef16c477f79f",
+    "site/vendor/yaml-frontmatter/package.json": "715a3a8565409286bafebb2b338a1b2b47ec22d88f669fbea8a8153fd6e8115f",
+    "site/vendor/yaml-frontmatter/package-lock.json": "3ab1288efa80d07a3e0aeeb4e0ac5da0947096287abeb982ce0cfd04f05654dd",
+    "workers/api/package.json": "8d5f9bfc86a741d4ee02b879537748c2211e43405289808abd4bde8ce48162ae",
+    "workers/api/package-lock.json": "e8165120ad3cc2d53f1b9f8b91df55556d58175dc7d250ae645b676f53c5bec3"
+  },
+  "verification": {
+    "rootCheck": "passed",
+    "siteTests": 446,
+    "apiTests": 425,
+    "browserPassed": 45,
+    "browserSkipped": 3,
+    "browserSkipReason": "deployed-only authentication checks need an external environment",
+    "vendorManifestScannedWithoutOwnNodeModules": true
+  },
+  "licenseDisposition": "pending-owner-decision; no exceptions applied",
+  "productionDeployed": false
+}

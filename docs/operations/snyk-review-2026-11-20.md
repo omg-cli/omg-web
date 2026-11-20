@@ -56,3 +56,11 @@ Snyk CLI 1.1309.0 completed fresh local scans. The dependency scan passed all th
 These local results do not automatically replace the connected Snyk main-branch snapshot or establish a production deployment. The repository integration must scan the published commit before its dashboard can show the new state.
 
 The final Code scan included ignored findings and returned zero issues with exit code 0. Its source revision and report hashes are recorded in [the verification receipt](./snyk-review-2026-11-20.json). No findings were suppressed.
+
+## Scope correction and toolchain follow-up
+
+The dependency scan above omitted `--dev`. Its zero-vulnerability result covered the default dependency graph and did not establish that development tooling was clear. A later `snyk test --all-projects --dev` found six unique Undici advisories repeated across three projects (18 security findings) and 54 license-policy findings. The code scan remained clear with ignored findings included.
+
+The Undici follow-up pins 7.30.2 for root/API Miniflare and 8.12.4 for the site's Effect Node platform. The first development-inclusive rescan after those pins reported no security advisories; 54 license-policy findings remained. Those license findings must remain visible until the repository owner selects a license-policy disposition or the dependencies are replaced.
+
+The completed development-inclusive verification is in [the follow-up receipt](./snyk-development-scan-2026-11-20.json): zero security advisories, zero code issues, and 54 unapproved license-policy findings. The fourth package manifest scans successfully from its lockfile without its own node_modules directory. License approval is still pending.

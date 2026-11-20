@@ -37,7 +37,8 @@
     "typecheck:workers": "npm run typecheck --prefix workers/api",
     "check:installer": "node tools/check-installer-sync.mjs && bash tools/installer-security.sh",
     "release:staging": "node tools/release-staging.mjs",
-    "test:release": "node --test tools/release/*.test.mjs"
+    "test:release": "node --test tools/release/*.test.mjs",
+    "audit:snyk": "npx --yes snyk@1.1309.0 code test --include-ignores && npx --yes snyk@1.1309.0 test --all-projects --dev"
   },
   "devDependencies": {
     "@oxlint/plugins": "1.82.0",
@@ -51,7 +52,7 @@
   },
   "overrides": {
     "miniflare": {
-      "undici": "7.30.1",
+      "undici": "7.30.2",
       "sharp": "0.35.5"
     },
     "devalue": "5.9.4"
