@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
-import { createServer } from 'node:http';
+import { createServer } from 'node:https';
 import { test } from 'node:test';
 import { waitForHealth } from './health.mjs';
+import { localTlsFixture } from './tls-fixture.mjs';
+
+const tls = localTlsFixture();
 
 const previous = { tag: 'a'.repeat(40), versionId: 'previous' };
 const revision = 'b'.repeat(40);
@@ -11,7 +14,7 @@ const newBody = { version: { tag: revision, id: versionId }, features: { billing
 
 async function endpoint(t, responses) {
   let requests = 0;
-  const server = createServer((req, res) => {
+  const server = createServer({ key: tls.key, cert: tls.cert }, (req, res) => {
     assert.equal(req.url, '/health');
     const response = responses[Math.min(requests++, responses.length - 1)];
     res.writeHead(response.status, { 'content-type': 'application/json' });
@@ -25,7 +28,11 @@ async function endpoint(t, responses) {
         server.close(resolve);
       })
   );
-  return { origin: `http://127.0.0.1:${server.address().port}`, requests: () => requests };
+  return {
+    fetchHealth: tls.fetchHealth,
+    origin: `https://127.0.0.1:${server.address().port}`,
+    requests: () => requests,
+  };
 }
 
 test('waits through the recorded previous version, retaining both health observations', async t => {
@@ -36,6 +43,7 @@ test('waits through the recorded previous version, retaining both health observa
   const observations = [];
   const result = await waitForHealth({
     origin: server.origin,
+    fetchHealth: server.fetchHealth,
     revision,
     versionId,
     previous,
@@ -54,7 +62,13 @@ test('waits through the recorded previous version, retaining both health observa
 
 test('accepts the expected version immediately', async t => {
   const server = await endpoint(t, [{ status: 200, body: newBody }]);
-  const result = await waitForHealth({ origin: server.origin, revision, versionId, previous });
+  const result = await waitForHealth({
+    origin: server.origin,
+    fetchHealth: server.fetchHealth,
+    revision,
+    versionId,
+    previous,
+  });
   assert.equal(result.version.id, versionId);
   assert.equal(server.requests(), 1);
 });
@@ -90,6 +104,7 @@ for (const [name, response, error] of [
     await assert.rejects(
       waitForHealth({
         origin: server.origin,
+        fetchHealth: server.fetchHealth,
         revision,
         versionId,
         previous,
@@ -110,6 +125,7 @@ test('stops polling at the deadline when only the previous version remains', asy
   await assert.rejects(
     waitForHealth({
       origin: server.origin,
+      fetchHealth: server.fetchHealth,
       revision,
       versionId,
       previous,
@@ -129,6 +145,7 @@ test('does not accept the expected version after receipt persistence exceeds the
   await assert.rejects(
     waitForHealth({
       origin: server.origin,
+      fetchHealth: server.fetchHealth,
       revision,
       versionId,
       previous,
@@ -145,6 +162,7 @@ test('does not retry a previous version without a recorded source tag', async t 
   await assert.rejects(
     waitForHealth({
       origin: server.origin,
+      fetchHealth: server.fetchHealth,
       revision,
       versionId,
       previous: { ...previous, tag: null },

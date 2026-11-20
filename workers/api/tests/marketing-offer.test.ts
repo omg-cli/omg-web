@@ -5,18 +5,18 @@ import type { Env } from '../src/api';
 import { handleCreateCheckout } from '../src/handlers/billing';
 import { handleMarketingOffer } from '../src/handlers/marketing-offer';
 
-const INTERNAL_SECRET = 'test-internal-secret';
-const SVELTE_BFF_SECRET = 'test-svelte-bff-secret';
+const INTERNAL_SECRET = crypto.randomUUID();
+const SVELTE_BFF_SECRET = crypto.randomUUID();
 
 function offerEnv(rateLimitSuccess = true, ipLimitSuccess = true): Env {
   return {
     DB: env.DB,
     EMAIL: env.EMAIL,
-    STRIPE_SECRET_KEY: 'stripe-test-key',
-    STRIPE_WEBHOOK_SECRET: 'webhook-test-secret',
+    STRIPE_SECRET_KEY: crypto.randomUUID(),
+    STRIPE_WEBHOOK_SECRET: crypto.randomUUID(),
     STRIPE_INTRO_COUPON_ID: 'coupon_intro_test',
-    JWT_SECRET: 'jwt-test-secret',
-    JWT_PRIVATE_KEY: 'private-test-key',
+    JWT_SECRET: crypto.randomUUID(),
+    JWT_PRIVATE_KEY: crypto.randomUUID(),
     ADMIN_API_SECRET: INTERNAL_SECRET,
     SVELTE_BFF_SECRET,
     API_RATE_LIMITER: {

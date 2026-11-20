@@ -4,6 +4,7 @@ import { assertHealth } from './validation.mjs';
 
 export async function waitForHealth({
   origin,
+  fetchHealth = fetch,
   revision,
   versionId,
   previous,
@@ -16,7 +17,7 @@ export async function waitForHealth({
   assert.ok(Number.isSafeInteger(intervalMs) && intervalMs > 0);
   const deadline = performance.now() + timeoutMs;
   while (performance.now() < deadline) {
-    const response = await fetch(`${origin}/health`, {
+    const response = await fetchHealth(`${origin}/health`, {
       redirect: 'error',
       signal: AbortSignal.timeout(
         Math.max(1, Math.ceil(Math.min(10_000, deadline - performance.now())))

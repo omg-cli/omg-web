@@ -10,7 +10,7 @@ import inboxMigration from '../migrations/011_stripe_event_inbox.sql?raw';
 import claimTokenMigration from '../migrations/018_stripe_event_claim_tokens.sql?raw';
 import deadLetterMigration from '../migrations/021_stripe_event_dead_letter.sql?raw';
 
-const WEBHOOK_SECRET = 'whsec_test_inbox';
+const WEBHOOK_SECRET = `whsec_${crypto.randomUUID()}`;
 const InboxRowSchema = Schema.Struct({
   status: Schema.Literal('received', 'processing', 'processed', 'failed', 'dead'),
   attempt_count: Schema.Number,
