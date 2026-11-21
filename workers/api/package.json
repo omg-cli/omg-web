@@ -34,7 +34,7 @@
     "wrangler": "4.149.0"
   },
   "dependencies": {
-    "@sentry/cloudflare": "10.74.0",
+    "@sentry/cloudflare": "10.78.0",
     "effect": "3.22.2"
   },
   "overrides": {
