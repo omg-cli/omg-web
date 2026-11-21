@@ -1,14 +1,19 @@
 import { spawnSync } from 'node:child_process';
 import { readFile, readdir } from 'node:fs/promises';
-import { createRequire } from 'node:module';
-import { posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { LicensingRoutes } from '../shared/licensing-routes.ts';
 
-const workspaceRoot = new URL('../', import.meta.url);
-const requireFromSite = createRequire(new URL('../site/package.json', import.meta.url));
-const ts = requireFromSite('typescript');
+import {
+  allFiles,
+  isSourceFile,
+  isSvelteKitRouteEntry,
+  isTestFile,
+  parseSource,
+  resolveImport,
+  ts,
+  workspaceRoot,
+} from './check-source-graph.mjs';
 
 const runtimeSourceDirectories = ['shared', 'site/src', 'site/static/terminal', 'workers/api/src'];
 const consumerSourceDirectories = [
@@ -27,8 +32,6 @@ const frameworkEntryPoints = new Set([
   'site/src/params.ts',
   'workers/api/src/worker.ts',
 ]);
-const sourceExtensions = ['.js', '.mjs', '.svelte', '.ts'];
-const sourceExtensionSet = new Set(sourceExtensions);
 const requiredSiteFiles = [
   'site/alchemy.environment.mjs',
   'site/alchemy.run.ts',
@@ -89,20 +92,6 @@ const privatePrivacyTerms = [
 const runtimeSourceMap = new Map();
 const violations = [];
 
-async function allFiles(directory) {
-  const entries = await readdir(new URL(`${directory}/`, workspaceRoot), { withFileTypes: true });
-  const files = [];
-  for (const entry of entries) {
-    const path = `${directory}/${entry.name}`;
-    if (entry.isDirectory()) {
-      files.push(...(await allFiles(path)));
-    } else if (entry.isFile()) {
-      files.push(path);
-    }
-  }
-  return files;
-}
-
 async function readable(path) {
   try {
     await readFile(new URL(path, workspaceRoot));
@@ -116,41 +105,8 @@ function report(path, message) {
   violations.push({ path, message });
 }
 
-function scriptSource(path, source) {
-  if (!path.endsWith('.svelte')) return source;
-  return [...source.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gu)]
-    .map(match => match[1] ?? '')
-    .join('\n');
-}
-
-function scriptKind(path) {
-  if (path.endsWith('.js') || path.endsWith('.mjs')) return ts.ScriptKind.JS;
-  return ts.ScriptKind.TS;
-}
-
-function resolveImport(importer, specifier) {
-  let unresolved;
-  const bareSpecifier = specifier.replace(/\?.*$/u, '');
-  if (bareSpecifier.startsWith('$lib/')) {
-    unresolved = `site/src/lib/${bareSpecifier.slice(5)}`;
-  } else if (bareSpecifier.startsWith('.')) {
-    unresolved = posix.normalize(posix.join(posix.dirname(importer), bareSpecifier));
-  } else {
-    return null;
-  }
-
-  const base = unresolved.replace(/\.(?:js|mjs)$/u, '');
-  const candidates = [
-    unresolved,
-    base,
-    ...sourceExtensions.map(suffix => `${base}${suffix}`),
-    ...sourceExtensions.map(suffix => `${base}/index${suffix}`),
-  ];
-  return candidates.find(candidate => knownRepositoryFiles.has(candidate)) ?? null;
-}
-
 function isRuntimeEntry(path) {
-  return frameworkEntryPoints.has(path) || path.startsWith('site/src/routes/');
+  return frameworkEntryPoints.has(path) || isSvelteKitRouteEntry(path);
 }
 
 function cliServiceRoute(route) {
@@ -290,7 +246,7 @@ for (const path of repositoryConfigFiles) {
 
 for (const directory of runtimeSourceDirectories) {
   for (const path of await allFiles(directory)) {
-    if (sourceExtensionSet.has(posix.extname(path)) && !path.endsWith('.d.ts')) {
+    if (isSourceFile(path)) {
       runtimeSourceMap.set(path, await readFile(new URL(path, workspaceRoot), 'utf8'));
     }
   }
@@ -309,7 +265,7 @@ if (
 }
 
 for (const [path, source] of runtimeSourceMap) {
-  if (/\.(?:test|spec)\.[^.]+$/u.test(path) || path === 'shared/public-site.ts') continue;
+  if (isTestFile(path) || path === 'shared/public-site.ts') continue;
   if (source.includes(canonicalSiteHostname)) {
     report(path, 'production modules must import the shared canonical site contract');
   }
@@ -364,25 +320,21 @@ const knownRepositoryFiles = new Set([
   ...(await allFiles('workers/api/tests')),
 ]);
 const consumerFiles = new Map(runtimeSourceMap);
-const runtimeDependencies = new Map([...runtimeSourceMap.keys()].map(path => [path, new Set()]));
+const runtimeDependencies = new Map(
+  [...runtimeSourceMap.keys()].filter(path => !isTestFile(path)).map(path => [path, new Set()])
+);
 for (const directory of consumerSourceDirectories.filter(
   candidateDirectory => !runtimeSourceDirectories.includes(candidateDirectory)
 )) {
   for (const path of await allFiles(directory)) {
-    if (sourceExtensionSet.has(posix.extname(path)) && !path.endsWith('.d.ts')) {
+    if (isSourceFile(path)) {
       consumerFiles.set(path, await readFile(new URL(path, workspaceRoot), 'utf8'));
     }
   }
 }
 
 for (const [path, source] of consumerFiles) {
-  const sourceFile = ts.createSourceFile(
-    path,
-    scriptSource(path, source),
-    ts.ScriptTarget.Latest,
-    true,
-    scriptKind(path)
-  );
+  const sourceFile = parseSource(path, source);
 
   function visit(node) {
     let specifier;
@@ -407,16 +359,12 @@ for (const [path, source] of consumerFiles) {
         report(path, `retired framework import remains: ${specifier}`);
       }
       if (specifier.startsWith('.') || specifier.startsWith('$lib/')) {
-        const resolved = resolveImport(path, specifier);
+        const resolved = resolveImport(path, specifier, knownRepositoryFiles);
         const generatedWorkerImport =
           path === 'site/worker.js' && specifier === './.svelte-kit/cloudflare/_worker.js';
         if (resolved === null && specifier !== './$types' && !generatedWorkerImport) {
           report(path, `local import does not resolve to a checked source file: ${specifier}`);
-        } else if (
-          resolved !== null &&
-          runtimeSourceMap.has(path) &&
-          runtimeSourceMap.has(resolved)
-        ) {
+        } else if (resolved !== null && runtimeDependencies.has(resolved)) {
           runtimeDependencies.get(path)?.add(resolved);
         }
         if (
@@ -454,15 +402,15 @@ for (const [path, source] of consumerFiles) {
 }
 
 const reachableRuntimeFiles = new Set();
-const pendingRuntimeFiles = [...runtimeSourceMap.keys()].filter(isRuntimeEntry);
+const pendingRuntimeFiles = [...runtimeDependencies.keys()].filter(isRuntimeEntry);
 while (pendingRuntimeFiles.length > 0) {
   const path = pendingRuntimeFiles.pop();
   if (path === undefined || reachableRuntimeFiles.has(path)) continue;
   reachableRuntimeFiles.add(path);
   pendingRuntimeFiles.push(...(runtimeDependencies.get(path) ?? []));
 }
-for (const path of runtimeSourceMap.keys()) {
-  if (!/\.(?:test|spec)\.[^.]+$/u.test(path) && !reachableRuntimeFiles.has(path)) {
+for (const path of runtimeDependencies.keys()) {
+  if (!reachableRuntimeFiles.has(path)) {
     report(path, 'production module is unreachable from every route or Worker entry point');
   }
 }
@@ -531,8 +479,7 @@ for (const disallowed of ['/api/', '/dashboard/', '/admin/']) {
 }
 
 for (const [path, source] of runtimeSourceMap) {
-  const isWebsiteProductionModule =
-    path.startsWith('site/src/') && !/\.(?:test|spec)\.[^.]+$/u.test(path);
+  const isWebsiteProductionModule = path.startsWith('site/src/') && !isTestFile(path);
   if (isWebsiteProductionModule && externalBoundarySignal.test(source)) {
     if (path.endsWith('.svelte')) {
       report(path, 'Svelte components must delegate external boundaries to typed modules');
