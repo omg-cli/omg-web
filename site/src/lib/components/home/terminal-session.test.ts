@@ -82,4 +82,33 @@ describe('recorded Arch terminal session', () => {
     );
     expect(text(session.run('omg env check'))).toContain('No drift detected');
   });
+
+  it('supports extended packages, dry-run, AUR sandbox builds, runtimes, tasks, and shell inspection', () => {
+    const session = new TerminalSession();
+    expect(session.stateSummary().inSync).toBe(true);
+    expect(text(session.run('rg --version'))).toContain('command not found');
+    expect(text(session.run('omg install --dry-run ripgrep'))).toContain('No system changes made');
+    expect(text(session.run('omg install -y fd'))).toContain('1 package installed');
+    expect(text(session.run('fd --version'))).toContain('fd 10.5.0');
+    expect(session.stateSummary().inSync).toBe(false);
+    expect(text(session.run('omg env check'))).toContain('+ fd');
+    expect(text(session.run('omg remove fd'))).toContain('1 package removed');
+    expect(session.stateSummary().inSync).toBe(true);
+
+    const aur = session.run('omg install ripgrep-git');
+    expect(aur.prompt?.kind).toBe('install');
+    expect(text(aur)).toContain('Bubblewrap');
+    if (aur.prompt?.kind !== 'install') throw new Error('Expected AUR install prompt');
+    expect(text(session.confirm(aur.prompt, true))).toContain('Bubblewrap sandbox build');
+
+    expect(text(session.run('omg use rust 1.86'))).toContain('Now using Rust 1.86.0');
+    expect(text(session.run('rustc --version'))).toContain('rustc 1.86.0');
+    expect(text(session.run('omg list'))).toContain('*1.86.0');
+    expect(text(session.run('omg which rust'))).toBe('1.86.0');
+    expect(text(session.run('omg doctor --network'))).toContain('System is healthy');
+    expect(text(session.run('omg status'))).toContain('packages installed');
+    expect(text(session.run('omg run test'))).toContain('23 passed');
+    expect(text(session.run('omg audit'))).toContain('Bubblewrap');
+    expect(text(session.run('cat omg.lock'))).toContain('distro = "arch"');
+  });
 });
