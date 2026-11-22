@@ -4,6 +4,7 @@
     size = 18,
   }: {
     name:
+      | 'left'
       | 'right'
       | 'down'
       | 'external'
@@ -18,6 +19,7 @@
     size?: number;
   } = $props();
   const paths = {
+    left: 'M20 12H4m6-6-6 6 6 6',
     right: 'M4 12h16m-6-6 6 6-6 6',
     down: 'M12 4v16m-6-6 6 6 6-6',
     external: 'M7 17 17 7M7 7h10v10',

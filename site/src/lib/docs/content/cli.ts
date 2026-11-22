@@ -75,7 +75,7 @@ export const cliTopic: DocsTopic = {
             ],
             [
               '--json',
-              'Request JSON where that command implements it; do not assume one stable schema across commands',
+              'Request JSON where the command supports it; output schemas vary by command',
             ],
             ['--all-commands', 'Include advanced commands in top-level help'],
             ['-h, --help / -V, --version', 'Print command help or the installed OMG version'],

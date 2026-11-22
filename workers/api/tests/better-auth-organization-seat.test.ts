@@ -4,7 +4,7 @@ import * as Schema from 'effect/Schema';
 import { describe, expect, it } from 'vitest';
 import { createShadowAuth, type AuthEnvironment } from '../../../site/src/lib/server/auth.server';
 
-const AUTH_SECRET = 'organization-seat-integration-secret-with-32-characters';
+const AUTH_SECRET = crypto.randomUUID();
 const MemberCountRowSchema = Schema.Struct({ count: Schema.Number });
 const InvitationStatusRowsSchema = Schema.Array(
   Schema.Struct({ email: Schema.String, status: Schema.String })
@@ -15,11 +15,11 @@ function authEnvironment(): AuthEnvironment {
     BETTER_AUTH_SECRET: AUTH_SECRET,
     DB: env.DB,
     GITHUB_CLIENT_ID: 'test-github-client',
-    GITHUB_CLIENT_SECRET: 'test-github-secret',
+    GITHUB_CLIENT_SECRET: crypto.randomUUID(),
     LICENSING_API: {
       fetch: async () => new Response(null, { status: 503 }),
     },
-    SVELTE_BFF_SECRET: 'test-svelte-bff-secret',
+    SVELTE_BFF_SECRET: crypto.randomUUID(),
   };
 }
 

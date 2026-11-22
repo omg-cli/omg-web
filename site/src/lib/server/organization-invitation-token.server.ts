@@ -3,7 +3,7 @@ import * as Schema from 'effect/Schema';
 
 const REFERENCE_VERSION = 'v1';
 const REFERENCE_MAX_LENGTH = 2048;
-const SECRET_CONTEXT = 'omg-organization-invitation-reference-v1';
+const INVITATION_KEY_DOMAIN = 'omg-organization-invitation-reference-v1';
 const Secret = Schema.String.check(Schema.isMinLength(16), Schema.isMaxLength(512));
 const InvitationId = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(256));
 const Expiration = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64));
@@ -74,7 +74,7 @@ function encryptionKey(
     try: async () => {
       const digest = await crypto.subtle.digest(
         'SHA-256',
-        new TextEncoder().encode(`${SECRET_CONTEXT}\u0000${secret}`)
+        new TextEncoder().encode(`${INVITATION_KEY_DOMAIN}\u0000${secret}`)
       );
       return crypto.subtle.importKey('raw', digest, { name: 'AES-GCM' }, false, [
         'encrypt',

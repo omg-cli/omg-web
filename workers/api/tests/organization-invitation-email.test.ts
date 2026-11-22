@@ -9,17 +9,17 @@ type OrganizationInvitationEmailSender = NonNullable<
 >;
 type OrganizationInvitationEmailMessage = Parameters<OrganizationInvitationEmailSender>[0];
 
-const SVELTE_BFF_SECRET = 'test-svelte-bff-secret';
+const SVELTE_BFF_SECRET = crypto.randomUUID();
 const INVITATION_URL = `${ACCOUNT_ORIGIN}/dashboard/organization/invitations/accept/?token=v1.${'a'.repeat(16)}.${'b'.repeat(48)}`;
 
 function emailEnv(rateLimitSuccess = true): Env {
   return {
     DB: env.DB,
     EMAIL: env.EMAIL,
-    STRIPE_SECRET_KEY: 'stripe-test-key',
-    STRIPE_WEBHOOK_SECRET: 'webhook-test-secret',
-    JWT_SECRET: 'jwt-test-secret',
-    JWT_PRIVATE_KEY: 'private-test-key',
+    STRIPE_SECRET_KEY: crypto.randomUUID(),
+    STRIPE_WEBHOOK_SECRET: crypto.randomUUID(),
+    JWT_SECRET: crypto.randomUUID(),
+    JWT_PRIVATE_KEY: crypto.randomUUID(),
     SVELTE_BFF_SECRET,
     API_RATE_LIMITER: {
       limit: async () => ({ success: rateLimitSuccess }),

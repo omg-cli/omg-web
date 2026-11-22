@@ -110,8 +110,8 @@ components:
     padding: 0.8rem 1rem
   panel-install:
     backgroundColor: '{colors.paper-raised}'
-    rounded: '{rounded.panel}'
-    padding: clamp(1.25rem, 3vw, 2rem)
+    rounded: '{rounded.control}'
+    padding: 0.75rem 0.75rem 0.75rem 1.25rem
   panel-command:
     backgroundColor: '{colors.terminal-bg}'
     textColor: '{colors.terminal-ink}'
@@ -149,7 +149,8 @@ Public surfaces are strictly neutral. Orange marks actions and keyboard focus. T
 ### Neutral
 
 - **Paper and raised paper** separate the page from command selection, runtime, source, and installer containers. Dark variants preserve the same roles.
-- **Ink and muted ink** distinguish headings and executable commands from explanations and metadata. **Rule and strong rule** divide technical content and outline controls.
+- **Ink, body ink, and muted ink** create a three-step neutral hierarchy: full `--ink` for headings and executable commands, `--ink-body` (~85% ink) for reading prose, and `--ink-muted` for metadata and captions. **Rule and strong rule** divide technical content and outline controls.
+- **Custom code syntax tokens** (`--code-command`, `--code-flag`, `--code-string`, `--code-comment`) replace stock third-party highlight palettes so shell snippets stay quiet and only strings/URLs take `--signal`.
 - **Terminal charcoal, ink, muted text, rule, and output** form the consistently dark transcript. **Terminal selected** marks the prompt, insertion caret and local keyboard focus.
 - **Workspace paper, raised paper, ink, muted ink, and translucent rules** preserve the account/operator palette independently.
 - **Danger** and its dark/workspace variants remain reserved for error states.
@@ -163,8 +164,8 @@ Archivo Variable supplies display and body text, with the existing Archivo Fallb
 ### Hierarchy
 
 - **Display** is the compact homepage definition; its maximum measure is 30ch and its size scales from 2rem to 3.4rem.
-- **Headline** records package/runtime headings. The installation title uses the shared larger scale, `clamp(2.25rem, 4vw, 3.25rem)`, weight 650, line height 1.1.
-- **Title** records compact environment and source headings. First-command headings use 1.25rem with line height 1.35.
+- **Headline** records package/runtime headings. The installation title uses `clamp(1.75rem, 3vw, 2.5rem)`, weight 650, and line height 1.15.
+- **Title** records compact environment and source headings.
 - **Body** records package/runtime explanation. The introduction uses 1rem and line height 1.75; small technical notes range from 0.75rem to 0.875rem.
 - **Label** records compact technical step labels. Navigation uses 0.8125rem and weight 500; action labels use weight 600.
 - **Code** records the responsive installer scale. The transcript scales from 0.8125rem to 0.9375rem at line height 1.6. The editable command is 1rem.
@@ -173,25 +174,29 @@ Headings use balanced wrapping and negative tracking. Explanatory widths vary by
 
 ## Layout
 
-The public shell is centered at `min(100% - clamp(2.5rem, 8vw, 8rem), 75rem)`. Homepage sections use `clamp(3rem, 5vw, 4.5rem)` vertical padding and thin dividing rules. Content determines grouping and density.
+The public shell is centered at `min(100% - clamp(2.5rem, 8vw, 8rem), 75rem)`. Homepage sections use `clamp(3rem, 5vw, 4.5rem)` vertical padding. Spacing and headings separate the sections. The header, footer, and package list have no decorative dividing rules.
 
 A short product definition precedes a full-width, editable Arch terminal. Keep the prompt in the opening phone viewport. Place the install and documentation links below the terminal.
 
-The package backend definition list and runtime guidance sit side by side and stack below 40rem. A native disclosure contains the benchmark methodology. The installer keeps a download/review block and a separate first-command block, which stacks below 44rem.
+The package command diff and runtime guidance sit side by side and stack below 48rem. The homepage has no benchmark section or repeated search example. Installation pairs a short platform description with one command row and its copy button. It stacks below 50rem. The footer keeps navigation, author credit, and source links in two compact rows.
 
-The header is 4.5rem high. Below 50rem, the full navigation and account link give way to a native details menu, with the theme control inside it; the install action stays visible. The footer stacks below 40rem. Documentation uses a 16rem sidebar from 64rem; learning articles use a 15rem contents column at that breakpoint. Keep the 20rem body minimum and `min-width: 0` around code-bearing grid children.
+The header is 4.5rem high. Below 50rem, the full navigation and account link give way to a native details menu with a custom rotating chevron, with the theme control inside it; the install action stays visible. The footer stacks below 40rem. Documentation uses a 16rem sidebar from 64rem (with pointer-fine compact rows and a bottom scroll fade) and a 3-column layout from 72rem with a sticky right-rail scroll-spy outline; prose and code blocks share a 44rem measure. On desktop, multi-line documentation code blocks float the copy button in the top-right corner instead of adding an empty header bar, and heading `#` anchors hang in the left margin on hover/focus. Keep the 20rem body minimum and `min-width: 0` around code-bearing grid children.
 
-Interactive links and controls generally reserve 2.75rem height. Commands wrap; transcript output may scroll vertically inside its fixed viewport. Keep persistent space for clipboard status and readable commands without JavaScript.
+Controls generally reserve 2.75rem of height on touch devices. Commands wrap where needed. Reserve space for clipboard status and keep commands readable without JavaScript.
+
+Below 48rem, documentation code blocks place the copy button above the code, and the "On this page" outline sticks full-bleed with an opaque `--paper` background. Use 14px monospace text with 1.65 line height and 14px horizontal padding. Preserve lines and indentation. Long lines scroll inside the block instead of wrapping or widening the page. Code can receive keyboard focus for scrolling. Keep copy feedback beside the button.
+
+The terminal is 34rem tall on desktop, and clamped to fit the opening phone viewport at widths of 40rem or less (`clamp(19rem, calc(100dvh - 14.5rem), 32rem)`). It opens pre-seeded with static `omg search ripgrep` output (safe for SSR and pre-hydration input). Output scrolls above the prompt. The command menu opens over the output and scrolls without resizing the terminal.
 
 ## Elevation & Depth
 
-Public content is flat. Neutral tones, one-pixel rules, and spacing establish hierarchy. The command explorer has a border and no shadow. The open mobile menu alone uses the existing soft shadow (`0 12px 20px rgb(0 0 0 / 0.08)`).
+Public content uses neutral tones and spacing. Keep borders around controls and the terminal, with no shadow. The open mobile menu uses the existing soft shadow (`0 12px 20px rgb(0 0 0 / 0.08)`).
 
-**The Flat Content Rule.** Use neutral tonal grouping and thin rules for ordinary content. The command explorer is flat and bordered; reserve the existing soft shadow for the open mobile menu.
+Use spacing and neutral backgrounds to group content. Do not add horizontal rules between homepage sections.
 
 ## Shapes
 
-Controls use gently rounded corners (6px). The explorer, raised runtime/source panels, and installer use container corners (12px). Login fields and documentation panels retain their existing square corners. Mobile menu links and the terminal Run control use a local 4px radius. Use inline SVG icons and preserve the existing OMG brand mark.
+Controls and the installer command row use 6px corners. Raised runtime/source panels use 12px corners. Login fields and documentation panels retain their existing square corners. Mobile menu links and the terminal Run control use a local 4px radius. Use inline SVG icons and preserve the existing OMG brand mark.
 
 ## Components
 
@@ -203,11 +208,11 @@ The global keyboard treatment is a two-pixel signal outline with a four-pixel of
 
 ### Cards / Containers
 
-A raised neutral panel groups the installer and its actions. They use container corners without shadows. Backend support uses a definition list with ruled rows; the runtime guide links lead to project-specific setup. These are content-specific structures, not a repeated feature-card grid.
+A neutral command row places the installer command beside its copy button. Prerequisites and source links sit below it. List supported package managers in a definition list without row borders. Runtime guide links lead to setup instructions for each language or runtime.
 
 ### Inputs / Fields
 
-Login fields retain square corners, transparent backgrounds, a strong-rule border, mono text, and 0.8rem by 1rem padding. Focus changes the border to signal; the existing field-specific rule removes the outline. Preserve visible focus when extending the form. Errors use danger; disabled submission reduces opacity.
+Login fields retain square corners, transparent backgrounds, a strong-rule border, mono text, and 0.8rem by 1rem padding. Focus changes the border to signal and `:focus-visible` shows a two-pixel signal outline with a two-pixel offset. Errors use danger; disabled submission reduces opacity.
 
 ### Navigation
 
@@ -219,7 +224,7 @@ The labeled Arch simulation opens with a completed package search and an editabl
 
 ### Installation block
 
-Show the one-line installer with a nearby source inspection link and the GitHub CLI prerequisite. The copy control has a persistent status area; provenance and platform requirements stay alongside the command. The follow-up search is read-only and links to the quick start. InstallationView continues to own clipboard state and analytics.
+Show the one-line installer with a nearby source inspection link and the GitHub CLI prerequisite. Reserve a status line for clipboard feedback. Keep the terminal's search example out of the installation section. InstallationView owns clipboard state and analytics.
 
 Smooth anchor scrolling becomes automatic under reduced motion. The editable input uses the native insertion caret.
 

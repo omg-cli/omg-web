@@ -5,8 +5,10 @@ import { createShadowAuth, type AuthEnvironment } from './auth.server';
 
 const PRODUCTION = 'https://getomg.xyz';
 const STAGING = 'https://staging.getomg.xyz';
-const PROXY_SECRET = 'synthetic-proxy-secret-0123456789abcdef';
-const PROVIDER_SECRET = 'synthetic-production-github-secret';
+const PROXY_SECRET = crypto.randomUUID();
+const PROVIDER_SECRET = crypto.randomUUID();
+const STAGING_AUTH_SECRET = crypto.randomUUID();
+const PRODUCTION_AUTH_SECRET = crypto.randomUUID();
 
 function unavailable(): never {
   throw new Error('The D1 stub must not be called');
@@ -21,14 +23,12 @@ function environment(staging: boolean): AuthEnvironment {
       prepare: unavailable,
       withSession: unavailable,
     },
-    BETTER_AUTH_SECRET: staging
-      ? 'synthetic-staging-session-secret-4567'
-      : 'synthetic-production-session-secret-0123',
+    BETTER_AUTH_SECRET: staging ? STAGING_AUTH_SECRET : PRODUCTION_AUTH_SECRET,
     DEPLOYMENT_STAGE: staging ? 'staging' : 'production',
     OAUTH_PROXY_SECRET: PROXY_SECRET,
     GITHUB_CLIENT_ID: 'same-synthetic-client',
     GITHUB_CLIENT_SECRET: staging ? '' : PROVIDER_SECRET,
-    SVELTE_BFF_SECRET: 'synthetic-bff-secret',
+    SVELTE_BFF_SECRET: crypto.randomUUID(),
     LICENSING_API: { fetch: async () => Response.json({}) },
   };
 }
@@ -59,7 +59,7 @@ function mockGitHub(rejectCode = false) {
       return rejectCode
         ? Response.json({ error: 'bad_verification_code' }, { status: 400 })
         : Response.json({
-            access_token: 'synthetic-token',
+            access_token: crypto.randomUUID(),
             token_type: 'bearer',
             scope: 'read:user,user:email',
           });

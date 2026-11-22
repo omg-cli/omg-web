@@ -1,0 +1,770 @@
+{
+  "status": "approved",
+  "scope": "omg-web repository only; no organization-wide policy change",
+  "securityIgnores": false,
+  "sourceExclusions": false,
+  "findings": [
+    {
+      "project": "omg-web",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-arm64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-arm64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-web@1.0.0",
+        "wrangler@4.149.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-arm64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-web",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-arm:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-arm",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-web@1.0.0",
+        "wrangler@4.149.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-arm@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-web",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-ppc64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-ppc64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-web@1.0.0",
+        "wrangler@4.149.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-ppc64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-web",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-riscv64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-riscv64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-web@1.0.0",
+        "wrangler@4.149.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-riscv64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-web",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-x64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-x64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-web@1.0.0",
+        "wrangler@4.149.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-x64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-web",
+      "id": "snyk:lic:npm:img:sharp-libvips-linuxmusl-arm64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linuxmusl-arm64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-web@1.0.0",
+        "wrangler@4.149.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linuxmusl-arm64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-web",
+      "id": "snyk:lic:npm:img:sharp-libvips-linuxmusl-x64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linuxmusl-x64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-web@1.0.0",
+        "wrangler@4.149.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linuxmusl-x64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-web",
+      "id": "snyk:lic:npm:img:sharp-libvips-darwin-arm64:LGPL-3.0",
+      "package": "@img/sharp-libvips-darwin-arm64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-web@1.0.0",
+        "wrangler@4.149.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-darwin-arm64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-web",
+      "id": "snyk:lic:npm:img:sharp-libvips-darwin-x64:LGPL-3.0",
+      "package": "@img/sharp-libvips-darwin-x64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-web@1.0.0",
+        "wrangler@4.149.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-darwin-x64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-web",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-s390x:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-s390x",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-web@1.0.0",
+        "wrangler@4.149.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-s390x@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-linux-arm-gnueabihf:MPL-2.0",
+      "package": "lightningcss-linux-arm-gnueabihf",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-linux-arm-gnueabihf@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-linux-arm64-musl:MPL-2.0",
+      "package": "lightningcss-linux-arm64-musl",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-linux-arm64-musl@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-linux-x64-musl:MPL-2.0",
+      "package": "lightningcss-linux-x64-musl",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-linux-x64-musl@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:img:sharp-libvips-darwin-arm64:LGPL-3.0",
+      "package": "@img/sharp-libvips-darwin-arm64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "@alchemy.run/frontend-frameworks@2.0.0-beta.82",
+        "@alchemy.run/cloudflare-runtime@2.0.0-beta.82",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-darwin-arm64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-s390x:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-s390x",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "@alchemy.run/frontend-frameworks@2.0.0-beta.82",
+        "@alchemy.run/cloudflare-runtime@2.0.0-beta.82",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-s390x@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-x64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-x64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "@alchemy.run/frontend-frameworks@2.0.0-beta.82",
+        "@alchemy.run/cloudflare-runtime@2.0.0-beta.82",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-x64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-linux-arm64-gnu:MPL-2.0",
+      "package": "lightningcss-linux-arm64-gnu",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-linux-arm64-gnu@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-win32-x64-msvc:MPL-2.0",
+      "package": "lightningcss-win32-x64-msvc",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-win32-x64-msvc@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss:MPL-2.0",
+      "package": "lightningcss",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": ["omg-site@0.1.0", "vite@8.2.4", "lightningcss@1.33.0"]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-darwin-x64:MPL-2.0",
+      "package": "lightningcss-darwin-x64",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-darwin-x64@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:img:sharp-libvips-darwin-x64:LGPL-3.0",
+      "package": "@img/sharp-libvips-darwin-x64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "@alchemy.run/frontend-frameworks@2.0.0-beta.82",
+        "@alchemy.run/cloudflare-runtime@2.0.0-beta.82",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-darwin-x64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:img:sharp-libvips-linuxmusl-arm64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linuxmusl-arm64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "@alchemy.run/frontend-frameworks@2.0.0-beta.82",
+        "@alchemy.run/cloudflare-runtime@2.0.0-beta.82",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linuxmusl-arm64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-android-arm64:MPL-2.0",
+      "package": "lightningcss-android-arm64",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-android-arm64@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-linux-x64-gnu:MPL-2.0",
+      "package": "lightningcss-linux-x64-gnu",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-linux-x64-gnu@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-ppc64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-ppc64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "@alchemy.run/frontend-frameworks@2.0.0-beta.82",
+        "@alchemy.run/cloudflare-runtime@2.0.0-beta.82",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-ppc64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-freebsd-x64:MPL-2.0",
+      "package": "lightningcss-freebsd-x64",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-freebsd-x64@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-win32-arm64-msvc:MPL-2.0",
+      "package": "lightningcss-win32-arm64-msvc",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-win32-arm64-msvc@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-arm64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-arm64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "@alchemy.run/frontend-frameworks@2.0.0-beta.82",
+        "@alchemy.run/cloudflare-runtime@2.0.0-beta.82",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-arm64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-arm:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-arm",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "@alchemy.run/frontend-frameworks@2.0.0-beta.82",
+        "@alchemy.run/cloudflare-runtime@2.0.0-beta.82",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-arm@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-riscv64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-riscv64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "@alchemy.run/frontend-frameworks@2.0.0-beta.82",
+        "@alchemy.run/cloudflare-runtime@2.0.0-beta.82",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-riscv64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:img:sharp-libvips-linuxmusl-x64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linuxmusl-x64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "@alchemy.run/frontend-frameworks@2.0.0-beta.82",
+        "@alchemy.run/cloudflare-runtime@2.0.0-beta.82",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linuxmusl-x64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-site",
+      "id": "snyk:lic:npm:lightningcss-darwin-arm64:MPL-2.0",
+      "package": "lightningcss-darwin-arm64",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-site@0.1.0",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-darwin-arm64@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-linux-x64-musl:MPL-2.0",
+      "package": "lightningcss-linux-x64-musl",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-linux-x64-musl@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-arm64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-arm64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "@cloudflare/vitest-plugin@1.4.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-arm64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-darwin-arm64:MPL-2.0",
+      "package": "lightningcss-darwin-arm64",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-darwin-arm64@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-linux-arm64-musl:MPL-2.0",
+      "package": "lightningcss-linux-arm64-musl",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-linux-arm64-musl@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-darwin-x64:MPL-2.0",
+      "package": "lightningcss-darwin-x64",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-darwin-x64@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:img:sharp-libvips-darwin-x64:LGPL-3.0",
+      "package": "@img/sharp-libvips-darwin-x64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "@cloudflare/vitest-plugin@1.4.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-darwin-x64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-ppc64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-ppc64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "@cloudflare/vitest-plugin@1.4.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-ppc64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-s390x:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-s390x",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "@cloudflare/vitest-plugin@1.4.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-s390x@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:img:sharp-libvips-linuxmusl-x64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linuxmusl-x64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "@cloudflare/vitest-plugin@1.4.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linuxmusl-x64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-linux-arm-gnueabihf:MPL-2.0",
+      "package": "lightningcss-linux-arm-gnueabihf",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-linux-arm-gnueabihf@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-linux-x64-gnu:MPL-2.0",
+      "package": "lightningcss-linux-x64-gnu",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-linux-x64-gnu@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-win32-arm64-msvc:MPL-2.0",
+      "package": "lightningcss-win32-arm64-msvc",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-win32-arm64-msvc@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:img:sharp-libvips-darwin-arm64:LGPL-3.0",
+      "package": "@img/sharp-libvips-darwin-arm64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "@cloudflare/vitest-plugin@1.4.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-darwin-arm64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-x64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-x64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "@cloudflare/vitest-plugin@1.4.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-x64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-linux-arm64-gnu:MPL-2.0",
+      "package": "lightningcss-linux-arm64-gnu",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-linux-arm64-gnu@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-win32-x64-msvc:MPL-2.0",
+      "package": "lightningcss-win32-x64-msvc",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-win32-x64-msvc@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss:MPL-2.0",
+      "package": "lightningcss",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-freebsd-x64:MPL-2.0",
+      "package": "lightningcss-freebsd-x64",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-freebsd-x64@1.33.0"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-arm:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-arm",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "@cloudflare/vitest-plugin@1.4.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-arm@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:img:sharp-libvips-linux-riscv64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linux-riscv64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "@cloudflare/vitest-plugin@1.4.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linux-riscv64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:img:sharp-libvips-linuxmusl-arm64:LGPL-3.0",
+      "package": "@img/sharp-libvips-linuxmusl-arm64",
+      "version": "1.3.4",
+      "licenseCategory": "LGPL-3.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "@cloudflare/vitest-plugin@1.4.0",
+        "miniflare@5.20261006.1-alpha",
+        "sharp@0.35.5",
+        "@img/sharp-libvips-linuxmusl-arm64@1.3.4"
+      ]
+    },
+    {
+      "project": "omg-saas-workers",
+      "id": "snyk:lic:npm:lightningcss-android-arm64:MPL-2.0",
+      "package": "lightningcss-android-arm64",
+      "version": "1.33.0",
+      "licenseCategory": "MPL-2.0",
+      "dependencyPath": [
+        "omg-saas-workers@1.0.0",
+        "vitest@4.1.12",
+        "vite@8.2.4",
+        "lightningcss@1.33.0",
+        "lightningcss-android-arm64@1.33.0"
+      ]
+    }
+  ],
+  "bundleReview": {
+    "observedAt": "2026-11-20T08:11:02.496082+00:00",
+    "method": "Wrangler deployment dry-run esbuild metafile input inspection",
+    "targets": [
+      {
+        "target": "api",
+        "inputModules": 1597,
+        "toolchainModules": [],
+        "metafileSha256": "16d7d8dfde21da856ba0cbee5501cc1bb1adc4c25088b46612558bd6ed21dc54"
+      },
+      {
+        "target": "site",
+        "inputModules": 1402,
+        "toolchainModules": [],
+        "metafileSha256": "72145a734da771d252f9b700515cd7961d60545d8b2d483698214a6eebbb5746"
+      }
+    ],
+    "limitation": "Evidence concerns current Worker code bundles, not a future redistribution of node_modules or toolchain containers."
+  },
+  "approvedAt": "2026-11-20T08:38:05.213864+00:00",
+  "approval": "Keep tooling; approve listed license exceptions",
+  "approvedBy": "Repository owner in this Codex chat",
+  "policyFiles": [".snyk", "site/.snyk", "workers/api/.snyk"],
+  "matching": "Exact package version at any dependency path, scoped to the listed package project"
+}

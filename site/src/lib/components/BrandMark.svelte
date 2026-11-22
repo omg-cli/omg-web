@@ -9,4 +9,18 @@
     background: #090909;
     height: auto;
   }
+  :global(:root[data-theme='dark']) .brand-mark {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    mix-blend-mode: lighten;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme])) .brand-mark {
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      mix-blend-mode: lighten;
+    }
+  }
 </style>

@@ -31,9 +31,8 @@ export default defineConfig({
     suspicious: 'error',
   },
   rules: {
-    // `_tag` is the project-standard tagged-error discriminator (Effect/anti-slop);
-    // `__pagefind` is the pagefind runtime's global window hook.
-    'no-underscore-dangle': ['error', { allow: ['_tag', '__pagefind'] }],
+    // `_tag` is the project-standard tagged-error discriminator (Effect/anti-slop).
+    'no-underscore-dangle': ['error', { allow: ['_tag'] }],
     'anti-slop/no-chained-type-assertions': 'error',
     'anti-slop/no-conditional-empty-object-spread': 'error',
     'anti-slop/no-known-value-widening': 'error',

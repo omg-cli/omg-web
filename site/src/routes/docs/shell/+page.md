@@ -41,7 +41,7 @@ omg use node 22
 omg list node
 ```
 
-Enter the project containing its reviewed version file, then inspect selection and execution:
+Enter the project containing its version file, then inspect selection and execution:
 
 ```bash
 omg which node
@@ -91,7 +91,7 @@ Malformed current-directory pins produce a warning and leave the base PATH in us
 
 Shell hooks read runtime pins. They do not load mise `[env]`, read dotenv files, or execute mise source scripts. An explicit `omg run` task can resolve that project environment and execute repository-controlled code.
 
-The released hook restores the base PATH it recorded before applying directory pins. A later PATH change, including a Python virtual environment activation, can be replaced on a subsequent prompt or directory change.
+The shell hook restores the base PATH it recorded before applying directory pins. A later PATH change, including a Python virtual environment activation, can be replaced on a subsequent prompt or directory change.
 
 For a Python command that must use the project's virtual environment, invoke its executable explicitly:
 
@@ -99,7 +99,7 @@ For a Python command that must use the project's virtual environment, invoke its
 .venv/bin/python --version
 ```
 
-Do not infer that the selected global Python version proves a project's `.venv` uses the same interpreter. Recreate a virtual environment deliberately when changing its base Python.
+A project's `.venv` stays tied to the interpreter that created it, even if OMG switches the active global Python version; recreate the virtual environment when you change its base Python.
 
 ## Install command completions
 
@@ -139,4 +139,4 @@ This writes an `.omg-backup` beside the startup file. It refuses to rewrite a sy
 
 If selection is wrong, inspect the nearest pin, installed versions, and `command -v` before removing another manager. If completion installation fails, inspect the printed destination and permissions. Invalid shell names and unsupported hooks fail rather than enabling a partial integration.
 
-Read [configuration](/docs/configuration/) for storage overrides and [troubleshooting](/docs/troubleshooting/) for diagnosis. A successful hook evaluation alone does not prove that the intended runtime is installed or wins PATH resolution.
+Read [configuration](/docs/configuration/) for storage overrides and [troubleshooting](/docs/troubleshooting/) for diagnosis.

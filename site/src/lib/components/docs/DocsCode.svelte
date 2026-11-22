@@ -8,10 +8,11 @@
   <div class="code-actions">
     <span data-copy-status role="status"></span>
     <button type="button" data-copy-code title="Copy code" aria-label="Copy code">
-      {#if singleCommand}<Icon name="copy" size={16} />{:else}Copy code{/if}
+      <Icon name="copy" size={16} /><span class="copy-label">Copy code</span>
     </button>
   </div>
-  <pre><code>{code}</code></pre>
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex (keyboard access to horizontally scrolling code) -->
+  <pre tabindex="0"><code>{code}</code></pre>
 </div>
 
 <style>
@@ -19,6 +20,14 @@
     display: grid;
     place-content: center;
     min-width: 2.75rem;
+  }
+  .single-command .copy-label {
+    display: none;
+  }
+  @media (max-width: 47.99rem) {
+    .single-command .copy-label {
+      display: inline;
+    }
   }
   pre {
     padding: 1rem 1.25rem;

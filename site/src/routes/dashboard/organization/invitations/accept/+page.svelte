@@ -64,17 +64,13 @@
     border-top: 1px solid var(--rule);
   }
 
-  .state-label,
-  .text-link {
+  .state-label {
+    margin: 0;
     color: var(--signal);
     font-family: var(--font-mono);
     font-size: 0.7rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-  }
-
-  .state-label {
-    margin: 0;
   }
 
   .invitation-state h2 {
@@ -134,6 +130,10 @@
   .text-link {
     display: inline-block;
     color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     text-decoration: none;
   }
 

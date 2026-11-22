@@ -1,7 +1,6 @@
 <script lang="ts">
   import SeoHead from '../lib/components/SeoHead.svelte';
   import { serializeJsonLd, SITE_ORIGIN } from '../../../shared/public-site';
-  import HomeBenchmarks from '../lib/components/home/HomeBenchmarks.svelte';
   import HomeFeatureGrid from '../lib/components/home/HomeFeatureGrid.svelte';
   import HomeHero from '../lib/components/home/HomeHero.svelte';
   import HomeInstallation from '../lib/components/home/HomeInstallation.svelte';
@@ -71,7 +70,6 @@
 <main id="main-content" class="home">
   <HomeHero />
   <HomeFeatureGrid />
-  <HomeBenchmarks />
   <HomeInstallation />
 </main>
 

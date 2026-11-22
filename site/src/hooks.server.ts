@@ -1,4 +1,5 @@
 import { building, dev } from '$app/env';
+import { Effect } from 'effect';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle } from '@sveltejs/kit/hooks';
 import { createShadowAuth, enforceAuthMutationRateLimit } from './lib/server/auth.server';
@@ -61,6 +62,21 @@ export const handle: Handle = dev
       documentationResponse(
         input.event.request,
         async () => handleSite(input),
-        req => headSafeFetch(req, input.event.fetch)
+        req =>
+          headSafeFetch(req, dispatch => {
+            const { pathname, search } = new URL(dispatch.url);
+            return Effect.runPromise(
+              Effect.tryPromise({
+                try: () =>
+                  input.event.fetch(pathname + search, {
+                    method: dispatch.method,
+                    headers: dispatch.headers,
+                    mode: 'same-origin',
+                    redirect: 'error',
+                  }),
+                catch: cause => cause,
+              })
+            );
+          })
       )
   : handleSite;

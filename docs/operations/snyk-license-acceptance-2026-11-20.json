@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-11-20T08:44:07.511760+00:00",
+  "sourceBaseRevision": "4ebfee3ccad85842ab613d5fba80dc2730f21234",
+  "scope": "all four dependency projects including development dependencies; code scan includes ignored findings",
+  "codeIssues": 0,
+  "securityFindings": 0,
+  "openDependencyFindings": 0,
+  "acceptedLicenseFindings": 54,
+  "ignoredSecurityFindings": 0,
+  "organizationPolicyChanged": false,
+  "sourceExclusionsAdded": false,
+  "projects": [
+    {
+      "name": "omg-web",
+      "openFindings": 0,
+      "acceptedLicenseFindings": 10
+    },
+    {
+      "name": "omg-site",
+      "openFindings": 0,
+      "acceptedLicenseFindings": 22
+    },
+    {
+      "name": "@omg-cli/yaml-frontmatter",
+      "openFindings": 0,
+      "acceptedLicenseFindings": 0
+    },
+    {
+      "name": "omg-saas-workers",
+      "openFindings": 0,
+      "acceptedLicenseFindings": 22
+    }
+  ],
+  "verification": {
+    "policyScopeGate": "passed",
+    "policyRegressionTests": 4,
+    "rootCheck": "passed",
+    "siteTests": 446,
+    "apiTests": 425,
+    "releaseTests": 26,
+    "docsToolTests": 15,
+    "priorPublicBrowserPassed": 45,
+    "priorPublicBrowserSkipped": 3
+  },
+  "evidenceSha256": {
+    "normalDependencyReport": "f6d46c0a64f10f40b83c2aafc819462aac35e388e6ace8f7101b2fed7fac071c",
+    "policyFreeDependencyReport": "dcf0667ba7b3251dedd22c1a68a521a5d858c9406da6a82c29034a0f0837a06a",
+    "codeSarif": "1e46a06633d3b9cc43f995acc1e1c77fa0c5f9547600f1e34739c5a454b30b78",
+    "approvalInventory": "d35714d5a99df1df3505ae9f9c9af017dcb37518796e46a6cbf67053d12048d9"
+  },
+  "policySha256": {
+    ".snyk": "2407be80546e3cf33a0a182c28fbd26cf9989ebe72e438b785b8b367aabe87ad",
+    "site/.snyk": "220916fc3436a59b3de098bfdf3ef261cde101bc542a44a7868786379e3ba650",
+    "workers/api/.snyk": "11efbfd043725f381219f9a943709137f4f4fb1cef6bc85d171e78a0d7195021"
+  },
+  "productionDeployed": false
+}

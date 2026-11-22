@@ -31,7 +31,7 @@ OMG's published CLI targets are Linux x86_64 and Apple Silicon macOS. Additional
 
 ## Install and inspect
 
-```sh
+```bash
 omg list dotnet --available
 omg use dotnet latest
 omg list dotnet
@@ -42,7 +42,7 @@ Partial requests such as `9.0` resolve against supported-channel metadata. Use a
 
 At a fresh prompt with the OMG hook enabled:
 
-```sh
+```bash
 dotnet --version
 dotnet --list-sdks
 which -a dotnet
@@ -64,7 +64,7 @@ A `global.json` pin has this shape; replace the example with an exact installed 
 }
 ```
 
-```sh
+```bash
 omg use dotnet
 omg which dotnet
 dotnet --version
@@ -76,16 +76,16 @@ OMG reads the version field; this is not a full reimplementation of .NET's SDK r
 
 Once the selected SDK is verified, use the project's normal commands:
 
-```sh
+```bash
 dotnet restore
 dotnet build
 ```
 
-These commands can fetch dependencies or execute project build logic. OMG's archive integrity check does not review that code. A `.csproj` file alone is not a promise that the reviewed OMG task runner discovers a `build` task; use an explicit supported task declaration when needed.
+These commands fetch NuGet dependencies and run project build logic. `omg run` does not discover tasks from `.csproj` files alone; add a supported task declaration if you want to invoke `dotnet` through `omg run`.
 
 ## Change or remove an SDK
 
-Install another listed version with `omg use dotnet VERSION`. Using `latest` does not rewrite `global.json`; update a project pin deliberately after checking its build and tests.
+Install another listed version with `omg use dotnet VERSION`. Using `latest` does not rewrite `global.json`; update a project pin manually after checking its build and tests.
 
 To remove an old SDK, first select another installed version, then run `omg use dotnet VERSION --uninstall` with the exact installed SDK directory version. The active managed version cannot be removed. There is no separate `omg update dotnet` command.
 
@@ -103,6 +103,6 @@ To remove an old SDK, first select another installed version, then run `omg use 
 
 ## Continue
 
-Read [runtime management](/docs/runtimes/), [configuration](/docs/configuration/), and [task execution](/guides/task-runner/).
+Read [runtime management](/docs/runtimes/), [configuration](/docs/configuration/), and [project tasks](/docs/tasks/).
 
-Reviewed release source: [.NET provider](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/dotnet.rs), [runtime CLI](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [global.json detection](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs). The guide documents source behavior, not execution of each Microsoft SDK artifact.
+Source: [.NET provider](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/dotnet.rs), [runtime CLI](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [global.json detection](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs).

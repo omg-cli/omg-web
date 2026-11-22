@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '../../lib/components/Icon.svelte';
   import SeoHead from '../../lib/components/SeoHead.svelte';
   import { RELEASE_NOTES, releaseDate } from '../../lib/release-notes';
   import { SITE_ORIGIN, serializeJsonLd } from '../../../../shared/public-site';
@@ -61,7 +62,7 @@
   description="Reviewed highlights from published OMG releases. See what changed, when it shipped, and where to read the complete notes."
   path="/updates/"
   {structuredData}
-  modifiedTime={latestRelease === undefined ? undefined : latestRelease.date}
+  modifiedTime={latestRelease.date}
 />
 
 <main id="main-content" class="updates-shell">
@@ -82,8 +83,10 @@
     {#each RELEASE_NOTES as release, index (release.version)}
       <details id={release.version} open={index === 0}>
         <summary>
-          <span class="version">{release.version}</span>
-          <span>{release.title}</span>
+          <span class="release-summary">
+            <span class="version">{release.version}</span>
+            <span class="release-title">{release.title}</span>
+          </span>
           <time datetime={release.date}>{releaseDate(release.date)}</time>
         </summary>
         <div class="release-body">
@@ -91,8 +94,10 @@
           <ul>
             {#each release.changes as change (change)}<li>{change}</li>{/each}
           </ul>
-          <a href={`https://github.com/omg-cli/omg/releases/tag/${release.version}`}
-            >Full {release.version} release notes <span aria-hidden="true">↗</span></a
+          <a
+            class="notes-link"
+            href={`https://github.com/omg-cli/omg/releases/tag/${release.version}`}
+            >Full {release.version} release notes <Icon name="external" size={14} /></a
           >
         </div>
       </details>
@@ -107,34 +112,43 @@
     padding-block: clamp(3rem, 6vw, 5rem);
   }
   h1 {
-    margin: 1rem 0;
+    margin: 0 0 1rem;
     font-family: var(--font-display);
     font-size: var(--page-title);
-    line-height: 1;
-    letter-spacing: -0.06em;
-    font-weight: 550;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+    font-weight: 700;
   }
   .introduction {
     max-width: 50ch;
-    color: var(--ink-muted);
+    color: var(--ink-body);
     line-height: 1.7;
   }
   nav {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem 2rem;
-    margin-block: 1.5rem 3rem;
+    margin-block: 1.5rem 2.5rem;
   }
   a {
     color: var(--ink);
-    text-decoration-color: var(--signal);
-    text-underline-offset: 0.3em;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.25em;
+  }
+  a:hover {
+    color: var(--signal);
+    text-decoration-color: currentColor;
   }
   aside {
     max-width: 65ch;
-    color: var(--ink-muted);
+    padding: 0.875rem 1.25rem;
+    border-left: 2px solid var(--signal);
+    border-radius: 0 6px 6px 0;
+    background: var(--paper-raised);
+    color: var(--ink-body);
+    font-size: 0.875rem;
     line-height: 1.7;
-    margin-bottom: 3rem;
+    margin-bottom: 2.5rem;
   }
   .release-heading {
     position: absolute;
@@ -155,43 +169,84 @@
     border-bottom: 1px solid var(--rule);
   }
   summary {
-    padding-block: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.4rem 1.5rem;
+    padding-block: 1.25rem;
     cursor: pointer;
-    line-height: 1.8;
+    line-height: 1.6;
+    list-style: none;
   }
-  summary::marker {
-    color: var(--signal);
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary::before {
+    content: '';
+    display: inline-block;
+    width: 0.42rem;
+    height: 0.42rem;
+    margin-right: 0.35rem;
+    flex-shrink: 0;
+    border-right: 1.5px solid var(--ink-muted);
+    border-bottom: 1.5px solid var(--ink-muted);
+    transform: rotate(-45deg);
+    transition: transform 140ms ease;
+    align-self: center;
+  }
+  details[open] > summary::before {
+    transform: rotate(45deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    summary::before {
+      transition: none;
+    }
   }
   summary:focus-visible {
     outline: 2px solid var(--signal);
     outline-offset: 4px;
   }
+  .release-summary {
+    display: flex;
+    flex: 1 1 16rem;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 1rem;
+  }
   .version {
     color: var(--signal);
     font-family: var(--font-mono);
-    margin-right: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .release-title {
+    font-weight: 550;
   }
   time {
-    display: block;
     color: var(--ink-muted);
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
   }
   .release-body {
-    padding: 0 0 2rem 1.25rem;
+    padding: 0 0 1.75rem 1.4rem;
     max-width: 65ch;
   }
   ul {
     padding-left: 1.1rem;
-    margin: 0 0 1.5rem;
+    margin: 0 0 1.25rem;
   }
   li {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.65rem;
+    color: var(--ink-body);
     line-height: 1.7;
   }
-  @media (min-width: 48rem) {
-    time {
-      float: right;
-      line-height: 2.25;
-    }
+  .notes-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
   }
 </style>

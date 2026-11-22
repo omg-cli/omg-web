@@ -47,24 +47,28 @@
 </DocsReader>
 
 <style>
+  .search-page {
+    max-width: 44rem;
+  }
   h1 {
     margin: 0;
     font-size: var(--page-title);
-    font-weight: 680;
+    font-weight: 700;
     letter-spacing: -0.035em;
     line-height: 1.1;
   }
   .intro {
     max-width: 60ch;
-    margin: 1rem 0 2rem;
-    color: var(--ink-muted);
-    font-size: 0.9375rem;
-    line-height: 1.7;
+    margin: 1rem 0 1.75rem;
+    color: var(--ink-body);
+    font-size: 1rem;
+    line-height: 1.65;
   }
   .search-status {
     margin-block: 1.25rem;
     color: var(--ink-muted);
-    font-size: 0.8125rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
   }
   .search-results {
     margin: 0;
@@ -76,24 +80,27 @@
   }
   li a {
     display: block;
-    padding-block: 1.5rem;
+    padding-block: 1.35rem;
     text-decoration: none;
   }
   .result-page {
     color: var(--ink-muted);
+    font-family: var(--font-mono);
     font-size: 0.75rem;
   }
   h2 {
-    margin: 0.5rem 0;
-    font-size: 1.25rem;
-    font-weight: 650;
+    margin: 0.4rem 0;
+    color: var(--ink);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
   }
   li p {
     margin: 0;
-    color: var(--ink-muted);
+    color: var(--ink-body);
     font-size: 0.875rem;
-    line-height: 1.7;
-    overflow-wrap: anywhere;
+    line-height: 1.65;
+    overflow-wrap: break-word;
   }
   li a:hover h2,
   a:hover {
@@ -102,11 +109,17 @@
   .machine-link {
     margin-top: 2rem;
     color: var(--ink-muted);
+    font-family: var(--font-mono);
     font-size: 0.75rem;
     line-height: 1.8;
   }
   code {
+    padding: 0.1em 0.35em;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--paper-raised);
+    color: var(--ink);
     font-family: var(--font-mono);
-    font-size: 0.85em;
+    font-size: 0.84em;
   }
 </style>

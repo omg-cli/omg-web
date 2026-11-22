@@ -707,8 +707,8 @@ describe('admin analytics endpoints require an admin session', () => {
 describe('admin handler authorization', () => {
   const adminCustomerId = 'admin-gate-admin';
   const userCustomerId = 'admin-gate-user';
-  const adminToken = 'admin-gate-admin-token';
-  const userToken = 'admin-gate-user-token';
+  const adminToken = crypto.randomUUID();
+  const userToken = crypto.randomUUID();
 
   beforeEach(async () => {
     await ensureSchema();

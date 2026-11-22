@@ -25,7 +25,7 @@ A working, compatible Node.js and npm must already be available on PATH. This ma
 
 Before installing Pi, check the toolchain that npm will use:
 
-```sh
+```bash
 node --version
 npm --version
 which -a node
@@ -38,7 +38,7 @@ If you manage Node with OMG, select it first and verify it at a fresh prompt wit
 
 Select an exact published npm version. The version below illustrates the supported syntax; use the version required by your project or team.
 
-```sh
+```bash
 omg use pi 0.83.0
 omg list pi
 omg which pi
@@ -48,7 +48,7 @@ omg which pi
 
 After successful installation and shell activation, inspect the executable at a fresh prompt:
 
-```sh
+```bash
 which -a pi
 ```
 
@@ -56,7 +56,7 @@ which -a pi
 
 ## Pin Pi alongside Node
 
-Pi has no dedicated `.pi-version` file in the reviewed hook. Use `.tool-versions` with an exact Pi version:
+Pi has no dedicated `.pi-version` file in the shell hook. Use `.tool-versions` with an exact Pi version:
 
 ```text
 pi 0.83.0
@@ -64,12 +64,12 @@ pi 0.83.0
 
 Add the entry to the project's existing `.tool-versions`; do not overwrite other runtime entries. A Node pin can coexist in the same file or in `.node-version`.
 
-```sh
+```bash
 omg use pi
 omg which pi
 ```
 
-The nearest project pin wins. Within a directory, `.tool-versions` is considered before supported mise layers. The hook selects an installed Pi; it does not run npm merely because you entered a repository.
+The nearest project pin wins. Within a directory, `.tool-versions` is considered before supported mise layers. The hook selects an installed Pi version and does not run `npm` when you enter a directory.
 
 ## Understand npm's role and the trust boundary
 
@@ -81,7 +81,7 @@ Before publication, OMG reads the installed package manifest, requires its versi
 
 The resulting installation lives under `versions/pi` in the OMG data directory. Inspect the resolved data root with:
 
-```sh
+```bash
 omg config get data_dir
 ```
 
@@ -96,7 +96,7 @@ To remove an old version, select a different installed version first, then run `
 | Symptom                                    | Check                                                                                                            |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
 | npm cannot be executed                     | Verify `npm --version` and PATH in the same shell that runs OMG.                                                 |
-| Remote listing is unsupported              | Use an exact published npm version; the release does not provide Pi discovery.                                   |
+| Remote listing is unsupported              | Use an exact published npm version; OMG does not provide remote Pi discovery.                                    |
 | Installed version differs from the request | OMG refuses that manifest rather than silently activating it.                                                    |
 | Another Pi executable runs                 | Compare the project pin, `omg which pi`, and `which -a pi`; inspect competing npm global directories.            |
 | Pi cannot use its configured service       | Inspect Pi's own configuration and credentials; successful OMG activation does not configure external providers. |
@@ -105,4 +105,4 @@ To remove an old version, select a different installed version first, then run `
 
 See [Node.js setup](/runtimes/node/), [runtime management](/docs/runtimes/), and [configuration](/docs/configuration/).
 
-Reviewed release source: [Pi npm installer and validation](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/pi.rs), [runtime CLI](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [project hooks](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs). No npm package was installed or executed as part of this documentation review.
+Source: [Pi npm installer and validation](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/pi.rs), [runtime CLI](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [project hooks](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs).

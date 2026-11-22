@@ -55,7 +55,7 @@ omg search ripgrep --no-aur
 omg info ripgrep
 ```
 
-Search defaults to 15 results. On Arch, it includes AUR entries unless you pass `--no-aur`. `--detailed` adds source metadata where available. A name match or security grade does not certify the package's behavior.
+Search defaults to 15 results. On Arch, it includes AUR entries unless you pass `--no-aur`. `--detailed` adds source metadata where available.
 
 Use `--json` only with commands whose output contract you have checked in the [CLI reference](/docs/cli/).
 
@@ -82,7 +82,7 @@ The preview describes the requested operation without applying the package trans
 
 Name several packages in one invocation when you want one operation. Bare `omg install` requires an attended picker and fails without a terminal. It does not install a project's application dependencies.
 
-`--yes` skips ordinary confirmation. `--review` forces PKGBUILD review for AUR builds. Normal AUR review is already enabled by the released default `aur.review_pkgbuild` setting. Separate AUR approvals and policy checks are not blanket-disabled by `--yes`.
+`--yes` skips ordinary confirmation. `--review` forces PKGBUILD review for AUR builds. Normal AUR review is already enabled by the default `aur.review_pkgbuild` setting. Separate AUR approvals and policy checks are not blanket-disabled by `--yes`.
 
 For a local package archive, explicitly permit file input:
 
@@ -101,7 +101,7 @@ omg update --dry-run
 omg update
 ```
 
-The normal update workflow can update system packages and managed runtimes. On Arch, it also handles installed AUR packages. A successful check does not prove that a later build, download, or transaction will succeed.
+The normal update workflow can update system packages and managed runtimes. On Arch, it also handles installed AUR packages.
 
 Use these options only for the workflow they describe:
 
@@ -153,8 +153,8 @@ omg history --limit 5
 
 The four short counters report explicit, total, orphan, and available-update counts. A cached count can lag a transaction. Use package metadata and the transaction result to confirm the actual change.
 
-Command errors return a nonzero status. A dry run or a successful status report does not certify the safety of a future transaction. Security scans report findings without failing by default; CI must request `omg audit scan --fail-on-findings` for a finding gate.
+Command errors return a nonzero status. Security scans report findings without failing by default; pass `omg audit scan --fail-on-findings` in CI to fail on findings.
 
 History covers supported OMG transactions, rather than every action through the native package manager. Rollback depends on the backend and older package availability. It does not restore all machine state.
 
-If a transaction fails, keep its output and inspect `omg doctor` before deleting caches or retrying with different privileges. Use the native package tool to investigate backend failures. Read [troubleshooting](/docs/troubleshooting/) for bounded diagnostics, [configuration](/docs/configuration/) for released AUR settings, and [updates](/docs/updates/) for updating OMG itself.
+If a transaction fails, keep its output and inspect `omg doctor` before deleting caches or retrying with different privileges. Use the native package tool to investigate backend failures. Read [troubleshooting](/docs/troubleshooting/) for diagnostics, [configuration](/docs/configuration/) for AUR settings, and [updates](/docs/updates/) for updating OMG itself.

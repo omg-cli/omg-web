@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-12T01:49:03.663499+00:00",
+  "generatedAt": "2026-11-20T11:21:41.798522+00:00",
   "title": "Design System: OMG",
   "extensions": {
     "colorMeta": {
@@ -588,8 +588,8 @@
         "value": "49.99rem"
       },
       {
-        "name": "first-command-stack",
-        "value": "44rem"
+        "name": "installation-stack",
+        "value": "50rem"
       },
       {
         "name": "explorer-and-technical-stack",
@@ -675,20 +675,12 @@
       "css": ".ds-nav{display:flex;flex-wrap:wrap;align-items:center;gap:1.5rem;margin:0;padding:0;list-style:none;font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif)}.ds-nav a{display:flex;min-height:2.75rem;align-items:center;color:var(--ink-muted, #626262);font-size:.8125rem;font-weight:500;text-decoration:none}.ds-nav a:hover,.ds-nav a[aria-current=\"page\"]{color:var(--signal, #c23b15)}.ds-nav a:focus-visible{outline:2px solid var(--signal, #c23b15);outline-offset:4px;}"
     },
     {
-      "name": "Installer container",
-      "kind": "card",
-      "description": "Raised paper groups installation instructions without a shadow.",
-      "html": "<section class=\"ds-install\"><h3>1. Install OMG</h3><pre><code>curl -fsSL https://getomg.dev/install.sh | bash</code></pre><a href=\"/install.sh\">Read install.sh</a></section>",
-      "css": ".ds-install{padding:clamp(1.25rem,3vw,2rem);border-radius:12px;background:var(--paper-raised, #f5f5f5);color:var(--ink, #171717);font-family:var(--font-body, 'Archivo Variable', 'Archivo Fallback', system-ui, sans-serif)}.ds-install h3{margin:0 0 1rem;color:var(--ink-muted, #626262);font-size:.75rem;font-weight:500}.ds-install pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.ds-install code{font-family:var(--font-mono, 'IBM Plex Mono', 'Plex Mono Fallback', ui-monospace, monospace);font-size:clamp(.75rem,1.3vw,.9375rem);line-height:1.9}.ds-install p{margin:.5rem 0 0;color:var(--ink-muted, #626262);font-size:.75rem}",
-      "refersTo": "panel-install"
-    },
-    {
-      "name": "Command selection rail",
+      "name": "Installer command row",
       "kind": "custom",
-      "description": "Public-theme command choices; desktop shows previews and mobile uses a row.",
-      "html": "<div class=\"ds-choices\" role=\"group\" aria-label=\"Command examples\"><button type=\"button\" aria-pressed=\"true\"><span>Packages</span><code>omg search ripgrep</code></button><button type=\"button\" aria-pressed=\"false\"><span>Runtimes</span><code>omg use node 22</code></button><button type=\"button\" aria-pressed=\"false\"><span>Environments</span><code>omg env check</code></button></div>",
-      "css": ".ds-choices{display:flex;flex-direction:column;gap:.5rem;padding:.75rem;background:var(--paper-raised,#f5f5f5);font-family:var(--font-body,Archivo,sans-serif)}.ds-choices button{display:grid;gap:.5rem;min-height:5.5rem;padding:1rem;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--ink-muted,#626262);text-align:left;cursor:pointer}.ds-choices span{font-size:.875rem;font-weight:600}.ds-choices code{color:var(--ink-muted,#626262);font-family:var(--font-mono,monospace);font-size:.6875rem;line-height:1.6}.ds-choices button:hover{background:var(--paper,#fff);color:var(--ink,#171717)}.ds-choices button[aria-pressed=true]{background:var(--paper,#fff);border-color:var(--rule,#e3e3e3);color:var(--signal,#c23b15)}.ds-choices button:focus-visible{outline:2px solid var(--signal,#c23b15);outline-offset:4px}@media(max-width:40rem){.ds-choices{flex-direction:row;gap:.25rem;padding:.4rem}.ds-choices button{display:block;flex:1;min-height:2.75rem;padding:.65rem .35rem;text-align:center}.ds-choices span{font-size:.75rem}.ds-choices code{display:none}}",
-      "refersTo": "example-selector"
+      "description": "One installer command with an adjacent copy button.",
+      "html": "<div class=\"ds-install\"><code>curl -fsSL https://getomg.dev/install.sh | bash</code><button type=\"button\" aria-label=\"Copy install command\">Copy</button></div>",
+      "css": ".ds-install{display:flex;align-items:center;gap:1rem;padding:.75rem .75rem .75rem 1.25rem;border-radius:6px;background:var(--paper-raised,#f5f5f5);color:var(--ink,#171717)}.ds-install code{flex:1;min-width:0;font-family:var(--font-mono,monospace);font-size:clamp(.8125rem,1.2vw,.9375rem);line-height:1.7;overflow-wrap:anywhere}.ds-install button{flex-shrink:0;min-height:2.75rem;padding:.5rem .75rem;border:0;border-radius:4px;background:var(--ink,#171717);color:var(--paper,#fff);font-size:.8125rem}",
+      "refersTo": "panel-install"
     },
     {
       "name": "Command transcript",
@@ -701,7 +693,7 @@
   ],
   "narrative": {
     "northStar": "The command workbench",
-    "overview": "OMG uses familiar developer-tool craft: neutral white or charcoal surfaces, measured Archivo headings, and Plex command text. The user named bun.com and ripgrep.dev as references and rejected green-tinted public surfaces and repetitive slogan/feature rows. The user reviewed and approved this replacement on 2026-11-11 and authorized merging it into main and deploying it with Wrangler.\n\nThe command explorer is the homepage's signature component. Its selection rail and dark transcript give the product interaction room to be read. Orange marks actions, selection, and focus; documentation and technical details remain visually quiet. Authenticated dashboard and admin routes retain their independent dark operational theme.",
+    "overview": "OMG uses neutral light and dark themes, orange actions, Archivo text, and IBM Plex Mono commands. The user named bun.com and ripgrep.dev as references.\n\nThe Arch terminal accepts commands and displays recorded release output. It stays 34rem tall on desktop and 32rem at widths of 40rem or less. Output and command suggestions scroll inside it. Spacing and headings separate homepage sections without decorative dividing rules. Dashboard and admin pages retain their own theme.",
     "keyCharacteristics": [
       "Neutral public light/dark surfaces with restrained orange actions.",
       "Archivo hierarchy and IBM Plex Mono commands, with metric-matched font fallbacks.",
@@ -715,9 +707,14 @@
         "section": "colors"
       },
       {
-        "name": "The Flat Content Rule",
-        "body": "Use neutral tonal grouping and thin rules for ordinary content. The command explorer is flat and bordered; reserve the existing soft shadow for the open mobile menu.",
+        "name": "Content grouping",
+        "body": "Use spacing and neutral backgrounds to group content. Keep borders around controls and the terminal. Do not add horizontal rules between homepage sections.",
         "section": "elevation"
+      },
+      {
+        "name": "Mobile documentation code",
+        "body": "Below 48rem, put copy controls above the code. Use 14px monospace text, preserve lines and indentation, and scroll long lines inside the block. Keep keyboard focus visible and show copy feedback.",
+        "section": "typography"
       }
     ],
     "dos": [

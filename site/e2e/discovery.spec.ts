@@ -190,7 +190,7 @@ test('terminal commands change the environment in one visit', async ({ page }) =
   await page.getByText('Commands', { exact: true }).click();
   await page.getByRole('button', { name: 'omg install ripgrep', exact: true }).click();
   await expect(input).toHaveValue('omg install ripgrep');
-  await expect(page.locator('[role=log]')).toBeEmpty();
+  await expect(page.locator('[role=log]')).toContainText('omg search ripgrep');
   await input.press('Enter');
   await expect(respond).toBeFocused();
   await respond.press('Enter');
@@ -335,7 +335,7 @@ test.describe('dark mode without JavaScript', () => {
   test('keeps the complete Arch demo readable', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(16, 16, 16)');
-    await expect(page.locator('.fallback')).toContainText('omg search ripgrep');
+    await expect(page.locator('.transcript')).toContainText('omg search ripgrep');
     await expect(page.getByRole('textbox', { name: 'Terminal command' })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Read the command reference' })).toBeVisible();
   });

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { VFile } from 'vfile';
 import { unified } from 'unified';
@@ -8,6 +9,11 @@ import { markdownHeadings, markdownSections } from './headings';
 import { decodeDocumentationMetadata, documentationMetadata } from './markdown-document';
 
 describe('Markdown compilation contract', () => {
+  it('excludes the executable frontmatter package from the site dependency graph', () => {
+    const lock = readFileSync(new URL('../../../package-lock.json', import.meta.url), 'utf8');
+    expect(lock).not.toContain('https://registry.npmjs.org/gray-matter/');
+  });
+
   it('shares heading IDs between the compiler, search and table of contents', () => {
     const markdown =
       '## Use `omg` with [Node](https://example.com)\n\n## Use omg with Node\n\n````sh\n## fake\n```\nstill code\n````\n\nThird section\n-------------';

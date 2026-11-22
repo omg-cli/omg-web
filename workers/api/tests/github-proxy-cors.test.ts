@@ -61,6 +61,30 @@ describe('GET /api/github-stats CORS', () => {
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(ALLOWED_ORIGIN);
   });
 
+  it('returns the same complete JSON from the shared cache for range requests', async () => {
+    await seedStatsCache();
+    const response = await fetchWorker(
+      new Request(`${STATS_URL}?view=summary`, { headers: { Range: 'bytes=0-0' } })
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-Cache')).toBe('HIT');
+    expect(await response.text()).toBe(COMMIT_ACTIVITY_BODY);
+  });
+
+  it('uses the same public cache entry for a different request host and query', async () => {
+    await seedStatsCache();
+    const response = await fetchWorker(
+      new Request('https://untrusted.invalid/api/github-stats?pattern=(a+)+$', {
+        headers: { 'If-None-Match': 'untrusted', Range: 'bytes=0-0' },
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-Cache')).toBe('HIT');
+    expect(await response.text()).toBe(COMMIT_ACTIVITY_BODY);
+  });
+
   it('answers preflight requests with exactly one allowed origin', async () => {
     const response = await fetchWorker(
       new Request(STATS_URL, {

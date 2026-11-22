@@ -14,10 +14,9 @@
 
 <main id="main-content" class="account-shell">
   <section class="account-panel" aria-labelledby="signup-title">
-    <p class="page-kicker">New account</p>
-    <h1 id="signup-title" class="account-title">Bring your toolchain into focus.</h1>
+    <h1 id="signup-title" class="account-title">Create an OMG account</h1>
     <p class="account-copy">
-      Create an account with a verified identity. No public password registration and no unverified
+      Sign up with a verified GitHub identity. No public password registration and no unverified
       inboxes.
     </p>
 
@@ -37,7 +36,7 @@
 
     <p class="signup-signin">
       Existing account?
-      <a href="/login">Sign in</a>
+      <a href="/login/">Sign in</a>
     </p>
 
     <p class="account-note">
