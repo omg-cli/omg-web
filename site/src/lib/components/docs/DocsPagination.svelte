@@ -4,12 +4,28 @@
   const index = $derived(navigation.findIndex(entry => entry.href === page.url.pathname));
   const previous = $derived(index > 0 ? navigation[index - 1] : undefined);
   const next = $derived(index >= 0 ? navigation[index + 1] : undefined);
+
+  function slugLabel(href: string): string {
+    return href.replace(/^\/|\/$/gu, '').replaceAll('/', ' ');
+  }
 </script>
 
 {#if previous || next}
   <nav class="page-sequence" aria-label="Next documentation pages">
-    {#if previous}<a href={previous.href}><span>Previous</span>{previous.label}</a>{/if}
-    {#if next}<a class="next" href={next.href}><span>Next</span>{next.label}</a>{/if}
+    {#if previous}
+      <a href={previous.href}>
+        <span class="meta">&larr; Previous</span>
+        <span class="title">{previous.label}</span>
+        <span class="cmd">{slugLabel(previous.href)}</span>
+      </a>
+    {/if}
+    {#if next}
+      <a class="next" href={next.href}>
+        <span class="meta">Next &rarr;</span>
+        <span class="title">{next.label}</span>
+        <span class="cmd">{slugLabel(next.href)}</span>
+      </a>
+    {/if}
   </nav>
 {/if}
 
@@ -27,21 +43,29 @@
     display: flex;
     min-height: 2.75rem;
     flex-direction: column;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 600;
+    gap: 0.25rem;
     text-decoration: none;
   }
-  span {
+  .meta {
     color: var(--ink-muted);
+    font-family: var(--font-mono);
     font-size: 0.75rem;
-    font-weight: 400;
+  }
+  .title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+  .cmd {
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
   }
   .next {
     margin-left: auto;
     text-align: right;
   }
-  a:hover {
+  a:hover .title,
+  a:hover .meta {
     color: var(--signal);
   }
 </style>

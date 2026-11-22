@@ -306,10 +306,14 @@ for (const theme of ['light', 'dark']) {
         fullPage: true,
         path: testInfo.outputPath(`docs-${theme}-${width}.png`),
       });
-      await page.locator('.page-outline summary').click();
-      for (const link of await page.locator('.page-outline a').all()) {
-        const box = await link.boundingBox();
-        expect(box?.height).toBeGreaterThanOrEqual(44);
+      if (width < 1152) {
+        await page.locator('.page-outline summary').click();
+        for (const link of await page.locator('.page-outline a').all()) {
+          const box = await link.boundingBox();
+          expect(box?.height).toBeGreaterThanOrEqual(44);
+        }
+      } else {
+        await expect(page.locator('.rail-outline a').first()).toBeVisible();
       }
       await page.screenshot({
         fullPage: true,

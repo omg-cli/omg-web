@@ -4,6 +4,7 @@
   step with that contract when retention periods or rights change.
 -->
 <script lang="ts">
+  import Icon from '../../lib/components/Icon.svelte';
   import SeoHead from '../../lib/components/SeoHead.svelte';
   import { SITE_ORIGIN, serializeJsonLd } from '../../../../shared/public-site';
 
@@ -26,7 +27,6 @@
 />
 
 <main id="main-content" class="legal-shell">
-  <p class="page-kicker">Privacy and data rights</p>
   <h1 class="legal-title">Privacy policy</h1>
   <p class="legal-meta">Version 2.1 / Last updated September 1, 2026</p>
 
@@ -101,7 +101,7 @@
 
     <section>
       <h2>Your rights</h2>
-      <p class="policy-lead">These rights are available to all users regardless of location:</p>
+      <p>These rights are available to all users regardless of location:</p>
       <ul>
         <li><strong>Access and portability:</strong> request a portable copy from support.</li>
         <li>
@@ -121,14 +121,10 @@
     </section>
   </div>
 
-  <a href="/" class="legal-home">← Back to home</a>
+  <a href="/" class="legal-home"><Icon name="left" size={14} /> Back to home</a>
 </main>
 
 <style>
-  .policy-lead {
-    margin-bottom: 0.75rem !important;
-  }
-
   .legal-body strong {
     color: var(--ink);
     font-weight: 600;

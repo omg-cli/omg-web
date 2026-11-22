@@ -23,11 +23,11 @@ Deno is a JavaScript and TypeScript runtime. OMG v0.1.224 manages its executable
 
 The provider downloads official `denoland/deno` GitHub release ZIPs. Its target map covers Linux GNU and macOS on x86_64 and aarch64. It does not select a musl-specific Linux archive or a Windows executable.
 
-OMG's own published CLI binaries target Linux x86_64 and Apple Silicon macOS. Provider target mappings do not establish released OMG binaries on other architectures. WSL uses the Linux guest target, not a native Windows target.
+OMG's published CLI binaries target Linux x86_64 and Apple Silicon macOS; WSL uses the Linux guest target rather than native Windows.
 
 ## Install and inspect
 
-```sh
+```bash
 omg list deno --available
 omg use deno latest
 omg list deno
@@ -38,7 +38,7 @@ omg which deno
 
 Use an exact version for a project that needs a repeatable runtime selection. `omg which deno` reports the selected version. With the shell hook enabled, check the executable at a fresh prompt:
 
-```sh
+```bash
 deno --version
 which -a deno
 ```
@@ -51,7 +51,7 @@ Within a directory, Deno detection reads `.deno-version`, then `.dvmrc`, then `.
 
 For an installed version intended by your project, an example pin is:
 
-```sh
+```bash
 printf '%s\n' '2.9.0' > .deno-version
 omg use deno
 omg which deno
@@ -63,13 +63,13 @@ Replace the example with the project's chosen release. The hook selects installe
 
 Use Deno's normal project commands after confirming the runtime:
 
-```sh
+```bash
 deno task
 ```
 
-OMG's task runner can discover tasks in `deno.json`. If an equal-priority task also exists in another ecosystem, select the intended ecosystem explicitly rather than relying on an interactive prompt in CI. See the [task runner guide](/guides/task-runner/) for argument forwarding and selection modes.
+OMG's task runner can discover tasks in `deno.json`. If an equal-priority task also exists in another ecosystem, select the intended ecosystem explicitly rather than relying on an interactive prompt in CI. See [project tasks](/docs/tasks/) for argument forwarding and selection modes.
 
-OMG does not turn a runtime checksum into a security review of remote modules or task scripts. Keep the project's Deno lockfile and permission choices under review.
+Keep the project's Deno lockfile and permission flags under review alongside runtime pins.
 
 ## Update or remove a version
 
@@ -81,7 +81,7 @@ Switch to another installed version before running `omg use deno VERSION --unins
 
 OMG requires either the GitHub asset's SHA-256 digest or the official archive's `.sha256sum` sidecar. The sidecar must identify the intended archive. A missing checksum or mismatch stops installation.
 
-The archive is extracted into staging and the expected Deno launcher is checked before publishing the version. This checks downloaded bytes and layout against provider information; it does not establish a SLSA build level or verify every dependency Deno may fetch later.
+The archive is extracted into staging and the expected Deno launcher is checked before publishing the version. Checksums verify the upstream archive against GitHub release metadata, not third-party modules Deno fetches later.
 
 | Symptom                                    | Check                                                                                                                   |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
@@ -94,4 +94,4 @@ The archive is extracted into staging and the expected Deno launcher is checked 
 
 Read [runtime storage and hooks](/docs/runtimes/), [security boundaries](/docs/security/), and the [Node.js guide](/runtimes/node/) when choosing between runtimes.
 
-Reviewed release source: [Deno provider](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/deno.rs), [runtime CLI](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [version-file hooks](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs). The commands document source-supported behavior; no Deno release archive was executed for this review.
+Source: [Deno provider](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/deno.rs), [runtime CLI](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [version-file hooks](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs).

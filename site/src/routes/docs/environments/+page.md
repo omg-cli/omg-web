@@ -21,7 +21,7 @@ implementation:
 
 Environment capture records detected runtime and tool versions together with explicitly installed system package names. It writes `omg.lock` in your current directory.
 
-Capture and live drift checking require an Arch or Debian package backend in v0.1.224. This includes the native Debian backend used on Ubuntu. Fedora and Homebrew builds do not gain capture support merely because the portability planner accepts their target names.
+Capture and live drift checking require an Arch or Debian package backend in v0.1.224. This includes the native Debian backend used on Ubuntu. Fedora and Homebrew targets are supported by the portability planner, not by `omg env capture` or `omg env check`.
 
 The runtime probe iterates all supported native runtime names and registry tool names. Only successfully detected versions are recorded. It is not a fixed subset of seven runtimes, nor a list of everything that could be installed.
 
@@ -50,7 +50,7 @@ omg env check
 
 The check compares a fresh capture against `omg.lock`. It exits successfully when there is no detected drift. Missing or invalid locks, unsupported capture backends, probe errors, and detected drift cause failure.
 
-Use it as a CI condition only on a backend that can perform the underlying capture. A successful check covers the captured fields; it does not prove that package versions or application dependencies match.
+Use it as a CI condition only on a backend that can perform the underlying capture. The check covers only the captured inventory fields, not exact system package versions or application dependencies.
 
 For an intentional environment change, review the difference and recapture the baseline. For an unintended change, install or select the intended tools through their normal commands, then check again. The check command does not install missing packages.
 
@@ -72,7 +72,7 @@ Review `omg.lock`, then upload it:
 omg env share --description "Project development inventory"
 ```
 
-The default creates a secret Gist. A secret Gist is unlisted, not access-controlled private storage. Anyone who obtains its URL can read it. The release may print the visibility label `Private`; do not interpret that label as a confidentiality guarantee.
+The default creates a secret Gist. A secret Gist is unlisted, not access-controlled private storage. Anyone who obtains its URL can read it. OMG may print the visibility label `Private`, which refers to GitHub's unlisted secret Gist rather than access-controlled storage.
 
 `--public` creates a public Gist. The description defaults to `OMG Environment State` and is bounded to 1000 bytes by the implementation. The file content is uploaded as `omg.lock`.
 
@@ -142,4 +142,4 @@ Dotfile sources are relative to the manifest directory and destinations to the u
 
 The schema accepts manifests up to 256 KiB, at most 512 tools, and at most 128 dotfile mappings. Invalid targets, undeclared tool mappings, unsafe paths, and duplicate destinations fail validation.
 
-There is no released `omg env apply` command. Keep destination installation and file copying explicit. See [workflows](/docs/workflows/) for onboarding, [configuration](/docs/configuration/) for project versus user settings, and [troubleshooting](/docs/troubleshooting/) for lockfile failures.
+OMG does not include an `omg env apply` command. Keep destination installation and file copying explicit. See [workflows](/docs/workflows/) for onboarding, [configuration](/docs/configuration/) for project versus user settings, and [troubleshooting](/docs/troubleshooting/) for lockfile failures.

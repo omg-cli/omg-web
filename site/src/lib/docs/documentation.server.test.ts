@@ -133,7 +133,7 @@ describe('assembled documentation catalog and agent exports', () => {
 
   it('exports native Markdown instructions and implementation evidence', async () => {
     const java = await documentAt('/runtimes/java/');
-    expect(java.markdown).toContain('```sh\nomg list java --available');
+    expect(java.markdown).toContain('```bash\nomg list java --available');
     expect(java.markdown).toContain('## Set JAVA_HOME when your build needs it');
     expect(java.markdown).toMatch(/\|\s*Invalid Java version\s*\|/u);
     expect(

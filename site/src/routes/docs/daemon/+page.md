@@ -82,7 +82,7 @@ Use the actual UID of the account running the daemon. `omg daemon-status` shows 
 
 The socket uses mode `0600`; its private parent uses mode `0700`. Client and daemon validate directory type, ownership, and permissions. A stale socket is removed during startup only after the safety checks pass.
 
-Do not loosen socket permissions to share the daemon between users. Configure each user session deliberately. Starting OMG through `sudo` does not connect to your ordinary user state by inheriting overrides.
+Keep socket permissions private to one user and configure each user session separately. Running OMG through `sudo` uses root state paths instead of inheriting user overrides.
 
 Root ignores caller-controlled `OMG_CONFIG_DIR`, `OMG_DATA_DIR`, `OMG_CACHE_DIR`, `OMG_DAEMON_DATA_DIR`, and `OMG_SOCKET_PATH`. See [configuration](/docs/configuration/) for the complete path contract.
 

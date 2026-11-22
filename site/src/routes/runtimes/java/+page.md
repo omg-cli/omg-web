@@ -23,24 +23,24 @@ OMG v0.1.224 downloads Eclipse Temurin JDKs from Eclipse Adoptium's API. It requ
 
 Java requests use a feature number: `21` and `21.0` select the same managed `21` directory. A patch request such as `21.0.5` is rejected. This is a feature-level selection, not an exact security-update or build pin. The manager does not provide `latest` or `lts` aliases.
 
-```sh
+```bash
 omg list java --available
 omg use java 21
 omg list java
 omg which java
 ```
 
-The remote list marks feature releases that Adoptium identifies as LTS. That label does not guarantee an asset for every architecture or a particular support agreement.
+The remote list marks feature releases that Adoptium identifies as LTS; asset availability can still vary by architecture.
 
 ## Check host and executable selection
 
-The provider code maps Linux and macOS on x86_64 and aarch64 to Adoptium's host identifiers. Installation still requires a matching downloadable package and the expected extracted layout. It is not a guarantee that every Adoptium JDK package works on every host.
+The provider maps Linux and macOS on x86_64 and aarch64 to Adoptium's host identifiers. Installation requires a matching downloadable package and the expected extracted layout.
 
 OMG's published release binaries target Linux x86_64 and Apple Silicon macOS. The provider's broader architecture mapping does not add an OMG release target. Native Windows is unsupported; use a supported WSL guest for Linux workflows.
 
 With shell integration enabled, verify Java at a fresh prompt:
 
-```sh
+```bash
 java --version
 javac --version
 which -a java
@@ -51,7 +51,7 @@ which -a javac
 
 The nearest directory containing a Java pin wins. Within one directory, `.java-version` precedes `.tool-versions`; supported mise layers are considered afterward.
 
-```sh
+```bash
 printf '%s\n' '21' > .java-version
 omg use java
 omg which java
@@ -59,15 +59,15 @@ omg which java
 
 Use the feature required by the project, not this example by default. `omg use java` can install the detected request. The prompt hook only selects a matching installed version and does not download missing JDKs.
 
-A full patch number in `.java-version` cannot name one of this manager's feature directories. Correct the pin deliberately rather than expecting patch-level fidelity from a feature-level manager.
+A full patch number in `.java-version` cannot name one of this manager's feature directories. Update the pin to a feature number (such as `21`) because this manager tracks feature-level directories rather than individual patches.
 
 ## Set JAVA_HOME when your build needs it
 
-The Java command prints a `JAVA_HOME` hint. Printing the path does not export it into the calling shell. The reviewed hook adds runtime paths; do not assume it also updates a pre-existing `JAVA_HOME` used by Maven, Gradle, or an IDE.
+The Java command prints a `JAVA_HOME` hint. Printing the path does not export it into the calling shell. The shell hook updates `PATH` for the selected runtime; it does not update a pre-existing `JAVA_HOME` used by Maven, Gradle, or an IDE.
 
 For Bash or Zsh, after selecting feature `21`, an explicit session setting is:
 
-```sh
+```bash
 export JAVA_HOME="$(omg config get data_dir)/versions/java/21"
 "$JAVA_HOME/bin/java" --version
 ```
@@ -84,7 +84,7 @@ There is no dedicated in-place JDK patch updater or `omg update java` command. I
 
 ## Verification and troubleshooting
 
-Adoptium supplies the archive URL, filename, and SHA-256 checksum. OMG validates the metadata, verifies the download over HTTPS, stages extraction, and requires the runtime launcher before activation. A checksum match is an integrity check against that provider metadata, not a guarantee about application dependencies.
+Adoptium supplies the archive URL, filename, and SHA-256 checksum. OMG validates the metadata, verifies the download over HTTPS, stages extraction, and requires the runtime launcher before activation. Checksums verify the upstream JDK archive against Adoptium metadata, not application dependencies.
 
 | Symptom                                            | Check                                                                                               |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -95,6 +95,6 @@ Adoptium supplies the archive URL, filename, and SHA-256 checksum. OMG validates
 
 ## Continue
 
-See [runtime management](/docs/runtimes/), [configuration](/docs/configuration/), and [task execution](/guides/task-runner/).
+See [runtime management](/docs/runtimes/), [configuration](/docs/configuration/), and [project tasks](/docs/tasks/).
 
-Reviewed release implementation: [Adoptium provider](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/java.rs), [runtime dispatch](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [hook pin resolution](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs). Host mappings were reviewed in source; these instructions do not claim execution of every vendor archive.
+Source: [Adoptium provider](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/java.rs), [runtime dispatch](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [hook pin resolution](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs).

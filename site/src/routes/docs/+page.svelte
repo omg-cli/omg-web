@@ -184,15 +184,17 @@
   h2 {
     margin: 0;
     font-family: var(--font-display);
-    font-weight: 650;
-    letter-spacing: -0.035em;
-    line-height: 1.12;
+    line-height: 1.15;
   }
   h1 {
-    font-size: clamp(2rem, 4.5vw, 3.5rem);
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
   }
   h2 {
-    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
   }
   .masthead {
     padding-bottom: 1rem;
@@ -248,13 +250,22 @@
   section p {
     margin: 0.65rem 0 0;
     max-width: 65ch;
-    color: var(--ink-muted);
-    line-height: 1.6;
+    color: var(--ink-body);
+    line-height: 1.65;
+  }
+  section p code {
+    padding: 0.1em 0.35em;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--paper-raised);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.84em;
   }
   section :global(.docs-code) {
     margin-block: 0.875rem 0;
   }
-  section :global(.docs-code pre) {
+  :global(.docs-reader) section :global(.docs-code pre) {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
@@ -358,8 +369,8 @@
   }
   dd {
     margin: 0;
-    color: var(--ink-muted);
-    line-height: 1.5;
+    color: var(--ink-body);
+    line-height: 1.55;
   }
   @media (max-width: 40rem) {
     .task-links,

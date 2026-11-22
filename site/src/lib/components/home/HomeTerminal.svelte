@@ -31,7 +31,37 @@
     <div class="screen">
       <p class="location">demo@arch <span>~/project</span></p>
       <!-- svelte-ignore a11y_no_noninteractive_tabindex (keyboard access to scrollback) -->
-      <div class="transcript" role="log" aria-label="Terminal output" tabindex="0"></div>
+      <div class="transcript" role="log" aria-label="Terminal output" tabindex="0">
+        <div class="entry seed">
+          <p class="echo">$ omg search ripgrep</p>
+          <pre><span class="dim">  │ Search</span>
+  <b>ripgrep</b> <span class="version">15.2.0-1</span>  <span class="official"
+              >&#x2139;&#xFE0E;</span
+            > Official
+  <b>ripgrep-all</b> <span class="version">0.10.10-3</span>  <span class="official"
+              >&#x2139;&#xFE0E;</span
+            > Official
+  <b>ripgrep-all-git</b> <span class="version">0.10.10.462.g0f10fb9-1</span>  <span class="aur"
+              >&#x26A0;&#xFE0E;</span
+            > AUR
+  <b>ripgrep-git</b> <span class="version">15.1.0.r4.57c190d5-1</span>  <span class="aur"
+              >&#x26A0;&#xFE0E;</span
+            > AUR
+  <b>vim-ripgrep-git</b> <span class="version">r27.ec87af6-2</span>  <span class="aur"
+              >&#x26A0;&#xFE0E;</span
+            > AUR
+  <b>rippedgrep</b> <span class="version">0.1.0-1</span>  <span class="aur">&#x26A0;&#xFE0E;</span
+            > AUR
+  <b>fuzzy</b> <span class="version">0.0.2-2</span>  <span class="aur">&#x26A0;&#xFE0E;</span> AUR
+  <b>neovim-cmp-rg</b> <span class="version">1.3.8-1</span>  <span class="aur"
+              >&#x26A0;&#xFE0E;</span
+            > AUR
+  <b>repgrep</b> <span class="version">0.17.1-1</span>  <span class="official"
+              >&#x2139;&#xFE0E;</span
+            > Official
+<span class="dim">  (+15 more packages...)</span></pre>
+        </div>
+      </div>
       <form method="dialog" autocomplete="off">
         <label for="terminal-command"
           ><span aria-hidden="true">$</span><span class="sr-only">Terminal command</span></label
@@ -46,9 +76,7 @@
         />
         <button type="submit" aria-label="Run command">Enter ↵</button>
       </form>
-      <p class="fallback">
-        <code>$ omg search ripgrep</code><br /><a href="/docs/cli/">Read the command reference</a>
-      </p>
+      <p class="fallback"><a href="/docs/cli/">Read the command reference</a></p>
     </div>
     <div class="suggestions">
       <span>Type a command and press Enter.</span>
@@ -106,15 +134,46 @@
   h2 {
     scroll-margin-block-start: 5rem;
     margin: 0;
-    font-size: 1.375rem;
-    font-weight: 650;
-    letter-spacing: -0.035em;
-    line-height: 1.15;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+  h2::before {
+    content: '';
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-right: 0.6rem;
+    border-radius: 50%;
+    background: var(--terminal-accent);
+    vertical-align: 0.05em;
   }
   header span,
   .suggestions {
     color: var(--terminal-muted);
     font-size: 0.8125rem;
+  }
+  header > span {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+  .transcript :global(.seed b) {
+    color: var(--ansi-white);
+  }
+  .transcript :global(.seed .version) {
+    color: var(--ansi-green);
+  }
+  .transcript :global(.seed .official) {
+    color: var(--ansi-blue);
+    font-weight: 700;
+  }
+  .transcript :global(.seed .aur) {
+    color: var(--ansi-brown);
+    font-weight: 700;
+  }
+  .transcript :global(.seed .dim) {
+    opacity: 0.75;
   }
   omg-terminal {
     display: flex;
@@ -277,6 +336,10 @@
   }
   .fallback {
     margin: 0;
+    font-size: 0.8125rem;
+  }
+  .fallback a {
+    color: var(--terminal-ink);
   }
   omg-terminal:defined .fallback,
   omg-terminal:not(:defined) form {
@@ -287,7 +350,7 @@
   }
   @media (max-width: 40rem) {
     .command-workbench {
-      height: 32rem;
+      height: clamp(19rem, calc(100dvh - 14.5rem), 32rem);
     }
   }
 </style>

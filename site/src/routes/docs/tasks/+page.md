@@ -56,7 +56,7 @@ There is no `omg run --list` option. Read scripts or targets in the project file
 | `Taskfile.yml` or `Taskfile.yaml` | `list`; other names can use the fallback |
 | `Rakefile` | `tasks`; other names can use the fallback |
 
-The release does not discover `deno.jsonc`. Use `deno task` directly for a JSONC-only project. Taskfile and Rakefile support does not parse every declared task.
+OMG does not discover `deno.jsonc`. Use `deno task` directly for a JSONC-only project. Taskfile and Rakefile support does not parse every declared task.
 
 When no discovered task matches, OMG tries an ordered marker-based fallback: Make, the JavaScript manager, Taskfile, Rake, Pipenv, Deno, then Composer. Without a marker, it tries an executable with the requested name. A misspelled task can therefore reach a fallback command rather than produce an inventory error.
 
@@ -85,12 +85,12 @@ Use `omg run test --all` to run all detected matches sequentially. Execution sto
 
 The detector checks `packageManager` first. Without a recognized field, it checks `bun.lockb`, `pnpm-lock.yaml`, `yarn.lock`, then `package-lock.json` or `npm-shrinkwrap.json`. With no marker, it uses npm.
 
-The release does not use `bun.lock` as a detection marker. Set the manager explicitly in the project if that file is your only marker.
+OMG does not use `bun.lock` as a detection marker. Set the manager explicitly in the project if that file is your only marker.
 
 ```json
 {
-	"packageManager": "pnpm@9.0.0",
-	"scripts": { "build": "vite build" }
+  "packageManager": "pnpm@9.0.0",
+  "scripts": { "build": "vite build" }
 }
 ```
 
@@ -137,8 +137,8 @@ OMG does not import mise plugins, arbitrary backends, or `mise.lock`. Keep the n
 
 Preinstall the selected runtime and manager, install application dependencies, and resolve task ambiguity with `--using` or project preferences before running in CI.
 
-The released `omg run` has no `--yes` flag. Dependency installation prompts fail when no terminal is attached. `omg workspace run` has a separate `--yes` option for its own repository-command confirmation; that option does not belong to `omg run`.
+`omg run` has no `--yes` flag. Dependency installation prompts fail when no terminal is attached. `omg workspace run` has a separate `--yes` option for its own repository-command confirmation; that option does not belong to `omg run`.
 
-An ordinary failed child task makes the command fail with a reported child exit code. Do not assume that OMG preserves that exact numeric child code for every task path. `--all` stops on failure; parallel mode reports task failures after the launched work.
+A failed child task causes `omg run` to exit nonzero and report the failure, though the exact numeric child exit code is not preserved on every task path. `--all` stops on failure; parallel mode reports task failures after the launched work.
 
 If detection picks the wrong task, inspect the reported file and select an ecosystem. If execution fails afterward, run the underlying command to diagnose project dependencies. Continue with [runtimes](/docs/runtimes/), [shell integration](/docs/shell/), [environment capture](/docs/environments/), and [troubleshooting](/docs/troubleshooting/).

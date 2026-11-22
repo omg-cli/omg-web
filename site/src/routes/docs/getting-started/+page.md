@@ -45,7 +45,7 @@ curl -fsSL https://getomg.dev/install.sh | bash
 
 To read the installer before running it, open [install.sh](https://getomg.dev/install.sh).
 
-The public script URL can change independently of this guide's release. For a fixed installer source, use the reviewed release's script as described in [installation](/docs/installation/).
+The public script URL can change independently of this guide's release. For a pinned installer source, use the release script as described in [installation](/docs/installation/).
 
 The one-liner installs the current release. To install this guide's pinned release without editing shell startup files instead:
 
@@ -97,7 +97,7 @@ eval "$(omg hook bash)"
 
 Zsh and Fish setup, pin precedence, and removal are covered in [shell integration](/docs/shell/). The hook selects installed versions. It does not download missing ones.
 
-Enter a project that has a reviewed `.node-version` file and check both selection and execution:
+Enter a project with a `.node-version` file and check both selection and execution:
 
 ```bash
 omg which node

@@ -27,7 +27,7 @@ omg tool search prettier
 omg tool registry
 ```
 
-Search and registry list known names, package managers, and descriptions. They do not query every package registry or certify a package's safety.
+Search and registry list built-in names, package managers, and descriptions without querying remote registries.
 
 Registry entries can select system packages, npm, Cargo, pip, or Go. Source labels such as `pacman:ripgrep` delegate to the system-package install path, which uses the build's selected backend and that backend's package names. A package mapping is not guaranteed on every distribution.
 
@@ -58,7 +58,7 @@ Managed payloads live under `tools/MANAGER/NAME` in OMG's data directory. Execut
 
 `omg tool list` prints links in the managed bin directory. It is not a complete inventory of native system packages or every binary shipped by a package.
 
-If the command is not found after installation, inspect the printed link and your PATH. Add the resolved managed bin directory through your deliberate shell setup. Do not replace unrelated commands to resolve a collision.
+If the command is not found after installation, inspect the printed link and your PATH. Add the resolved managed bin directory to your shell `PATH`, and avoid overwriting unrelated commands to resolve a name collision.
 
 ## Understand installation protections
 
@@ -68,7 +68,7 @@ Installer stdin is closed. On Linux, manager processes also use `no_new_privs`. 
 
 The defaults differ by manager:
 
-| Manager        | Released default                                                                                          |
+| Manager        | Default                                                                                                   |
 | -------------- | --------------------------------------------------------------------------------------------------------- |
 | npm            | Public npm registry, initial install with scripts disabled, then `npm audit signatures` before activation |
 | Cargo          | Isolated Cargo configuration and `cargo install --locked`                                                 |
@@ -76,13 +76,13 @@ The defaults differ by manager:
 | Go             | Public proxy and checksum database, CGO disabled, and local toolchain only                                |
 | System package | Delegates to the selected package backend and its policy path                                             |
 
-Cargo builds can execute crate build scripts. A pip wheel still contains code that runs when invoked. Go and npm verification does not establish that the resulting tool is harmless.
+Cargo builds can execute crate build scripts, and installed tools run with your user account's permissions once invoked.
 
-These controls belong to `omg tool` language-manager installation. Native `omg use` providers have their own download and verification contracts. Do not generalize npm signature verification or Cargo locking to every runtime provider.
+These controls apply to `omg tool` language-manager installations; native `omg use` providers have their own download and verification contracts.
 
 ## Handle a package that needs an exception
 
-Read the manager's error before weakening a default. Prefer a package or published artifact that works with the normal protection. Released exception variables accept comma-separated exact package matches, not arbitrary prefix matches.
+Read the manager's error before weakening a default. Prefer a package or published artifact that works with the normal protection. Exception variables accept comma-separated exact package matches, not prefix matches.
 
 | Variable                                     | Exact match format    | Effect                                                              |
 | -------------------------------------------- | --------------------- | ------------------------------------------------------------------- |
@@ -98,13 +98,13 @@ The long npm variable name does not mean that setting any truthy value enables s
 
 Host-environment exceptions can expose credentials and change registry trust. An unverified exception removes an independent check; it does not repair a rejected signature. Scope any reviewed exception to one invocation and one exact package rather than exporting it permanently.
 
-OMG reports active overrides and records effective protections and executable hashes in `.omg-security-receipt.json` inside a managed install. This local receipt records the operation's policy; it is not an external signature or a guarantee of benign behavior.
+OMG reports active overrides and records effective protections and executable hashes in `.omg-security-receipt.json` inside a managed install. This local receipt records the policy used during installation rather than an external signature.
 
 ## Install an unregistered name
 
 An unregistered name opens a source picker in an attended terminal. Choices are system packages, Cargo, npm, pip, and Go.
 
-Without a terminal, an unknown name fails instead of guessing a source. The released install command has no `--source`, version, dry-run, or `--yes` option. Use the registry and the native manager when you need source controls outside this command.
+Without a terminal, an unknown name fails instead of guessing a source. `omg tool install` has no `--source`, version, dry-run, or `--yes` option. Use the registry and the native manager when you need source controls outside this command.
 
 Choosing a source does not import arbitrary repository URLs or local paths. The managed package grammar validates the package identifier for that manager.
 
@@ -134,6 +134,6 @@ Removal deletes the managed payload and cleans broken links in the managed bin d
 
 Another installation can still satisfy `command -v` after removal. Identify that executable's owner before deleting it.
 
-Install, update, and remove failures return nonzero. Registry and list success confirm their own read operation, not that a future install will work. The global `--json` flag does not turn these human-readable handlers into a stable JSON protocol.
+Install, update, and remove failures return nonzero. The global `--json` flag does not turn these human-readable handlers into a stable JSON protocol.
 
 If signatures fail, retain the exact package and error. If a wheel or locked Cargo build is unavailable, review the package's published artifacts before choosing an exception. For manager-path or link conflicts, preserve existing files and inspect ownership. Continue with [shell integration](/docs/shell/), [security](/docs/security/), and [troubleshooting](/docs/troubleshooting/).

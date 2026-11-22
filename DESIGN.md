@@ -149,7 +149,8 @@ Public surfaces are strictly neutral. Orange marks actions and keyboard focus. T
 ### Neutral
 
 - **Paper and raised paper** separate the page from command selection, runtime, source, and installer containers. Dark variants preserve the same roles.
-- **Ink and muted ink** distinguish headings and executable commands from explanations and metadata. **Rule and strong rule** divide technical content and outline controls.
+- **Ink, body ink, and muted ink** create a three-step neutral hierarchy: full `--ink` for headings and executable commands, `--ink-body` (~85% ink) for reading prose, and `--ink-muted` for metadata and captions. **Rule and strong rule** divide technical content and outline controls.
+- **Custom code syntax tokens** (`--code-command`, `--code-flag`, `--code-string`, `--code-comment`) replace stock third-party highlight palettes so shell snippets stay quiet and only strings/URLs take `--signal`.
 - **Terminal charcoal, ink, muted text, rule, and output** form the consistently dark transcript. **Terminal selected** marks the prompt, insertion caret and local keyboard focus.
 - **Workspace paper, raised paper, ink, muted ink, and translucent rules** preserve the account/operator palette independently.
 - **Danger** and its dark/workspace variants remain reserved for error states.
@@ -177,15 +178,15 @@ The public shell is centered at `min(100% - clamp(2.5rem, 8vw, 8rem), 75rem)`. H
 
 A short product definition precedes a full-width, editable Arch terminal. Keep the prompt in the opening phone viewport. Place the install and documentation links below the terminal.
 
-The package backend list and runtime guidance sit side by side and stack below 40rem. The homepage has no benchmark section or repeated search example. Installation pairs a short platform description with one command row and its copy button. It stacks below 50rem. The footer keeps navigation, author credit, and source links in two compact rows.
+The package command diff and runtime guidance sit side by side and stack below 48rem. The homepage has no benchmark section or repeated search example. Installation pairs a short platform description with one command row and its copy button. It stacks below 50rem. The footer keeps navigation, author credit, and source links in two compact rows.
 
-The header is 4.5rem high. Below 50rem, the full navigation and account link give way to a native details menu, with the theme control inside it; the install action stays visible. The footer stacks below 40rem. Documentation uses a 16rem sidebar from 64rem; learning articles use a 15rem contents column at that breakpoint. Keep the 20rem body minimum and `min-width: 0` around code-bearing grid children.
+The header is 4.5rem high. Below 50rem, the full navigation and account link give way to a native details menu with a custom rotating chevron, with the theme control inside it; the install action stays visible. The footer stacks below 40rem. Documentation uses a 16rem sidebar from 64rem (with pointer-fine compact rows and a bottom scroll fade) and a 3-column layout from 72rem with a sticky right-rail scroll-spy outline; prose and code blocks share a 44rem measure. On desktop, multi-line documentation code blocks float the copy button in the top-right corner instead of adding an empty header bar, and heading `#` anchors hang in the left margin on hover/focus. Keep the 20rem body minimum and `min-width: 0` around code-bearing grid children.
 
-Controls generally reserve 2.75rem of height. Commands wrap. Reserve space for clipboard status and keep commands readable without JavaScript.
+Controls generally reserve 2.75rem of height on touch devices. Commands wrap where needed. Reserve space for clipboard status and keep commands readable without JavaScript.
 
-Below 48rem, documentation code blocks place the copy button above the code. Use 14px monospace text with 1.65 line height and 14px horizontal padding. Preserve lines and indentation. Long lines scroll inside the block instead of wrapping or widening the page. Code can receive keyboard focus for scrolling. Keep copy feedback beside the button.
+Below 48rem, documentation code blocks place the copy button above the code, and the "On this page" outline sticks full-bleed with an opaque `--paper` background. Use 14px monospace text with 1.65 line height and 14px horizontal padding. Preserve lines and indentation. Long lines scroll inside the block instead of wrapping or widening the page. Code can receive keyboard focus for scrolling. Keep copy feedback beside the button.
 
-The terminal is 34rem tall, or 32rem at widths of 40rem or less. Its height stays the same when output is empty or commands run. Output scrolls above the prompt. The command menu opens over the output and scrolls without resizing the terminal.
+The terminal is 34rem tall on desktop, and clamped to fit the opening phone viewport at widths of 40rem or less (`clamp(19rem, calc(100dvh - 14.5rem), 32rem)`). It opens pre-seeded with static `omg search ripgrep` output (safe for SSR and pre-hydration input). Output scrolls above the prompt. The command menu opens over the output and scrolls without resizing the terminal.
 
 ## Elevation & Depth
 
@@ -211,7 +212,7 @@ A neutral command row places the installer command beside its copy button. Prere
 
 ### Inputs / Fields
 
-Login fields retain square corners, transparent backgrounds, a strong-rule border, mono text, and 0.8rem by 1rem padding. Focus changes the border to signal; the existing field-specific rule removes the outline. Preserve visible focus when extending the form. Errors use danger; disabled submission reduces opacity.
+Login fields retain square corners, transparent backgrounds, a strong-rule border, mono text, and 0.8rem by 1rem padding. Focus changes the border to signal and `:focus-visible` shows a two-pixel signal outline with a two-pixel offset. Errors use danger; disabled submission reduces opacity.
 
 ### Navigation
 

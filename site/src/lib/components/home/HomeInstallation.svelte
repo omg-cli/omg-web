@@ -13,7 +13,7 @@
   </div>
   <div class="install-details">
     <div class="command-row">
-      <code>{installation.command}</code>
+      <pre><code>{installation.command}</code></pre>
       <button
         type="button"
         aria-label="Copy install command"
@@ -72,12 +72,15 @@
     font-family: var(--font-mono);
     color: var(--ink);
   }
-  .command-row > code {
+  .command-row > pre {
     flex: 1;
     min-width: 0;
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
     font-size: clamp(0.8125rem, 1.2vw, 0.9375rem);
     line-height: 1.7;
-    overflow-wrap: anywhere;
   }
   button {
     display: inline-flex;
@@ -111,7 +114,14 @@
   .prerequisite code {
     font-size: 0.9em;
   }
-  a {
+  .prerequisite a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--ink);
+    text-underline-offset: 0.2em;
+  }
+  .install-links a {
     display: inline-flex;
     min-height: 2.75rem;
     align-items: center;

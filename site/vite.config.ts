@@ -1,10 +1,54 @@
 import { makeCloudflareAdapter } from '@alchemy.run/frontend-frameworks/sveltekit/cloudflare';
 import { sveltepress } from '@sveltepress/vite';
-import { codeToHtml } from 'shiki';
+import { codeToHtml, type ThemeRegistration } from 'shiki';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, normalizePath } from 'vite';
 import documentationHeadings from './tools/documentation-remark.ts';
 import { documentationOnlyPlugins } from './tools/sveltepress-scope.ts';
+
+const omgCodeTheme: ThemeRegistration = {
+  name: 'omg-workbench',
+  type: 'light',
+  colors: {
+    'editor.background': 'transparent',
+    'editor.foreground': 'var(--code-command)',
+  },
+  tokenColors: [
+    {
+      scope: ['comment', 'punctuation.definition.comment'],
+      settings: { foreground: 'var(--code-comment)' },
+    },
+    {
+      scope: ['string', 'string.quoted', 'constant.other.url', 'markup.underline.link'],
+      settings: { foreground: 'var(--code-string)' },
+    },
+    {
+      scope: [
+        'constant.other.option',
+        'punctuation.definition.parameter',
+        'variable.parameter',
+        'keyword.operator',
+        'punctuation.separator',
+        'punctuation.definition.variable',
+        'variable.other',
+        'support.type.property-name',
+        'entity.name.tag',
+      ],
+      settings: { foreground: 'var(--code-flag)' },
+    },
+    {
+      scope: [
+        'entity.name.function',
+        'support.function',
+        'keyword',
+        'storage',
+        'constant.numeric',
+        'constant.language',
+      ],
+      settings: { foreground: 'var(--code-command)' },
+    },
+  ],
+};
 
 export default defineConfig({
   plugins: [
@@ -33,13 +77,13 @@ export default defineConfig({
                 : 'text';
           const html = await codeToHtml(code, {
             lang,
-            themes: { light: 'github-light', dark: 'github-dark' },
+            theme: omgCodeTheme,
           });
           const className = code.trimEnd().includes('\n')
             ? 'docs-code'
             : 'docs-code single-command';
           return (
-            `<div class="${className}" data-copy-container><div class="code-actions"><span data-copy-status role="status"></span><button type="button" data-copy-code>Copy code</button></div>` +
+            `<div class="${className}" data-lang="${lang}" data-copy-container><div class="code-actions"><span data-copy-status role="status"></span><button type="button" data-copy-code>Copy code</button></div>` +
             html.replaceAll('{', '&#123;').replaceAll('}', '&#125;') +
             '</div>'
           );

@@ -73,38 +73,43 @@
 
 <style>
   code {
+    padding: 0.1em 0.35em;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--paper-raised);
     color: var(--ink);
     font-family: var(--font-mono);
-    font-size: 0.9em;
+    font-size: 0.84em;
     overflow-wrap: anywhere;
   }
   .paragraphs p {
-    max-width: 46rem;
+    max-width: 44rem;
     margin: 1rem 0 0;
-    color: var(--ink-muted);
-    line-height: 1.7;
-    overflow-wrap: anywhere;
+    color: var(--ink-body);
+    line-height: 1.75;
+    overflow-wrap: break-word;
   }
 
   h3 {
-    margin: 2.25rem 0 0;
+    margin: 2rem 0 0;
+    color: var(--ink);
     font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: 650;
-    letter-spacing: -0.03em;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   .steps-block {
     margin: 1rem 0 0;
     padding: 0;
     padding-left: 1.25rem;
-    color: var(--ink-muted);
-    line-height: 1.7;
+    color: var(--ink-body);
+    line-height: 1.75;
   }
 
   .steps-block li {
     padding-block: 0.5rem;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .steps-block li::marker {
@@ -149,8 +154,8 @@
   }
 
   td {
-    color: var(--ink-muted);
-    overflow-wrap: anywhere;
+    color: var(--ink-body);
+    overflow-wrap: break-word;
   }
 
   td:first-child {
@@ -160,17 +165,17 @@
   }
 
   .bullets-block {
-    max-width: 46rem;
+    max-width: 44rem;
     margin: 1rem 0 0;
     padding: 0;
     padding-left: 1.25rem;
-    color: var(--ink-muted);
-    line-height: 1.7;
+    color: var(--ink-body);
+    line-height: 1.75;
   }
 
   .bullets-block li {
     padding-block: 0.375rem;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .bullets-block li::marker {
@@ -178,19 +183,20 @@
   }
 
   .note {
-    max-width: 46rem;
+    max-width: 44rem;
     margin: 1.5rem 0 0;
-    padding: 1rem 1.25rem;
-    border-left: 1px solid var(--signal);
+    padding: 0.875rem 1.25rem;
+    border-left: 2px solid var(--signal);
+    border-radius: 0 6px 6px 0;
     background: var(--paper-raised);
   }
 
   .note p {
     margin: 0;
-    color: var(--ink-muted);
+    color: var(--ink-body);
     font-size: 0.875rem;
     line-height: 1.7;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .note-warning {

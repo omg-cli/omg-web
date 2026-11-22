@@ -1,5 +1,6 @@
 <!-- Terms of service for the OMG Package Manager site, CLI, and licensing API. -->
 <script lang="ts">
+  import Icon from '../../lib/components/Icon.svelte';
   import SeoHead from '../../lib/components/SeoHead.svelte';
   import { SITE_ORIGIN, serializeJsonLd } from '../../../../shared/public-site';
 
@@ -22,7 +23,6 @@
 />
 
 <main id="main-content" class="legal-shell">
-  <p class="page-kicker">Service agreement</p>
   <h1 class="legal-title">Terms of service</h1>
   <p class="legal-meta">Last updated September 2, 2026</p>
 
@@ -80,5 +80,5 @@
     </section>
   </div>
 
-  <a href="/" class="legal-home">← Back to home</a>
+  <a href="/" class="legal-home"><Icon name="left" size={14} /> Back to home</a>
 </main>

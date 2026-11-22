@@ -24,13 +24,13 @@ OMG v0.1.224's Swift provider installs official Swift.org Linux toolchains only 
 
 The presence of an OMG macOS binary does not imply a native Swift download path on macOS. This page does not configure Xcode or Apple's system toolchain. WSL can use a supported Ubuntu guest; native Windows is unsupported.
 
-OMG's published Linux CLI artifact is x86_64. The provider's aarch64 mapping does not establish a published Linux ARM64 OMG binary. The selected Swift release must also publish an archive for the mapped Ubuntu/architecture pair.
+OMG's published Linux CLI binary targets x86_64, and the selected Swift release must publish an archive for your Ubuntu version and architecture.
 
 ## Install and inspect a release
 
 The provider discovers stable `swift-NUMERIC-RELEASE` versions through `swiftlang/swift` GitHub releases. Preview tags, development snapshots, and prerelease entries are excluded.
 
-```sh
+```bash
 omg list swift --available
 omg use swift latest
 omg list swift
@@ -41,7 +41,7 @@ omg which swift
 
 With the shell hook enabled, inspect the actual toolchain at a fresh prompt:
 
-```sh
+```bash
 swift --version
 swiftc --version
 which -a swift
@@ -56,7 +56,7 @@ Within one directory, `.swift-version` precedes `.tool-versions`. The hook check
 
 For a project intentionally using the example release:
 
-```sh
+```bash
 printf '%s\n' '5.10' > .swift-version
 omg use swift
 omg which swift
@@ -70,16 +70,16 @@ The compiler pin does not replace Swift package manifests, dependency resolution
 
 After verifying the selected compiler, use the project's normal Swift commands:
 
-```sh
+```bash
 swift build
 swift test
 ```
 
-These commands can fetch and execute project build logic. Do not assume the reviewed OMG task runner discovers Swift package tasks from `Package.swift` alone; use a supported task declaration if the project needs `omg run` integration.
+These commands fetch packages and run project build logic. `omg run` discovers tasks from supported project manifests, not from `Package.swift` alone; add a supported task declaration if you want to run Swift commands via `omg run`.
 
 ## Verify the signed toolchain
 
-This provider verifies a detached `.sig` for the Swift.org archive with Sequoia-OpenPGP. It refreshes the official Swift release-key cache and accepts only the signing fingerprints pinned in the released implementation. A cached keyring is a fallback when refresh fails, not permission to skip signature verification.
+This provider verifies a detached `.sig` for the Swift.org archive with Sequoia-OpenPGP. It refreshes the official Swift release-key cache and accepts only the signing fingerprints pinned in OMG. A cached keyring is a fallback when refresh fails, not permission to skip signature verification.
 
 A source build of OMG must enable the `pgp` feature for Swift installation. Without a verifier, installation refuses the archive. Do not work around a signature error by copying unchecked files into the versions tree.
 
@@ -87,7 +87,7 @@ The extracted toolchain must expose `usr/bin/swift`, and a Swift version smoke c
 
 Toolchains live under `versions/swift` in the OMG data root. Inspect that root and available disk space before downloading a large toolchain:
 
-```sh
+```bash
 omg config get data_dir
 ```
 
@@ -112,4 +112,4 @@ Switch to another installed version before running `omg use swift VERSION --unin
 
 See [installation and backend features](/docs/installation/), [runtime management](/docs/runtimes/), and [security boundaries](/docs/security/).
 
-Reviewed release source: [Swift provider and signature verification](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/swift.rs), [runtime CLI](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [Swift hook paths](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs). The documentation review did not download or execute a Swift toolchain.
+Source: [Swift provider and signature verification](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/swift.rs), [runtime CLI](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [Swift hook paths](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs).

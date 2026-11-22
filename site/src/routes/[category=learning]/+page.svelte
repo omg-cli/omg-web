@@ -48,13 +48,7 @@
           '@type': 'BreadcrumbList',
           itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
-            {
-              '@type': 'ListItem',
-              position: 2,
-              name: 'Learn',
-              item: `${SITE_ORIGIN}/${data.category}/`,
-            },
-            { '@type': 'ListItem', position: 3, name: data.title, item: canonical },
+            { '@type': 'ListItem', position: 2, name: data.title, item: canonical },
           ],
         },
       ],
@@ -86,7 +80,7 @@
         <a href={entry.href}
           ><h2>{entry.title}</h2>
           <p>{entry.description}</p>
-          <span>Read the guide <Icon name="right" size={16} /></span></a
+          <span class="row-arrow" aria-hidden="true"><Icon name="right" size={16} /></span></a
         >
       </li>
     {/each}
@@ -102,14 +96,14 @@
   h1 {
     max-width: 18ch;
     font-size: var(--page-title);
-    line-height: 1.05;
+    line-height: 1.08;
     letter-spacing: -0.035em;
   }
   .introduction {
     max-width: 45rem;
-    color: var(--ink-muted);
-    font-size: 1.15rem;
-    line-height: 1.7;
+    color: var(--ink-body);
+    font-size: 1.0625rem;
+    line-height: 1.65;
   }
   nav {
     display: flex;
@@ -118,9 +112,18 @@
     margin-block: 2rem 3rem;
   }
   nav a {
-    min-height: 2.75rem;
     display: inline-flex;
     align-items: center;
+    min-height: 2.75rem;
+    color: var(--ink-muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    font-size: 0.875rem;
+  }
+  nav a:hover,
+  nav a[aria-current='page'] {
+    color: var(--signal);
+    border-bottom-color: var(--signal);
   }
   ul {
     margin: 0;
@@ -138,49 +141,43 @@
     grid-template-columns: 1fr 1.25fr auto;
     gap: 1.5rem;
     align-items: baseline;
-    padding: 1.75rem 0;
+    padding: 1.5rem 0;
     text-decoration: none;
   }
   li a:hover h2,
-  li a:hover span {
+  li a:hover .row-arrow {
     color: var(--signal);
   }
   h2 {
     margin: 0;
     color: var(--ink);
-    font-size: 1.125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
   }
   li p {
     margin: 0;
-    color: var(--ink-muted);
+    color: var(--ink-body);
     font-size: 0.875rem;
-    line-height: 1.7;
+    line-height: 1.65;
   }
-  li span {
+  .row-arrow {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    min-height: 2.75rem;
-    font-size: 0.75rem;
-    white-space: nowrap;
-  }
-  nav a {
     color: var(--ink-muted);
-    text-decoration: none;
-    border-bottom: 2px solid transparent;
-    font-size: 0.875rem;
-  }
-  nav a:hover,
-  nav a[aria-current='page'] {
-    color: var(--signal);
-    border-bottom-color: var(--signal);
   }
   @media (max-width: 55rem) {
     li a {
-      grid-template-columns: 1fr;
-      gap: 0.5rem;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.4rem 1rem;
+    }
+    li p {
+      grid-column: 1;
+    }
+    .row-arrow {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
     }
   }
 </style>

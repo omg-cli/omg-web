@@ -25,18 +25,18 @@ The provider maps Linux and macOS on x86_64 and aarch64. Each requested version 
 
 ## Install and inspect
 
-```sh
+```bash
 omg list zig --available
 omg use zig latest
 omg list zig
 omg which zig
 ```
 
-The release list excludes the index's `master` entry. `latest` chooses the newest listed release, and partial numeric requests resolve against the release index. Do not assume this command manages development snapshots or every historical Zig build.
+The release list excludes the index's `master` entry. `latest` chooses the newest listed release, and partial numeric requests resolve against the release index; `master` development snapshots are not managed by this command.
 
 With the shell hook enabled, verify the actual compiler at a fresh prompt:
 
-```sh
+```bash
 zig version
 which -a zig
 ```
@@ -47,9 +47,9 @@ which -a zig
 
 Within a directory, `.zig-version` precedes `.tool-versions`. The hook searches the current directory before parents and then considers supported mise layers within each directory.
 
-For a project deliberately using the example release:
+For a project using a pinned release:
 
-```sh
+```bash
 printf '%s\n' '0.13.0' > .zig-version
 omg use zig
 omg which zig
@@ -63,11 +63,11 @@ The runtime pin selects a compiler. It does not replace `build.zig`, `build.zig.
 
 After confirming the intended Zig version, use the project's normal build command:
 
-```sh
+```bash
 zig build
 ```
 
-Do not assume `omg run build` discovers a task merely because `build.zig` exists. The reviewed polyglot task runner has a defined manifest set; a project's Makefile or supported task declaration can invoke Zig explicitly.
+`omg run` discovers tasks from supported project manifests, not from `build.zig`; invoke Zig from a Makefile or supported task declaration if you want to run it via `omg run`.
 
 ## Install a newer release or remove one
 
@@ -81,11 +81,11 @@ Switch away from an old version before running `omg use zig VERSION --uninstall`
 
 OMG validates the release-index artifact fields, checks the SHA-256 digest, and extracts the `.tar.xz` archive in staging. The normalized launcher and toolchain layout are checked before the version is activated.
 
-Integrity is anchored to the official index retrieved over HTTPS. It does not prove the safety of project build scripts, third-party dependencies, or code compiled by Zig.
+Checksums verify the upstream Zig archive against the official release index, not project build scripts or third-party dependencies.
 
 Toolchains live under `versions/zig` in the OMG data directory. The default data root is `~/.local/share/omg` on Linux and `~/Library/Application Support/omg` on macOS.
 
-```sh
+```bash
 omg config get data_dir
 ```
 
@@ -100,6 +100,6 @@ omg config get data_dir
 
 ## Continue
 
-Read [runtime management](/docs/runtimes/), [configuration](/docs/configuration/), and [task discovery](/guides/task-runner/).
+Read [runtime management](/docs/runtimes/), [configuration](/docs/configuration/), and [project tasks](/docs/tasks/).
 
-Reviewed release source: [Zig provider](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/zig.rs), [runtime CLI](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [pin detection](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs). Target mappings and checks were reviewed in source; no compiler archive was executed for this guide.
+Source: [Zig provider](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/runtimes/zig.rs), [runtime CLI](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/cli/runtimes.rs), and [pin detection](https://github.com/omg-cli/omg/blob/f0d8cb5d8a95dbbc6cae50460178702ac0263ebb/src/hooks/mod.rs).

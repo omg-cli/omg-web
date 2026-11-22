@@ -75,8 +75,9 @@
     max-height: 100dvh;
     overflow-y: auto;
     min-width: 0;
-    padding: 2rem 1.5rem 2rem 0;
+    padding: 2rem 1.5rem 3.5rem 0;
     border-right: 1px solid var(--rule);
+    mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 2.5rem), transparent 100%);
   }
   nav {
     margin-top: 1.5rem;
@@ -96,7 +97,7 @@
     margin-top: 1.25rem;
   }
   .nav-group p {
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.35rem;
     color: var(--ink-muted);
     font-size: 0.75rem;
     font-weight: 600;
@@ -115,6 +116,18 @@
     color: var(--ink-muted);
     font-size: 0.8125rem;
     text-decoration: none;
+  }
+  @media (pointer: fine) {
+    .docs-home {
+      min-height: 2.125rem;
+    }
+    li a {
+      min-height: 2rem;
+      padding: 0.35rem 0.75rem;
+    }
+    .agent-link {
+      min-height: 2.125rem;
+    }
   }
   li a:hover {
     color: var(--ink);
@@ -144,15 +157,44 @@
     padding-block: 2.5rem 4rem;
   }
   .reader-content :global(.heading-link) {
-    padding-inline: 0.4rem;
+    padding-inline: 0.35rem;
     color: var(--ink-muted);
     font-size: 0.75em;
+    font-weight: 400;
     text-decoration: none;
+    opacity: 0.45;
   }
   .reader-content :global(.heading-link:hover),
   .reader-content :global(.heading-link:focus-visible) {
     color: var(--signal);
-    text-decoration: underline;
+    opacity: 1;
+    text-decoration: none;
+  }
+  @media (min-width: 48rem) {
+    .reader-content :global(h2:has(.heading-link)),
+    .reader-content :global(h3:has(.heading-link)) {
+      position: relative;
+    }
+    .reader-content :global(h2 .heading-link),
+    .reader-content :global(h3 .heading-link) {
+      position: absolute;
+      left: -1.4rem;
+      top: 0.08em;
+      padding: 0 0.25rem;
+      opacity: 0;
+      transition: opacity 120ms ease;
+    }
+    .reader-content :global(h2:hover .heading-link),
+    .reader-content :global(h2:focus-within .heading-link),
+    .reader-content :global(h3:hover .heading-link),
+    .reader-content :global(h3:focus-within .heading-link) {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reader-content :global(.heading-link) {
+      transition: none;
+    }
   }
   .mobile-topics {
     display: none;
@@ -183,6 +225,7 @@
       padding: 1.25rem 0;
       border-right: 0;
       border-bottom: 1px solid var(--rule);
+      mask-image: none;
     }
     .desktop-topics {
       display: none;

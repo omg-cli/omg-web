@@ -1,3 +1,50 @@
+function initScrollSpy() {
+  const rail = document.querySelector('.rail-outline');
+  if (!rail) return;
+  const links = Array.from(rail.querySelectorAll('a[href^="#"]'));
+  if (links.length === 0) return;
+  const targets = links
+    .map(link => {
+      const id = decodeURIComponent(link.getAttribute('href').slice(1));
+      const el = document.getElementById(id);
+      return el ? { id, el, link } : null;
+    })
+    .filter(Boolean);
+  if (targets.length === 0) return;
+
+  const setActive = id => {
+    for (const item of targets) {
+      if (item.id === id) item.link.setAttribute('aria-current', 'location');
+      else item.link.removeAttribute('aria-current');
+    }
+  };
+
+  const visible = new Set();
+  const observer = new IntersectionObserver(
+    entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) visible.add(entry.target.id);
+        else visible.delete(entry.target.id);
+      }
+      const firstVisible = targets.find(item => visible.has(item.id));
+      if (firstVisible) {
+        setActive(firstVisible.id);
+        return;
+      }
+      // Fallback: last heading scrolled above viewport top.
+      let passed = targets[0];
+      for (const item of targets) {
+        if (item.el.getBoundingClientRect().top <= 120) passed = item;
+      }
+      if (passed) setActive(passed.id);
+    },
+    { rootMargin: '-48px 0px -65% 0px', threshold: 0 }
+  );
+
+  for (const item of targets) observer.observe(item.el);
+  setActive(targets[0].id);
+}
+
 (() => {
   const root = document.documentElement;
   if (root.dataset.docCopy === 'ready') return;
@@ -40,4 +87,10 @@
       button.disabled = false;
     }
   });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initScrollSpy, { once: true });
+  } else {
+    initScrollSpy();
+  }
 })();

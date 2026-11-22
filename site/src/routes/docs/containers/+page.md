@@ -28,11 +28,11 @@ omg container images
 
 Status checks the detected engine by listing containers. A missing engine or failed engine request makes it fail. If both engines are installed, check the runtime named in the result before looking for a container in the other engine.
 
-Engine permissions, images, repository code, and host mounts remain separate trust decisions. Do not expose an engine socket or a private host directory merely to make a project command work.
+Engine permissions, images, repository code, and host mounts remain separate trust decisions. Avoid exposing an engine socket or private host directory unless the container specifically needs it.
 
 ## Generate a project recipe
 
-From a reviewed project directory:
+From a project directory:
 
 ```bash
 omg container init
@@ -50,7 +50,7 @@ omg container init --base debian:bookworm-slim
 
 Choose one init invocation. The command refuses to overwrite an existing `Dockerfile.omg`; inspect or preserve that file before regenerating it.
 
-The release detects these project markers in the current directory:
+OMG detects these project markers in the current directory:
 
 | Marker                                 | Generator request |
 | -------------------------------------- | ----------------- |
@@ -103,7 +103,7 @@ omg container run alpine --env APP_MODE=test -- printenv APP_MODE
 
 An ordinary run attaches with a TTY and removes the container on exit. `--interactive` explicitly requests the interactive configuration. `--detach` starts in the background and keeps the container after the launching command returns.
 
-The released wrapper has no non-TTY attached mode. Exec also requests a TTY. Use the native engine when a pipeline needs its noninteractive controls.
+The wrapper has no non-TTY attached mode. Exec also requests a TTY. Use the native engine when a pipeline needs its noninteractive controls.
 
 Use `--name` to choose a container name, `--workdir` for its working directory, repeatable `--env KEY=VALUE` for environment values, and repeatable `--volume HOST:CONTAINER` for mounts.
 
@@ -111,7 +111,7 @@ Use `--name` to choose a container name, `--workdir` for its working directory, 
 omg container run alpine --volume "$PWD/data:/data" -- ls /data
 ```
 
-Create and review the host data directory first. These mounts can expose writable host files. The wrapper rejects suffix modes such as `HOST:CONTAINER:ro`. Use the native engine's reviewed read-only controls when you need a read-only mount.
+Create and review the host data directory first. These mounts can expose writable host files. The wrapper rejects suffix modes such as `HOST:CONTAINER:ro`. Use the native engine directly when you need a read-only mount.
 
 Environment arguments require a nonempty key and `=`. Keep secrets out of ordinary command history and image build arguments. Use your engine's appropriate secret mechanism for credentials.
 
@@ -138,6 +138,6 @@ omg container stop CONTAINER
 
 Replace `CONTAINER` with the exact name or ID you inspected. Pull downloads an image. Exec runs in an existing container; stop changes that container's state.
 
-Run, shell, and exec propagate a nonzero container process status through their wrapper path. Build, pull, stop, listing, and validation failures also fail the command. Detached launch success does not prove the background application stays healthy.
+Run, shell, and exec propagate a nonzero container process status through their wrapper path. Build, pull, stop, listing, and validation failures also fail the command. With `--detach`, a zero exit code only means the container started; check container logs and status to verify the application is healthy.
 
 If a command fails, inspect the engine's own status and logs. Check malformed mounts or environment entries before retrying. Preserve an existing recipe when generation refuses to overwrite it. See [project tasks](/docs/tasks/) for host execution, [installation](/docs/installation/) for verified OMG downloads, and [troubleshooting](/docs/troubleshooting/) for support evidence.

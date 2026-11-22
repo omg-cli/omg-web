@@ -56,9 +56,9 @@ To request one specific release:
 omg self-update --version 0.1.224
 ```
 
-An equal version returns success without replacement. An older requested version fails unless `--force` is present. `--force` allows reinstallation or deliberate downgrade; it does not turn off archive verification.
+An equal version returns success without replacement. An older requested version fails unless `--force` is present. `--force` allows reinstallation or downgrade without turning off archive verification.
 
-To repair the same installed release deliberately:
+To reinstall the same release:
 
 ```bash
 omg self-update --version 0.1.224 --force
@@ -123,7 +123,7 @@ omg status > status.txt
 
 Failed commands do not receive an update notice or have their failure status replaced. An offline host, old cache, disabled check, or unsupported command path can all explain silence.
 
-A notice compares version strings. It does not report vulnerabilities or certify the candidate release. Use the release notes and [security guide](/docs/security/) for those separate decisions.
+A notice only compares version strings. Check the release notes and [security guide](/docs/security/) for security advisories and upgrade details.
 
 ## Disable or inspect notice state
 

@@ -118,7 +118,7 @@ test.describe('Svelte public surfaces', () => {
     await expect(
       page.locator('#install').getByRole('link', { name: 'Read install.sh' })
     ).toHaveAttribute('href', '/install.sh');
-    await expect(page.getByRole('link', { name: 'Download from GitHub' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'GitHub releases' })).toHaveAttribute(
       'href',
       'https://github.com/omg-cli/omg/releases'
     );
@@ -253,13 +253,11 @@ test.describe('Svelte public surfaces', () => {
 
     await expect(
       page.getByRole('heading', {
-        name: 'One CLI for system packages and language runtimes.',
+        name: /One command\./,
         level: 1,
       })
     ).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: 'Which package manager does OMG use?' })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Same command, native backend' })).toBeVisible();
     await expect(page.getByText('Package search benchmarks', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Install OMG' })).toBeVisible();
     await expect
@@ -571,7 +569,7 @@ test.describe('deployed Svelte authorization surfaces', () => {
 
     await page.goto('/admin/', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/login\/?$/);
-    await expect(page.getByRole('heading', { name: 'Pick up where you left off.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sign in to OMG' })).toBeVisible();
   });
 
   test('renders the complete login entry surface', async ({ page }) => {

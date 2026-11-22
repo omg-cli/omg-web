@@ -18,10 +18,9 @@
 
 <main id="main-content" class="account-shell">
   <section class="account-panel" aria-labelledby="login-title">
-    <p class="page-kicker">Account access</p>
-    <h1 id="login-title" class="account-title">Pick up where you left off.</h1>
+    <h1 id="login-title" class="account-title">Sign in to OMG</h1>
     <p class="account-copy">
-      Continue with a verified GitHub identity, or sign in to an existing controlled account.
+      Continue with a verified GitHub identity, or sign in to an existing account.
     </p>
 
     <button
@@ -85,8 +84,7 @@
     margin: 2rem 0;
     color: var(--ink-muted);
     font-family: var(--font-mono);
-    font-size: 0.625rem;
-    text-transform: uppercase;
+    font-size: 0.75rem;
   }
 
   .login-divider::before,
@@ -125,7 +123,11 @@
 
   .login-input:focus {
     border-color: var(--signal);
-    outline: none;
+  }
+
+  .login-input:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
   }
 
   .login-submit {
