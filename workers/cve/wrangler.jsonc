@@ -11,6 +11,7 @@
     "bindings": [{ "name": "ADVISORY_STREAM", "class_name": "AdvisoryStream" }],
   },
   "migrations": [{ "tag": "advisory-stream-v1", "new_sqlite_classes": ["AdvisoryStream"] }],
+  "services": [{ "binding": "EVIDENCE_ARCHIVE", "service": "omg-cve-enrichment" }],
   "assets": {
     "directory": "public",
     "binding": "ASSETS",

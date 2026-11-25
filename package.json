@@ -14,7 +14,7 @@
     "check:anti-slop": "node tools/oxlint/sync-anti-slop.mjs --check",
     "check:audit-evidence": "node tools/check-audit-evidence.mjs",
     "check:cloudflare:remote": "node tools/check-cloudflare-remote.mjs",
-    "check:deploy": "npm run check:staging && npm run build:check --prefix site && wrangler deploy --dry-run --config workers/api/wrangler.toml && wrangler deploy --dry-run --config workers/api/wrangler.staging.jsonc && wrangler deploy --dry-run --config site/wrangler.staging.jsonc && wrangler deploy --dry-run --config site/wrangler.production.jsonc && wrangler deploy --dry-run --config workers/cve/wrangler.jsonc",
+    "check:deploy": "npm run check:staging && npm run build:check --prefix site && wrangler deploy --dry-run --config workers/api/wrangler.toml && wrangler deploy --dry-run --config workers/api/wrangler.staging.jsonc && wrangler deploy --dry-run --config site/wrangler.staging.jsonc && wrangler deploy --dry-run --config site/wrangler.production.jsonc && wrangler deploy --dry-run --config workers/cve/wrangler.jsonc && wrangler deploy --dry-run --config workers/cve/wrangler.enrichment.jsonc",
     "check:staging": "node tools/check-staging.mjs",
     "drill:d1-recovery": "node tools/drill-d1-recovery.mjs",
     "check:migrations": "npm run check:migrations --prefix workers/api",
@@ -65,6 +65,7 @@
     "workerd@1.20261006.1": true
   },
   "dependencies": {
-    "effect": "3.22.2"
+    "effect": "3.22.2",
+    "postgres": "4.1.1"
   }
 }

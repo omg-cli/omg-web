@@ -11,8 +11,13 @@ export const dashboardSnapshot = Schema.Struct({
 export type DashboardSnapshot = typeof dashboardSnapshot.Type;
 
 export const streamPath = 'https://dashboard-stream.internal';
-const key = 'dashboard-v1';
+const key = 'dashboard-v4';
 const emptyZeroDays = { entries: [], checkedAt: null, current: false };
+export const archiveOrigin = 'https://enrichment.internal';
+
+export interface EvidenceBinding {
+  EVIDENCE_ARCHIVE?: { fetch(request: Request): Promise<Response> };
+}
 
 interface StreamStorage {
   get<A>(name: string): Promise<A | undefined>;
@@ -32,6 +37,7 @@ declare const WebSocketPair: new () => { 0: WebSocket; 1: WebSocket };
 export interface TailEvent {
   scriptName?: string | null;
   outcome: string;
+  logs?: readonly { message: readonly (string | number)[] }[];
   event:
     | null
     | { cron: string }
@@ -50,6 +56,12 @@ const publishingRoutes = new Set([
 ]);
 
 export function isIntakeEvent(trace: TailEvent) {
+  if (trace.scriptName === 'omg-cve-enrichment') {
+    return (
+      trace.outcome === 'ok' &&
+      Boolean(trace.logs?.some(log => log.message[0] === 'vendor_intake_changed'))
+    );
+  }
   if (trace.scriptName !== 'omg-advisories') return false;
   const event = trace.event;
   if (event === null || 'cron' in event || 'scheduledTime' in event) return true;
@@ -64,11 +76,13 @@ export function isIntakeEvent(trace: TailEvent) {
 
 export class AdvisoryStream {
   private readonly state: StreamState;
+  private readonly environment: EvidenceBinding;
   private refreshing: Promise<void> | null = null;
   private pending = false;
 
-  constructor(state: StreamState) {
+  constructor(state: StreamState, environment: EvidenceBinding) {
     this.state = state;
+    this.environment = environment;
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -122,7 +136,9 @@ export class AdvisoryStream {
   }
 
   private async update() {
-    const previous = await this.state.storage.get<DashboardSnapshot>(key);
+    const previous =
+      (await this.state.storage.get<DashboardSnapshot>(key)) ??
+      (await this.state.storage.get<DashboardSnapshot>('dashboard-v3'));
     const [feeds, records] = await Promise.allSettled([
       advisoryJson('/v1/status', feedStatus, true),
       advisoryJson(recentPath(null), recentPage, true),
@@ -138,9 +154,22 @@ export class AdvisoryStream {
     };
     await this.publish(snapshot);
 
-    const zeroDays = await checkZeroDays(oldZeroDays, new Date());
+    const zeroDays = await this.syncEvidence(oldZeroDays);
     if (JSON.stringify(zeroDays) !== JSON.stringify(oldZeroDays)) {
       await this.publish({ ...snapshot, version: crypto.randomUUID(), zeroDays });
+    }
+  }
+
+  private async syncEvidence(previous: typeof zeroDayView.Type) {
+    if (!this.environment.EVIDENCE_ARCHIVE) return checkZeroDays(previous, new Date());
+    try {
+      const response = await this.environment.EVIDENCE_ARCHIVE.fetch(
+        new Request(archiveOrigin + '/sync', { method: 'POST' })
+      );
+      if (!response.ok) return { ...previous, current: false };
+      return Schema.decodeUnknownSync(zeroDayView)(await response.json());
+    } catch {
+      return { ...previous, current: false };
     }
   }
 

@@ -9,7 +9,13 @@ import {
   type Revision,
 } from './advisories.ts';
 import type { DashboardSnapshot } from './stream.ts';
-import { projectZero, type ZeroDay, type ZeroDayView } from './zero-days.ts';
+import {
+  projectZero,
+  type ExploitationReport,
+  type ZeroDay,
+  type ZeroDayView,
+} from './zero-days.ts';
+import { chromeSite, type VendorSignal } from './vendor-signals.ts';
 
 const project = 'https://github.com/omg-cli/omg';
 const projectSecurity = `${project}/blob/main/docs/security.md`;
@@ -187,7 +193,9 @@ function sourceState(feed: FeedStatus['feeds'][number] | undefined, now: number)
   return feed.complete ? 'Current' : 'Partial';
 }
 
-function sources(status: FeedStatus | null, now: number) {
+function sources(status: FeedStatus | null, publisher: ZeroDayView['publisher'], now: number) {
+  const publisherCurrent =
+    publisher?.complete && now - Date.parse(publisher.checkedAt) < 5 * 60_000;
   return `<aside id="feed-status" class="sources" aria-labelledby="sources-title" data-live-region>
 <div class="panel-heading"><div><h2 id="sources-title">Source status</h2><p>Last successful checks from the OMG advisory service.</p></div></div>
 <ul>${feeds
@@ -197,7 +205,9 @@ function sources(status: FeedStatus | null, now: number) {
       return `<li><div class="feed-top"><a href="${url}">${label} <span aria-hidden="true">↗</span></a><span class="status-label ${state === 'Current' ? 'ok' : 'warn'}">${state}</span></div>
 <p>${summary}</p><div class="feed-time">Checked ${time(feed?.checked_at ?? null, true)}</div></li>`;
     })
-    .join('')}</ul>
+    .join('')}
+${publisher ? `<li><div class="feed-top"><a href="${chromeSite}">Chrome Releases</a><span class="status-label ${publisherCurrent ? 'ok' : 'warn'}">${publisherCurrent ? 'Current' : publisher.complete ? 'Stale' : 'Check failed'}</span></div><p>${number.format(publisher.signals)} CVE IDs observed · ${number.format(publisher.knownExploited)} reported exploited</p><div class="feed-time">Checked ${time(publisher.checkedAt, true)}</div></li>` : ''}
+</ul>
 <a class="text-link api-link" href="${advisoryOrigin}/v1/status">Feed status JSON <span aria-hidden="true">↗</span></a>
 </aside>`;
 }
@@ -271,7 +281,7 @@ ${metricsCard('95th-percentile lag', duration(sample?.p95 ?? null), sampleNote)}
 ${metricsCard('Archive records imported', status ? number.format(status.baseline.imported) : '—', status ? archiveStatus : 'Archive status unavailable')}
 ${metricsCard('New CVEs · 24h', publicationCount, sample?.lowerBound || (sample && !complete) ? 'Minimum from latest revisions' : 'Publication timestamps')}
 </dl>
-<div class="monitor-layout">${exploitation(snapshot?.zeroDays ?? null)}${sources(status, now)}</div>
+<div class="monitor-layout">${exploitation(snapshot?.zeroDays ?? null)}${sources(status, snapshot?.zeroDays.publisher, now)}</div>
 <section class="section" id="recent">
 <div class="section-heading"><div><h2>Recent CVE records</h2><p>Newest by publisher revision time. Each row shows when OMG received that revision.</p></div><a class="button subtle" href="/archive">Browse 30-day archive <span aria-hidden="true">→</span></a></div>
 ${lookup()}
@@ -305,6 +315,7 @@ function zeroDayRows(entries: readonly ZeroDay[]) {
 
 function exploitation(feed: ZeroDayView | null) {
   const entries = feed?.entries ?? [];
+  const chromeReports = feed?.publisher?.recentExploitation ?? [];
   return `<section id="exploitation" class="zero-days" data-live-region>
 <div class="section-heading"><div><h2>Documented zero-days</h2><p>Recent public reports of exploitation before a fix, matched to records in the OMG archive.</p></div></div>
 ${feed?.current ? '' : `<p class="notice">${entries.length ? 'Showing the last confirmed entries. The evidence source is temporarily unavailable.' : 'Zero-day evidence is unavailable.'}</p>`}
@@ -312,7 +323,37 @@ ${entries.length ? zeroDayRows(entries.slice(0, 5)) : feed?.current ? '<p class=
 ${entries.length > 5 ? `<details class="more-evidence"><summary>Show ${entries.length - 5} more documented zero-days</summary>${zeroDayRows(entries.slice(5))}</details>` : ''}
 <p class="section-note">Evidence comes from <a href="${projectZero}">Google Project Zero</a> and verified vendor disclosures. <a href="${kevCatalog}">CISA KEV</a> tracks known exploitation, including cases after a fix.</p>
 ${feed?.checkedAt ? `<p class="feed-time">Evidence checked ${time(feed.checkedAt, true)}</p>` : ''}
+${
+  chromeReports.length
+    ? `<div class="publisher-watch"><h3>Exploitation reported by Chrome</h3><ul class="evidence-list">${chromeReports
+        .map(
+          ({ id, advisoryUrl, published, archived }) =>
+            `<li><div>${archived ? `<a href="/cves/${escape(id)}">${escape(id)}</a>` : `<a href="${escape(advisoryUrl)}">${escape(id)}</a><span>CVE record pending</span>`}</div><div><a class="text-link" href="${escape(advisoryUrl)}">Chrome advisory</a>${time(published)}</div></li>`
+        )
+        .join('')}</ul></div>`
+    : ''
+}
 </section>`;
+}
+
+function evidenceDetails(evidence: ZeroDay) {
+  const dateLabel = (day: string) => shortDate.format(Date.parse(day + 'T00:00:00Z'));
+  const details = [
+    evidence.discovered ? `Discovered ${dateLabel(evidence.discovered)}` : '',
+    evidence.patched ? `Patched ${dateLabel(evidence.patched)}` : '',
+    evidence.euvd ? 'Listed as exploited by ENISA EUVD' : '',
+    evidence.epss != null && evidence.epssDate
+      ? `EPSS ${(evidence.epss * 100).toFixed(1)}% on ${escape(evidence.epssDate)}`
+      : '',
+  ].filter(Boolean);
+  return `<p>Documented zero-day affecting ${escape(evidence.product || 'the product in the CVE record')}. <a class="text-link" href="${escape(evidence.evidence)}">${evidence.source}</a></p>
+${details.length ? `<ul class="evidence-facts">${details.map(item => `<li>${item}</li>`).join('')}</ul>` : ''}
+${evidence.vendorAdvisory ? `<p><a class="text-link" href="${escape(evidence.vendorAdvisory)}">Vendor advisory</a></p>` : ''}`;
+}
+
+function publisherReports(signals: readonly VendorSignal[]) {
+  if (!signals.length) return '';
+  return `<div class="publisher-reports"><h2>Publisher reports</h2><ul class="evidence-facts">${signals.map(signal => `<li><a class="text-link" href="${escape(signal.advisoryUrl)}">${escape(signal.provider)} advisory</a> · ${signal.exploited ? 'Reported exploited in the wild' : 'Vendor disclosure'} · Advisory published ${time(signal.published, true)} · ${signal.exploited && signal.exploitationReceived ? `Exploitation first recorded by OMG ${time(signal.exploitationReceived, true)}` : `Received by OMG ${time(signal.received, true)}`}</li>`).join('')}</ul></div>`;
 }
 
 function auditEvidence() {
@@ -375,7 +416,7 @@ ${table(page.records)}
   );
 }
 
-export function detail(data: RecordDetails, documented: ZeroDay | undefined, now: number) {
+export function detail(data: RecordDetails, evidence: ExploitationReport, now: number) {
   const { provenance: record, kev, kev_complete: kevComplete, kev_checked_at: kevCheckedAt } = data;
   const kevCurrent = kevComplete && freshAt(kevCheckedAt ?? null, now);
   const state =
@@ -393,11 +434,12 @@ export function detail(data: RecordDetails, documented: ZeroDay | undefined, now
 ${metricsCard('Received by OMG', time(record.fetched_at), '')}${metricsCard('Intake lag', duration(lagMinutes(record)), '')}</dl>
 <div class="record-evidence">
 <div><h2>Exploitation evidence</h2>
-${documented ? `<p>Documented zero-day affecting ${escape(documented.product || 'the product in the CVE record')}. <a class="text-link" href="${escape(documented.evidence)}">${documented.source}</a></p>` : ''}
+${evidence.zeroDay ? evidenceDetails(evidence.zeroDay) : ''}
 <p>${kev ? `Listed by CISA KEV on <time datetime="${kev.dateAdded}">${kev.dateAdded}</time>.` : kevCurrent ? 'No listing in the current CISA KEV snapshot.' : 'CISA KEV listing status is unavailable.'} ${kev && !kevCurrent ? 'The CISA snapshot is partial or stale.' : ''} <a class="text-link" href="${kevCatalog}">CISA catalog ↗</a></p>
 ${kevCheckedAt ? `<p>Catalog checked ${time(kevCheckedAt, true)}</p>` : ''}</div>
 <div><h2>Stored revision SHA-256</h2><p><code>${record.payload_sha256}</code></p></div>
 </div>
+${publisherReports(evidence.vendor)}
 <div class="detail-links"><a class="button" href="https://www.cve.org/CVERecord?id=${record.id}">Publisher record ↗</a>
 <a class="button subtle" href="${advisoryOrigin}/v1/cves/${record.id}">OMG stored record JSON ↗</a>
 <a class="button subtle" href="${advisoryOrigin}/v1/epss/${record.id}">EPSS JSON ↗</a></div>

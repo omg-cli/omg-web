@@ -21,3 +21,23 @@ export async function advisoryJson<A, I>(path: string, schema: Schema.Schema<A, 
   if (!response.ok) throw new UpstreamError(response.status);
   return Schema.decodeUnknownSync(schema)(await response.json());
 }
+
+export async function readLimitedText(response: Response, limitBytes: number) {
+  if (!response.body) throw new Error('Source response is empty');
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let result = '';
+  let bytes = 0;
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) return result + decoder.decode();
+      bytes += value.byteLength;
+      if (bytes > limitBytes) throw new Error('Source response exceeds size limit');
+      result += decoder.decode(value, { stream: true });
+    }
+  } finally {
+    await reader.cancel().catch(() => undefined);
+    reader.releaseLock();
+  }
+}

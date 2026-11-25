@@ -9,8 +9,16 @@ import {
   recordDetails,
 } from './advisories.ts';
 import { advisoryJson, UpstreamError } from './sources.ts';
-import { dashboardSnapshot, isIntakeEvent, streamPath, type TailEvent } from './stream.ts';
+import {
+  archiveOrigin,
+  dashboardSnapshot,
+  isIntakeEvent,
+  streamPath,
+  type EvidenceBinding,
+  type TailEvent,
+} from './stream.ts';
 import { archive, detail, home, message, renderLive } from './views.ts';
+import { exploitationReport, type ExploitationReport } from './zero-days.ts';
 
 export { AdvisoryStream } from './stream.ts';
 
@@ -18,7 +26,7 @@ interface CacheStorage {
   open(name: string): Promise<Cache>;
 }
 
-interface DashboardEnvironment {
+interface DashboardEnvironment extends EvidenceBinding {
   ASSETS: { fetch(request: Request): Promise<Response> };
   ADVISORY_STREAM: {
     getByName(name: string): { fetch(request: Request): Promise<Response> };
@@ -91,6 +99,22 @@ async function readSnapshot(environment: DashboardEnvironment) {
   }
 }
 
+async function readEvidence(
+  id: string,
+  environment: DashboardEnvironment
+): Promise<ExploitationReport> {
+  try {
+    const response = await environment.EVIDENCE_ARCHIVE?.fetch(
+      new Request(`${archiveOrigin}/records/${id}`)
+    );
+    if (response?.ok) return Schema.decodeUnknownSync(exploitationReport)(await response.json());
+  } catch {
+    // The most recent public snapshot can still corroborate a documented case.
+  }
+  const snapshot = await readSnapshot(environment);
+  return { zeroDay: snapshot?.zeroDays.entries.find(item => item.id === id) ?? null, vendor: [] };
+}
+
 async function dashboard(environment: DashboardEnvironment, fragments: boolean) {
   const state = await readSnapshot(environment);
   const now = Date.now();
@@ -129,20 +153,14 @@ async function browse(url: URL, context: DashboardContext) {
 
 async function record(id: string, environment: DashboardEnvironment, context: DashboardContext) {
   try {
-    const [data, snapshot] = await Promise.all([
+    const [data, evidence] = await Promise.all([
       loadPublic(`/v1/cves/${id}`, recordDetails, context),
-      readSnapshot(environment),
+      readEvidence(id, environment),
     ]);
     if (data.provenance.id !== id || (data.kev && data.kev.cveID !== id)) {
       throw new Error('Advisory ID mismatch');
     }
-    return html(
-      detail(
-        data,
-        snapshot?.zeroDays.entries.find(item => item.id === id),
-        Date.now()
-      )
-    );
+    return html(detail(data, evidence, Date.now()));
   } catch (error) {
     if (error instanceof UpstreamError && error.status === notFound) {
       return html(

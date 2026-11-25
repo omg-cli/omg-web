@@ -1,25 +1,39 @@
 import { Schema } from 'effect';
 import { cveId, recordDetails } from './advisories.ts';
 import { advisoryJson, UpstreamError } from './sources.ts';
+import { vendorFeedStatus, vendorSignal } from './vendor-signals.ts';
 
 export const projectZero = 'https://projectzero.google/0day.html';
 
 const cveIdentity = Schema.String.pipe(Schema.pattern(cveId));
 const observation = Schema.NullOr(Schema.String);
-const zeroDay = Schema.Struct({
+export const zeroDay = Schema.Struct({
   id: cveIdentity,
   product: Schema.String,
   patched: observation,
   evidence: Schema.String.pipe(Schema.startsWith('https://')),
   source: Schema.Literal('Project Zero', 'Vendor disclosure'),
   observedAt: Schema.optional(observation),
+  vendor: Schema.optional(observation),
+  discovered: Schema.optional(observation),
+  vendorAdvisory: Schema.optional(observation),
+  kevAdded: Schema.optional(observation),
+  epss: Schema.optional(Schema.NullOr(Schema.Number)),
+  epssDate: Schema.optional(observation),
+  euvd: Schema.optional(Schema.Boolean),
 });
 export const zeroDayView = Schema.Struct({
   entries: Schema.Array(zeroDay),
   checkedAt: observation,
   current: Schema.Boolean,
   seen: Schema.optional(Schema.Array(Schema.Struct({ id: cveIdentity, observedAt: observation }))),
+  publisher: Schema.optional(Schema.NullOr(vendorFeedStatus)),
 });
+export const exploitationReport = Schema.Struct({
+  zeroDay: Schema.NullOr(zeroDay),
+  vendor: Schema.Array(vendorSignal),
+});
+export type ExploitationReport = typeof exploitationReport.Type;
 export type ZeroDay = typeof zeroDay.Type;
 export type ZeroDayView = typeof zeroDayView.Type;
 
@@ -27,7 +41,7 @@ const spreadsheet =
   'https://docs.google.com/spreadsheets/d/1lkNJ0uQwbeC1ZTRrxdtuPLCIl7mlUreoKfSIgajnSyY/gviz/tq';
 const maxRows = 16;
 const maxBytes = 64 * 1024;
-const header = '"CVE","Vendor","Product","Date Patched"';
+const header = '"CVE","Vendor","Product","Date Discovered","Date Patched","Advisory"';
 
 const vendorDisclosures: readonly ZeroDay[] = [
   {
@@ -54,8 +68,16 @@ const vendorDisclosures: readonly ZeroDay[] = [
   },
 ];
 
-interface Candidate extends ZeroDay {
+export interface Candidate extends ZeroDay {
   order: string;
+  year?: number;
+}
+
+interface EvidenceFeed {
+  source: ZeroDay['source'];
+  rows: readonly Candidate[];
+  coverageYears: readonly number[];
+  complete: boolean;
 }
 
 function isoDay(value: string) {
@@ -66,7 +88,31 @@ function isoDay(value: string) {
     : null;
 }
 
-const csvRow = /^"((?:[^"]|"")*)","((?:[^"]|"")*)","((?:[^"]|"")*)","((?:[^"]|"")*)"$/u;
+const csvRow =
+  /^"((?:[^"]|"")*)","((?:[^"]|"")*)","((?:[^"]|"")*)","((?:[^"]|"")*)","((?:[^"]|"")*)","((?:[^"]|"")*)"$/u;
+const advisoryHosts = new Set([
+  'access.redhat.com',
+  'chromereleases.googleblog.com',
+  'helpx.adobe.com',
+  'msrc.microsoft.com',
+  'support.apple.com',
+  'www.mozilla.org',
+  'www.samsungmobile.com',
+]);
+
+function vendorUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' &&
+      !url.username &&
+      !url.password &&
+      advisoryHosts.has(url.hostname)
+      ? url.href
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 export function readTracker(csv: string): Candidate[] {
   const [first, ...lines] = csv
@@ -77,7 +123,8 @@ export function readTracker(csv: string): Candidate[] {
   return lines.flatMap(line => {
     const match = csvRow.exec(line);
     if (!match) throw new Error('Invalid Project Zero row');
-    const [, value = '', vendor = '', product = '', patched = ''] = match;
+    const [, value = '', vendor = '', product = '', discovered = '', patched = '', advisory = ''] =
+      match;
     const id = value.trim();
     if (!cveId.test(id)) return [];
     const name = [vendor, product]
@@ -90,6 +137,9 @@ export function readTracker(csv: string): Candidate[] {
         id,
         product: name.slice(0, 160),
         patched: day,
+        vendor: vendor.replaceAll('""', '"').trim().slice(0, 120) || null,
+        discovered: isoDay(discovered.trim()),
+        vendorAdvisory: vendorUrl(advisory),
         order: day ?? '',
         evidence: projectZero,
         source: 'Project Zero',
@@ -103,7 +153,7 @@ async function rowsFor(year: number) {
   url.search = new URLSearchParams({
     tqx: 'out:csv',
     sheet: String(year),
-    tq: 'select A,B,C,G',
+    tq: 'select A,B,C,F,G,H',
   }).toString();
   const response = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(4_000) });
   if (
@@ -120,7 +170,7 @@ async function rowsFor(year: number) {
   try {
     for (;;) {
       const { value, done } = await reader.read();
-      if (done) return readTracker(csv + decoder.decode());
+      if (done) return readTracker(csv + decoder.decode()).map(entry => ({ ...entry, year }));
       bytes += value.byteLength;
       if (bytes > maxBytes) throw new Error('Project Zero export too large');
       csv += decoder.decode(value, { stream: true });
@@ -131,17 +181,42 @@ async function rowsFor(year: number) {
   }
 }
 
+export async function loadEvidence(now: Date): Promise<readonly EvidenceFeed[]> {
+  const year = now.getUTCFullYear();
+  const years = [year, year - 1];
+  const sheets = await Promise.allSettled(years.map(rowsFor));
+  const coverageYears = years.flatMap((value, index) =>
+    sheets[index]?.status === 'fulfilled' ? [value] : []
+  );
+  const tracker = sheets.flatMap(sheet => (sheet.status === 'fulfilled' ? sheet.value : []));
+  return [
+    {
+      source: 'Project Zero',
+      rows: tracker,
+      coverageYears,
+      complete: coverageYears.length === years.length,
+    },
+    {
+      source: 'Vendor disclosure',
+      rows: vendorDisclosures.map(entry => ({
+        ...entry,
+        order: entry.patched ?? entry.id.slice(4, 8),
+      })),
+      coverageYears: [],
+      complete: true,
+    },
+  ];
+}
+
 export async function checkZeroDays(previous: ZeroDayView | null, now: Date): Promise<ZeroDayView> {
   try {
-    const year = now.getUTCFullYear();
-    const sheets = await Promise.allSettled([rowsFor(year), rowsFor(year - 1)]);
-    const tracker = sheets.flatMap(sheet => (sheet.status === 'fulfilled' ? sheet.value : []));
-    if (sheets.every(sheet => sheet.status === 'rejected')) throw new Error('Tracker unavailable');
-    const current = sheets.every(sheet => sheet.status === 'fulfilled');
-    const candidates = new Map(tracker.map(row => [row.id, row]));
-    for (const item of vendorDisclosures) {
-      if (!candidates.has(item.id))
-        candidates.set(item.id, { ...item, order: item.patched ?? item.id.slice(4, 8) });
+    const feeds = await loadEvidence(now);
+    const current = feeds.every(feed => feed.complete);
+    const candidates = new Map<string, Candidate>();
+    for (const feed of feeds) {
+      for (const item of feed.rows) {
+        if (!candidates.has(item.id)) candidates.set(item.id, item);
+      }
     }
 
     const previousSeen = new Map(previous?.seen?.map(({ id, observedAt }) => [id, observedAt]));
@@ -183,16 +258,31 @@ export async function checkZeroDays(previous: ZeroDayView | null, now: Date): Pr
     }
     const fresh = entries
       .toSorted((a, b) => b.order.localeCompare(a.order))
-      .map(({ id, product, patched, evidence, source, observedAt }) => ({
-        id,
-        product,
-        patched,
-        evidence,
-        source,
-        observedAt: observedAt ?? null,
-      }));
+      .map(
+        ({
+          id,
+          product,
+          patched,
+          evidence,
+          source,
+          observedAt,
+          vendor,
+          discovered,
+          vendorAdvisory,
+        }) => ({
+          id,
+          product,
+          patched,
+          evidence,
+          source,
+          observedAt: observedAt ?? null,
+          vendor,
+          discovered,
+          vendorAdvisory,
+        })
+      );
     if (!current) {
-      const merged = new Map(fresh.map(entry => [entry.id, entry]));
+      const merged = new Map<string, ZeroDay>(fresh.map(entry => [entry.id, entry]));
       for (const entry of previous?.entries ?? []) {
         if (!merged.has(entry.id))
           merged.set(entry.id, { ...entry, observedAt: entry.observedAt ?? null });
