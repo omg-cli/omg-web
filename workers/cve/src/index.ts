@@ -62,21 +62,16 @@ function html(body: string, status = 200) {
   return respond(body, status, new Headers({ 'Content-Type': 'text/html; charset=utf-8' }));
 }
 
-async function loadPublic<A, I>(
-  path: string,
-  schema: Schema.Schema<A, I>,
-  context: DashboardContext,
-  cacheFirstPage = false
-) {
-  const url = new URL(path, advisoryOrigin);
-  const key = new Request(url);
-  const cache = cacheFirstPage ? await caches.open('omg-cve-v1').catch(() => null) : null;
+async function firstArchivePage(context: DashboardContext) {
+  const path = recentPath(null);
+  const key = new Request(new URL(path, advisoryOrigin));
+  const cache = await caches.open('omg-cve-v1').catch(() => null);
   const cached = await cache?.match(key).catch(() => undefined);
   if (cached) {
-    return Schema.decodeUnknownSync(schema)(await cached.json());
+    return Schema.decodeUnknownSync(recentPage)(await cached.json());
   }
 
-  const data = await advisoryJson(path, schema);
+  const data = await advisoryJson(path, recentPage);
   if (cache) {
     const entry = Response.json(data, { headers: { 'Cache-Control': 'public, max-age=30' } });
     context.waitUntil(cache.put(key, entry).catch(() => undefined));
@@ -134,7 +129,10 @@ async function browse(url: URL, context: DashboardContext) {
     );
   }
   try {
-    const page = await loadPublic(recentPath(cursor), recentPage, context, cursor === null);
+    const page =
+      cursor === null
+        ? await firstArchivePage(context)
+        : await advisoryJson(recentPath(cursor), recentPage);
     return html(archive(page, cursor === null, Date.now()));
   } catch (error) {
     if (error instanceof UpstreamError && error.status === 400) {
@@ -150,10 +148,10 @@ async function browse(url: URL, context: DashboardContext) {
   }
 }
 
-async function record(id: string, environment: DashboardEnvironment, context: DashboardContext) {
+async function record(id: string, environment: DashboardEnvironment) {
   try {
     const [data, evidence] = await Promise.all([
-      loadPublic(`/v1/cves/${id}`, recordDetails, context),
+      advisoryJson(`/v1/cves/${id}`, recordDetails),
       readEvidence(id, environment),
     ]);
     if (data.provenance.id !== id || (data.kev && data.kev.cveID !== id)) {
@@ -210,7 +208,7 @@ async function route(
   }
 
   const id = url.pathname.slice('/cves/'.length);
-  if (url.pathname.startsWith('/cves/') && cveId.test(id)) return record(id, environment, context);
+  if (url.pathname.startsWith('/cves/') && cveId.test(id)) return record(id, environment);
   return html(message('Page not found', 'Open the dashboard or browse recent CVEs.'), notFound);
 }
 
