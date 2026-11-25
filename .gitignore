@@ -31,4 +31,5 @@ tasks/
 *.cpuprofile
 npm-debug.log*
 workers/api/.wrangler/
+workers/cve/.wrangler/
 site/.wrangler/
