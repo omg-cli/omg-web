@@ -7,6 +7,10 @@
   "workers_dev": false,
   "preview_urls": false,
   "routes": [{ "pattern": "cve.getomg.dev", "custom_domain": true }],
+  "durable_objects": {
+    "bindings": [{ "name": "ADVISORY_STREAM", "class_name": "AdvisoryStream" }],
+  },
+  "migrations": [{ "tag": "advisory-stream-v1", "new_sqlite_classes": ["AdvisoryStream"] }],
   "assets": {
     "directory": "public",
     "binding": "ASSETS",

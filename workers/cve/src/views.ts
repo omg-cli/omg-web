@@ -8,6 +8,8 @@ import {
   type RecordDetails,
   type Revision,
 } from './advisories.ts';
+import type { DashboardSnapshot } from './stream.ts';
+import { projectZero, type ZeroDay, type ZeroDayView } from './zero-days.ts';
 
 const project = 'https://github.com/omg-cli/omg';
 const projectSecurity = `${project}/blob/main/docs/security.md`;
@@ -48,25 +50,6 @@ const feeds = [
     'https://security.archlinux.org/',
   ],
   ['kev', 'CISA KEV', 'Known exploited vulnerabilities', kevCatalog],
-];
-
-const zeroDays = [
-  {
-    id: 'CVE-2026-102764',
-    product: 'BeyondTrust Remote Support',
-    advisory: 'https://www.beyondtrust.com/blog/entry/bt26-05',
-  },
-  {
-    id: 'CVE-2026-88772',
-    product: 'Citrix NetScaler',
-    advisory:
-      'https://support.citrix.com/external/article/CTX697096/citrix-netscaler-adc-and-citrix-netscaler-gateway-security-bulletin.html',
-  },
-  {
-    id: 'CVE-2026-22769',
-    product: 'Dell RecoverPoint for VMs',
-    advisory: 'https://www.dell.com/support/kbdoc/en-us/000426773/dsa-2026-079',
-  },
 ];
 
 const checks = [
@@ -171,20 +154,21 @@ function layout(title: string, path: string, body: string, refresh = false) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#101615">
+<meta name="theme-color" content="#090909">
 <title>${escape(title)} · OMG Security</title>
 <meta name="description" content="${description}">
 <link rel="canonical" href="${canonical}${path}">
+<link rel="preload" href="/archivo.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/dashboard.css">
 ${refresh ? '<script src="/dashboard.js" defer></script>' : ''}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="topbar"><div class="shell topbar-inner">
-<a class="brand" href="/" aria-label="OMG Security dashboard"><span>OMG</span><span class="brand-divider"></span><span>Security</span></a>
+<a class="brand" href="https://getomg.dev/" aria-label="OMG Package Manager home"><img src="/logo.svg" width="110" height="33" alt="OMG"></a>
 <nav aria-label="Security dashboard">
-<a href="/#intake">Intake</a><a href="/#exploitation">Zero-days</a><a href="/#coverage">Install checks</a><a href="/#audit">Audit evidence</a>
-</nav></div></header>
+<a href="/" aria-current="${path === '/' ? 'page' : 'false'}">Advisories</a><a href="/#exploitation">Zero-days</a><a href="/#coverage">Install checks</a><a href="/#audit">Audits</a>
+</nav><a class="site-link" href="${siteSecurity}">OMG Security</a></div></header>
 <main class="shell" id="main">${body}</main>
 <footer class="shell footer"><a class="footer-home" href="https://getomg.dev/">OMG package manager</a><div><a href="${siteSecurity}">Project security</a><a href="${advisoryOrigin}/v1/status">Advisory API</a><a href="${project}/security/policy">Report a vulnerability</a><a href="${project}">GitHub</a></div></footer>
 </body></html>`;
@@ -204,8 +188,8 @@ function sourceState(feed: FeedStatus['feeds'][number] | undefined, now: number)
 }
 
 function sources(status: FeedStatus | null, now: number) {
-  return `<aside class="panel sources" aria-labelledby="sources-title">
-<div class="panel-heading"><div><h2 id="sources-title">Scheduled feeds</h2><p>Cloudflare checks these feeds every 5 minutes.</p></div></div>
+  return `<aside id="feed-status" class="sources" aria-labelledby="sources-title" data-live-region>
+<div class="panel-heading"><div><h2 id="sources-title">Source status</h2><p>Last successful checks from the OMG advisory service.</p></div></div>
 <ul>${feeds
     .map(([key, label, summary, url]) => {
       const feed = status?.feeds.find(item => item.source === key);
@@ -219,7 +203,7 @@ function sources(status: FeedStatus | null, now: number) {
 }
 
 function metricsCard(label: string, value: string, note: string) {
-  return `<div class="metric"><dt>${label}</dt><dd>${value}</dd><p>${note}</p></div>`;
+  return `<div class="metric"><dt>${label}</dt><dd>${value}${note ? `<span>${note}</span>` : ''}</dd></div>`;
 }
 
 function intakeChart(page: RecentPage, metrics: ReturnType<typeof sampleMetrics>) {
@@ -250,7 +234,9 @@ function labels(record: Revision) {
   return 'Other';
 }
 
-function liveView(status: FeedStatus | null, page: RecentPage | null, now: number) {
+export function renderLive(snapshot: DashboardSnapshot | null, now: number) {
+  const status = snapshot?.status ?? null;
+  const page = snapshot?.recent ?? null;
   const cve = status?.feeds.find(item => item.source === 'cve');
   const cveState = sourceState(cve, now);
   const complete = page?.complete && freshAt(page.checked_at, now) && cveState === 'Current';
@@ -267,33 +253,31 @@ function liveView(status: FeedStatus | null, page: RecentPage | null, now: numbe
     ? `${sample.lowerBound || !complete ? '≥' : ''}${number.format(sample.newlyPublished)}`
     : '—';
 
-  return `<div id="live-view">
-<section class="hero" aria-labelledby="title">
-<div class="hero-top"><span class="eyebrow">Advisory intake &amp; package checks</span><span class="status-label hero-status ${complete ? 'ok' : 'warn'}">${complete ? 'CVE feed current' : `CVE feed ${cveState === 'Current' ? 'partial' : cveState.toLowerCase()}`}</span></div>
-<h1 id="title">Security coverage</h1>
-<p class="lede">See which advisories OMG receives, how quickly they arrive, and what OMG checks before installing packages or runtimes.</p>
-<div class="hero-meta"><span>Last CVE check <strong>${time(cve?.checked_at ?? page?.checked_at ?? null)}</strong></span><a class="text-link" href="/" aria-label="Refresh the dashboard">Refresh <span aria-hidden="true">↻</span></a></div>
-</section>
-<dl class="metrics">
+  return `<div id="live-view" data-version="${escape(snapshot?.version ?? '')}">
+<section class="hero" id="intake" aria-labelledby="title">
+<div class="hero-copy">
+<h1 id="title">Vulnerability<br><span>intake.</span></h1>
+<p class="lede">Follow advisories as OMG receives them. See when zero-days are documented and what the CLI checks before installation.</p>
+<a class="button" href="#recent">Browse advisories</a>
+<div class="hero-meta"><span id="stream-status" role="status" hidden></span><span id="cve-status" data-live-region><span class="status-label hero-status ${complete ? 'ok' : 'warn'}">${complete ? 'CVE feed current' : `CVE feed ${cveState === 'Current' ? 'partial' : cveState.toLowerCase()}`}</span><span class="last-check">Last checked ${time(cve?.checked_at ?? page?.checked_at ?? null, true)}</span></span></div>
+</div>
+<section class="activity" id="intake-chart" aria-labelledby="activity-title" data-live-region>
+<div class="panel-heading"><div><h2 id="activity-title">CVE intake activity</h2><p>${page && sample ? `Latest ${page.records.length} revisions across ${sample.chartHours}h` : 'Publisher activity in the recent CVE feed'}</p></div><span class="tag">UTC</span></div>
+${page && sample ? intakeChart(page, sample) : '<p class="notice">The recent CVE feed is unavailable.</p>'}
+<dl class="chart-metrics">${metricsCard('Median intake lag', duration(sample?.median ?? null), sampleNote)}
+${metricsCard('95th-percentile lag', duration(sample?.p95 ?? null), sampleNote)}</dl>
+</section></section>
+<dl class="metrics overview-metrics" id="intake-totals" data-live-region>
 ${metricsCard('Archive records imported', status ? number.format(status.baseline.imported) : '—', status ? archiveStatus : 'Archive status unavailable')}
 ${metricsCard('New CVEs · 24h', publicationCount, sample?.lowerBound || (sample && !complete) ? 'Minimum from latest revisions' : 'Publication timestamps')}
-${metricsCard('Median intake lag', duration(sample?.median ?? null), sampleNote)}
-${metricsCard('95th-percentile lag', duration(sample?.p95 ?? null), sampleNote)}
 </dl>
-<div class="overview" id="intake">
-<section class="panel activity" aria-labelledby="activity-title">
-<div class="panel-heading"><div><h2 id="activity-title">CVE intake activity</h2><p>${page && sample ? `Publisher activity over the last ${sample.chartHours}h in the latest ${page.records.length} stored revisions.` : 'Publisher activity in the recent CVE feed.'}</p></div><span class="tag">UTC</span></div>
-${page && sample ? intakeChart(page, sample) : '<p class="notice">The recent CVE feed is unavailable.</p>'}
-</section>
-${sources(status, now)}
-</div>
-</div>
+<div class="monitor-layout">${exploitation(snapshot?.zeroDays ?? null)}${sources(status, now)}</div>
 <section class="section" id="recent">
 <div class="section-heading"><div><h2>Recent CVE records</h2><p>Newest by publisher revision time. Each row shows when OMG received that revision.</p></div><a class="button subtle" href="/archive">Browse 30-day archive <span aria-hidden="true">→</span></a></div>
 ${lookup()}
-<div id="current-revisions">
-${page ? table(page.records.slice(0, 12)) : '<p class="notice">Recent CVE records could not be loaded. The feed will retry on the next refresh.</p>'}
-</div></section>`;
+<div id="current-revisions" data-live-region>
+${page ? table(page.records.slice(0, 12)) : '<p class="notice">Recent CVE records are unavailable.</p>'}
+</div></section></div>`;
 }
 
 function table(records: readonly Revision[]) {
@@ -310,16 +294,24 @@ function table(records: readonly Revision[]) {
     .join('')}</tbody></table></div>`;
 }
 
-function exploitation() {
-  return `<section class="section" id="exploitation">
-<div class="section-heading"><div><h2>Documented zero-days</h2><p>These CVEs are in the OMG archive and were publicly documented as exploited before a fix was available.</p></div><a class="button subtle" href="${kevCatalog}">CISA KEV catalog <span aria-hidden="true">↗</span></a></div>
-<ul class="evidence-list">${zeroDays
+function zeroDayRows(entries: readonly ZeroDay[]) {
+  return `<ul class="evidence-list">${entries
     .map(
-      ({ id, product, advisory }) =>
-        `<li><a href="/cves/${id}">${id}</a><span>${product}</span><a class="text-link" href="${advisory}">Vendor advisory <span aria-hidden="true">↗</span></a></li>`
+      ({ id, product, patched, observedAt, evidence, source }) =>
+        `<li><div><a href="/cves/${escape(id)}">${escape(id)}</a><span>${escape(product || 'Product in CVE record')}</span></div><div><a class="text-link" href="${escape(evidence)}">${source}</a>${observedAt ? `<time datetime="${escape(observedAt)}">Added ${shortDate.format(Date.parse(observedAt))}</time>` : patched ? `<time datetime="${escape(patched)}">Patched ${shortDate.format(Date.parse(patched + 'T00:00:00Z'))}</time>` : ''}</div></li>`
     )
-    .join('')}</ul>
-<p class="section-note">These are selected public examples. CISA KEV listings document known exploitation and can include vulnerabilities exploited after a fix was available. OMG checks the CISA feed every five minutes and shows its listing date on individual CVE records. Public feeds cover vulnerabilities after disclosure.</p>
+    .join('')}</ul>`;
+}
+
+function exploitation(feed: ZeroDayView | null) {
+  const entries = feed?.entries ?? [];
+  return `<section id="exploitation" class="zero-days" data-live-region>
+<div class="section-heading"><div><h2>Documented zero-days</h2><p>Recent public reports of exploitation before a fix, matched to records in the OMG archive.</p></div></div>
+${feed?.current ? '' : `<p class="notice">${entries.length ? 'Showing the last confirmed entries. The evidence source is temporarily unavailable.' : 'Zero-day evidence is unavailable.'}</p>`}
+${entries.length ? zeroDayRows(entries.slice(0, 5)) : feed?.current ? '<p class="notice">There are no matching records from these sources yet.</p>' : ''}
+${entries.length > 5 ? `<details class="more-evidence"><summary>Show ${entries.length - 5} more documented zero-days</summary>${zeroDayRows(entries.slice(5))}</details>` : ''}
+<p class="section-note">Evidence comes from <a href="${projectZero}">Google Project Zero</a> and verified vendor disclosures. <a href="${kevCatalog}">CISA KEV</a> tracks known exploitation, including cases after a fix.</p>
+${feed?.checkedAt ? `<p class="feed-time">Evidence checked ${time(feed.checkedAt, true)}</p>` : ''}
 </section>`;
 }
 
@@ -361,17 +353,12 @@ ${auditEvidence()}
 <section class="section methodology" id="methodology">
 <h2>How intake is measured</h2>
 <p>Intake lag is the time between the CVE Program’s modification timestamp and OMG’s receipt of that revision. The median and 95th percentile use up to 100 latest stored revisions with valid, ordered timestamps. Historical imports can increase intake lag. The 24-hour publication count uses publication dates in that same sample. A <strong>≥</strong> indicates the sample or feed is incomplete.</p>
-<p>The dashboard refreshes every minute while visible. The CVE Program can publish changes between Cloudflare checks. Records in the archive represent the latest stored revision of each CVE. Install decisions use version and source evidence for the specific operation.</p>
+<p>The dashboard updates when the advisory service completes intake. Upstream publishers set their own schedules, and OMG’s scheduled checks pick up their published changes. The archive shows the latest stored revision of each CVE.</p>
 </section>`;
 }
 
-export function home(status: FeedStatus | null, page: RecentPage | null, now: number) {
-  return layout(
-    'Security coverage',
-    '/',
-    `${liveView(status, page, now)}${exploitation()}${coverage()}`,
-    true
-  );
+export function home(snapshot: DashboardSnapshot | null, now: number) {
+  return layout('Vulnerability intake', '/', `${renderLive(snapshot, now)}${coverage()}`, true);
 }
 
 export function archive(page: RecentPage, firstPage: boolean, now: number) {
@@ -388,9 +375,8 @@ ${table(page.records)}
   );
 }
 
-export function detail(data: RecordDetails, now: number) {
+export function detail(data: RecordDetails, documented: ZeroDay | undefined, now: number) {
   const { provenance: record, kev, kev_complete: kevComplete, kev_checked_at: kevCheckedAt } = data;
-  const documented = zeroDays.find(item => item.id === record.id);
   const kevCurrent = kevComplete && freshAt(kevCheckedAt ?? null, now);
   const state =
     record.state === 'PUBLISHED'
@@ -407,7 +393,7 @@ export function detail(data: RecordDetails, now: number) {
 ${metricsCard('Received by OMG', time(record.fetched_at), '')}${metricsCard('Intake lag', duration(lagMinutes(record)), '')}</dl>
 <div class="record-evidence">
 <div><h2>Exploitation evidence</h2>
-${documented ? `<p>Documented zero-day affecting ${documented.product}. <a class="text-link" href="${documented.advisory}">Vendor advisory ↗</a></p>` : ''}
+${documented ? `<p>Documented zero-day affecting ${escape(documented.product || 'the product in the CVE record')}. <a class="text-link" href="${escape(documented.evidence)}">${documented.source}</a></p>` : ''}
 <p>${kev ? `Listed by CISA KEV on <time datetime="${kev.dateAdded}">${kev.dateAdded}</time>.` : kevCurrent ? 'No listing in the current CISA KEV snapshot.' : 'CISA KEV listing status is unavailable.'} ${kev && !kevCurrent ? 'The CISA snapshot is partial or stale.' : ''} <a class="text-link" href="${kevCatalog}">CISA catalog ↗</a></p>
 ${kevCheckedAt ? `<p>Catalog checked ${time(kevCheckedAt, true)}</p>` : ''}</div>
 <div><h2>Stored revision SHA-256</h2><p><code>${record.payload_sha256}</code></p></div>
