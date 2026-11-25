@@ -29,6 +29,7 @@ export const vendorSignal = Schema.Struct({
   published: Schema.String,
   received: Schema.String,
   exploitationReceived: Schema.optional(Schema.NullOr(Schema.String)),
+  exploitedSince: Schema.optional(Schema.NullOr(Schema.String)),
   exploited: Schema.Boolean,
 });
 
@@ -37,6 +38,7 @@ export const publisherExploitation = Schema.Struct({
   advisoryUrl: Schema.String.pipe(Schema.startsWith('https://')),
   published: Schema.String,
   archived: Schema.Boolean,
+  exploitedSince: Schema.optional(Schema.NullOr(Schema.String)),
 });
 
 export const vendorFeedStatus = Schema.Struct({
@@ -46,6 +48,11 @@ export const vendorFeedStatus = Schema.Struct({
   signals: Schema.Number,
   knownExploited: Schema.Number,
   recentExploitation: Schema.optional(Schema.Array(publisherExploitation)),
+});
+
+export const publisherFeedStatus = Schema.Struct({
+  ...vendorFeedStatus.fields,
+  provider: Schema.String,
 });
 
 export type VendorSignal = typeof vendorSignal.Type;

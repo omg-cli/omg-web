@@ -3,11 +3,11 @@ import {
   chromeProvider,
   fetchChrome,
   type publisherExploitation,
+  type publisherFeedStatus,
   type VendorSignal,
-  vendorFeedStatus,
 } from './vendor-signals.ts';
 
-type WatchStatus = typeof vendorFeedStatus.Type;
+type WatchStatus = typeof publisherFeedStatus.Type;
 
 export async function collectChrome(sql: postgres.Sql) {
   const [before] = await sql<{ etag: string | null; successful: Date | null }[]>`
@@ -78,9 +78,9 @@ export async function collectChrome(sql: postgres.Sql) {
   }
 }
 
-export async function watchStatus(sql: postgres.Sql): Promise<WatchStatus | null> {
-  const [status] = await sql<WatchStatus[]>`
-    SELECT to_char(s.checked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "checkedAt",
+export async function watchStatuses(sql: postgres.Sql) {
+  return sql<WatchStatus[]>`
+    SELECT s.provider, to_char(s.checked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "checkedAt",
            s.complete, to_char(q.latest AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "lastNewSignal",
            q.signals::int, q.known_exploited::int AS "knownExploited"
       FROM public.cve_vendor_signal_source s
@@ -89,25 +89,30 @@ export async function watchStatus(sql: postgres.Sql): Promise<WatchStatus | null
                MAX(first_received_at) FILTER (WHERE NOT baseline) AS latest
           FROM public.cve_vendor_signal WHERE provider=s.provider
       ) q
-     WHERE s.provider=${chromeProvider}
+     ORDER BY s.provider
   `;
-  return status ?? null;
 }
 
-export async function recentChromeExploitation(sql: postgres.Sql) {
-  return sql<(typeof publisherExploitation.Type)[]>`
+export async function recentPublisherExploitation(sql: postgres.Sql) {
+  return sql<(typeof publisherExploitation.Type & { provider: string })[]>`
     WITH latest AS (
-      SELECT DISTINCT ON (cve_id) cve_id, advisory_url, publisher_published_at
+      SELECT DISTINCT ON (provider, cve_id) provider, cve_id, advisory_url,
+             publisher_published_at, exploited_since
         FROM public.cve_vendor_signal
-       WHERE provider=${chromeProvider} AND reported_exploited
-       ORDER BY cve_id, publisher_published_at DESC, advisory_url
+       WHERE reported_exploited
+       ORDER BY provider, cve_id, publisher_published_at DESC, advisory_url
+    ), ranked AS (
+      SELECT *, row_number() OVER (PARTITION BY provider ORDER BY publisher_published_at DESC, cve_id DESC) AS position
+        FROM latest
     )
-    SELECT v.cve_id AS id, v.advisory_url AS "advisoryUrl",
+    SELECT v.provider, v.cve_id AS id, v.advisory_url AS "advisoryUrl",
            to_char(v.publisher_published_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS published,
+           v.exploited_since::text AS "exploitedSince",
            coalesce(r.state = 'PUBLISHED', false) AS archived
-      FROM latest v
+      FROM ranked v
       LEFT JOIN public.source_record r ON r.id=v.cve_id
-     ORDER BY v.publisher_published_at DESC, v.cve_id DESC LIMIT 5
+     WHERE v.position <= 4
+     ORDER BY v.publisher_published_at DESC, v.cve_id DESC
   `;
 }
 
@@ -116,6 +121,7 @@ export async function vendorSignals(sql: postgres.Sql, id: string) {
     SELECT provider, advisory_url AS "advisoryUrl", reported_exploited AS exploited,
            to_char(publisher_published_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS published,
            to_char(first_received_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS received,
+           exploited_since::text AS "exploitedSince",
            to_char(first_exploitation_received_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "exploitationReceived"
       FROM public.cve_vendor_signal WHERE cve_id=${id}
      ORDER BY reported_exploited DESC, publisher_published_at DESC LIMIT 8

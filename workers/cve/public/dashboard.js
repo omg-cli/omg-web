@@ -8,26 +8,46 @@ let fetching = false;
 let reconnectDelay = 1000;
 let socket;
 
-function indicate(message) {
-  indicator.textContent = message;
-  indicator.hidden = !message;
+function indicate(message, connected = false) {
+  if (indicator.textContent !== message) indicator.textContent = message;
+  indicator.hidden = false;
+  indicator.toggleAttribute('data-connected', connected);
+}
+
+function matchingControl(replacement, active) {
+  if (active.matches('details[id] > summary')) {
+    return replacement.querySelector(`#${CSS.escape(active.parentElement.id)} > summary`);
+  }
+  if (active.matches('a[href]')) {
+    return Array.from(replacement.querySelectorAll('a[href]')).find(
+      link =>
+        link.getAttribute('href') === active.getAttribute('href') &&
+        link.textContent === active.textContent
+    );
+  }
+  return null;
 }
 
 function applyRegion(current, replacement) {
-  const details = current.querySelector('details[open]');
-  if (details) replacement.querySelector('details')?.setAttribute('open', '');
+  for (const details of current.querySelectorAll('details[id][open]')) {
+    replacement.querySelector(`#${CSS.escape(details.id)}`)?.setAttribute('open', '');
+  }
+  if (current.isEqualNode(replacement)) return true;
+  const active = document.activeElement;
+  const focus = current.contains(active) ? matchingControl(replacement, active) : null;
+  if (current.contains(active) && !focus) return false;
   const scroll = current.querySelector('.table-wrap')?.scrollLeft ?? 0;
   current.replaceWith(replacement);
   const table = replacement.querySelector('.table-wrap');
   if (table) table.scrollLeft = scroll;
+  focus?.focus({ preventScroll: true });
+  return true;
 }
 
 function applyDeferred() {
   for (const [id, replacement] of deferred) {
     const current = document.getElementById(id);
-    if (current?.contains(document.activeElement)) continue;
-    deferred.delete(id);
-    if (current) applyRegion(current, replacement);
+    if (!current || applyRegion(current, replacement)) deferred.delete(id);
   }
 }
 
@@ -47,11 +67,10 @@ async function hydrate() {
     for (const replacement of parsed.querySelectorAll('[data-live-region]')) {
       const current = document.getElementById(replacement.id);
       if (!current) continue;
-      if (current.contains(document.activeElement)) {
-        deferred.set(current.id, replacement);
-      } else {
+      if (applyRegion(current, replacement)) {
         deferred.delete(current.id);
-        applyRegion(current, replacement);
+      } else {
+        deferred.set(current.id, replacement);
       }
     }
     liveView.dataset.version = version;
@@ -69,10 +88,10 @@ function connect() {
   socket = new WebSocket(socketUrl);
   socket.addEventListener('open', () => {
     reconnectDelay = 1000;
-    indicate('');
+    indicate('Live updates', true);
   });
   socket.addEventListener('message', event => {
-    indicate('');
+    indicate('Live updates', true);
     wantedVersion = event.data;
     void hydrate();
   });

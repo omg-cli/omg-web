@@ -11,17 +11,31 @@ export const dashboardSnapshot = Schema.Struct({
 export type DashboardSnapshot = typeof dashboardSnapshot.Type;
 
 export const streamPath = 'https://dashboard-stream.internal';
+export const streamName = 'public-dashboard';
 const key = 'dashboard-v4';
+const evidenceGenerationKey = 'evidence-generation';
 const emptyZeroDays = { entries: [], checkedAt: null, current: false };
 export const archiveOrigin = 'https://enrichment.internal';
+export const evidenceUpdate = Schema.Struct({
+  generation: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+  zeroDays: zeroDayView,
+});
 
 export interface EvidenceBinding {
   EVIDENCE_ARCHIVE?: { fetch(request: Request): Promise<Response> };
 }
 
-interface StreamStorage {
+export interface DashboardBinding {
+  ADVISORY_STREAM: { getByName(name: string): { fetch(request: Request): Promise<Response> } };
+}
+
+interface SnapshotStorage {
   get<A>(name: string): Promise<A | undefined>;
   put<A>(name: string, value: A): Promise<void>;
+}
+
+interface StreamStorage extends SnapshotStorage {
+  transaction<A>(callback: (transaction: SnapshotStorage) => Promise<A>): Promise<A>;
   getAlarm(): Promise<number | null>;
   setAlarm(time: number): Promise<void>;
 }
@@ -29,7 +43,7 @@ interface StreamStorage {
 interface StreamState {
   storage: StreamStorage;
   acceptWebSocket(socket: WebSocket): void;
-  getWebSockets(): WebSocket[];
+  getWebSockets(): Pick<WebSocket, 'send' | 'close'>[];
 }
 
 declare const WebSocketPair: new () => { 0: WebSocket; 1: WebSocket };
@@ -37,7 +51,6 @@ declare const WebSocketPair: new () => { 0: WebSocket; 1: WebSocket };
 export interface TailEvent {
   scriptName?: string | null;
   outcome: string;
-  logs?: readonly { message: readonly (string | number)[] }[];
   event:
     | null
     | { cron: string }
@@ -56,12 +69,6 @@ const publishingRoutes = new Set([
 ]);
 
 export function isIntakeEvent(trace: TailEvent) {
-  if (trace.scriptName === 'omg-cve-enrichment') {
-    return (
-      trace.outcome === 'ok' &&
-      Boolean(trace.logs?.some(log => log.message[0] === 'vendor_intake_changed'))
-    );
-  }
   if (trace.scriptName !== 'omg-advisories') return false;
   const event = trace.event;
   if (event === null || 'cron' in event || 'scheduledTime' in event) return true;
@@ -87,6 +94,16 @@ export class AdvisoryStream {
 
   async fetch(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname;
+    if (path === '/evidence' && request.method === 'POST') {
+      let evidence;
+      try {
+        evidence = Schema.decodeUnknownSync(evidenceUpdate)(await request.json());
+      } catch {
+        return new Response(null, { status: 400 });
+      }
+      await this.merge({ zeroDays: evidence.zeroDays }, evidence.generation);
+      return new Response(null, { status: 202 });
+    }
     if (path === '/refresh' && request.method === 'POST') {
       if ((await this.state.storage.getAlarm()) === null) {
         await this.state.storage.setAlarm(Date.now());
@@ -136,48 +153,46 @@ export class AdvisoryStream {
   }
 
   private async update() {
-    const previous =
-      (await this.state.storage.get<DashboardSnapshot>(key)) ??
-      (await this.state.storage.get<DashboardSnapshot>('dashboard-v3'));
     const [feeds, records] = await Promise.allSettled([
       advisoryJson('/v1/status', feedStatus, true),
       advisoryJson(recentPath(null), recentPage, true),
     ]);
     const status = feeds.status === 'fulfilled' ? feeds.value : null;
     const recent = records.status === 'fulfilled' ? records.value : null;
-    const oldZeroDays = previous?.zeroDays ?? emptyZeroDays;
-    const snapshot: DashboardSnapshot = {
-      version: crypto.randomUUID(),
-      status,
-      recent: recent ?? (previous?.recent ? { ...previous.recent, complete: false } : null),
-      zeroDays: oldZeroDays,
-    };
-    await this.publish(snapshot);
-
-    const zeroDays = await this.syncEvidence(oldZeroDays);
-    if (JSON.stringify(zeroDays) !== JSON.stringify(oldZeroDays)) {
-      await this.publish({ ...snapshot, version: crypto.randomUUID(), zeroDays });
+    await this.merge({ status, recent });
+    if (!this.environment.EVIDENCE_ARCHIVE) {
+      const old = await this.state.storage.get<DashboardSnapshot>(key);
+      await this.merge({ zeroDays: await checkZeroDays(old?.zeroDays ?? null, new Date()) });
     }
   }
 
-  private async syncEvidence(previous: typeof zeroDayView.Type) {
-    if (!this.environment.EVIDENCE_ARCHIVE) return checkZeroDays(previous, new Date());
-    try {
-      const response = await this.environment.EVIDENCE_ARCHIVE.fetch(
-        new Request(archiveOrigin + '/sync', { method: 'POST' })
-      );
-      if (!response.ok) return { ...previous, current: false };
-      return Schema.decodeUnknownSync(zeroDayView)(await response.json());
-    } catch {
-      return { ...previous, current: false };
-    }
-  }
-
-  private async publish(snapshot: DashboardSnapshot) {
-    await this.state.storage.put(key, snapshot);
+  private async merge(patch: Partial<Omit<DashboardSnapshot, 'version'>>, generation?: number) {
+    const version = await this.state.storage.transaction(async transaction => {
+      if (generation !== undefined) {
+        const latest = await transaction.get<number>(evidenceGenerationKey);
+        if (latest !== undefined && latest >= generation) return null;
+        await transaction.put(evidenceGenerationKey, generation);
+      }
+      const previous =
+        (await transaction.get<DashboardSnapshot>(key)) ??
+        (await transaction.get<DashboardSnapshot>('dashboard-v3'));
+      const fields = {
+        status: previous?.status ?? null,
+        recent: previous?.recent ?? null,
+        zeroDays: previous?.zeroDays ?? emptyZeroDays,
+      };
+      const next = { ...fields, ...patch };
+      if (patch.recent === null && previous?.recent)
+        next.recent = { ...previous.recent, complete: false };
+      if (previous && JSON.stringify(fields) === JSON.stringify(next)) return null;
+      const revision = crypto.randomUUID();
+      await transaction.put(key, { version: revision, ...next });
+      return revision;
+    });
+    if (!version) return;
     for (const socket of this.state.getWebSockets()) {
       try {
-        socket.send(snapshot.version);
+        socket.send(version);
       } catch {
         try {
           socket.close(1011, 'Reconnect for updates');

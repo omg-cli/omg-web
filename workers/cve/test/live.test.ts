@@ -1,9 +1,59 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { isIntakeEvent } from '../src/stream.ts';
+import { AdvisoryStream, isIntakeEvent } from '../src/stream.ts';
 import { readTracker } from '../src/zero-days.ts';
 import { parseChrome } from '../src/vendor-signals.ts';
 import { renderLive } from '../src/views.ts';
+
+test('publishes committed evidence to an open stream independently of archive intake', async () => {
+  const stored = new Map<string, unknown>();
+  const storage: ConstructorParameters<typeof AdvisoryStream>[0]['storage'] = {
+    async get<A>(key: string) {
+      // SAFETY: The test stores values through the same typed storage interface.
+      return stored.get(key) as A | undefined;
+    },
+    async put<A>(key: string, value: A) {
+      stored.set(key, value);
+    },
+    async getAlarm() {
+      return null;
+    },
+    async setAlarm() {},
+    async transaction(callback) {
+      return callback(storage);
+    },
+  };
+  const delivered: string[] = [];
+  const socket = {
+    send: (value: Parameters<WebSocket['send']>[0]) => delivered.push(String(value)),
+    close() {},
+  };
+  const stream = new AdvisoryStream(
+    { storage, acceptWebSocket() {}, getWebSockets: () => [socket] },
+    {}
+  );
+  const newer = '2026-11-25T14:42:05.000Z';
+  const older = '2026-11-25T14:41:05.000Z';
+  const send = (checkedAt: string) =>
+    stream.fetch(
+      new Request('https://dashboard-stream.internal/evidence', {
+        method: 'POST',
+        body: JSON.stringify({
+          generation: Date.parse(checkedAt),
+          zeroDays: { entries: [], checkedAt, current: true },
+        }),
+      })
+    );
+
+  assert.equal((await send(newer)).status, 202);
+  assert.equal((await send(older)).status, 202);
+  const snapshot = await (
+    await stream.fetch(new Request('https://dashboard-stream.internal/snapshot'))
+  ).json();
+  assert.equal(snapshot.status, null);
+  assert.equal(snapshot.zeroDays.checkedAt, newer);
+  assert.deepEqual(delivered, [snapshot.version]);
+});
 
 test('uses only documented tracker rows with a valid CVE identity', () => {
   const data = [
@@ -40,15 +90,6 @@ test('reacts to producer intake completion and ignores public reads and refused 
     false
   );
   assert.equal(isIntakeEvent({ ...producer, scriptName: 'omg-cve', event: null }), false);
-  assert.equal(
-    isIntakeEvent({
-      ...producer,
-      scriptName: 'omg-cve-enrichment',
-      event: null,
-      logs: [{ message: ['vendor_intake_changed', 1] }],
-    }),
-    true
-  );
   assert.equal(
     isIntakeEvent({ ...producer, scriptName: 'omg-cve-enrichment', event: null }),
     false
@@ -112,9 +153,56 @@ test('links a publisher exploitation report before the canonical CVE is availabl
     },
     Date.parse(now)
   );
-  assert.ok(html.includes('Exploitation reported by Chrome'));
+  assert.ok(html.includes('Reported exploitation'));
   assert.ok(
     html.includes(`<a href="${advisoryUrl}">CVE-2026-12345</a><span>CVE record pending</span>`)
   );
   assert.ok(!html.includes('href="/cves/CVE-2026-12345"'));
+});
+
+test('shows a pending Project Zero CVE and an install-relevant report with no CVE', () => {
+  const checkedAt = '2026-11-25T14:42:05.000Z';
+  const html = renderLive(
+    {
+      version: 'test',
+      status: null,
+      recent: null,
+      zeroDays: {
+        entries: [
+          {
+            id: 'CVE-2026-12345',
+            source: 'Project Zero',
+            product: 'Example runtime',
+            patched: null,
+            evidence: 'https://projectzero.google/0day.html',
+            archived: false,
+          },
+        ],
+        checkedAt,
+        current: true,
+        packages: {
+          sources: [],
+          recent: [
+            {
+              id: 'GHSA-1234-5678-abcd',
+              cveId: null,
+              kind: 'malware',
+              advisoryUrl: 'https://github.com/advisories/GHSA-1234-5678-abcd',
+              publishedAt: checkedAt,
+              observedAt: checkedAt,
+              packages: [
+                { ecosystem: 'npm', name: 'example-package', range: '= 1.2.3', fixed: null },
+              ],
+            },
+          ],
+        },
+      },
+    },
+    Date.parse(checkedAt)
+  );
+  assert.ok(html.includes('CVE record pending'));
+  assert.ok(!html.includes('href="/cves/CVE-2026-12345"'));
+  assert.ok(html.includes('https://github.com/advisories/GHSA-1234-5678-abcd'));
+  assert.ok(html.includes('example-package'));
+  assert.ok(html.includes('= 1.2.3'));
 });

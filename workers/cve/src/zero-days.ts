@@ -1,7 +1,8 @@
 import { Schema } from 'effect';
 import { cveId, recordDetails } from './advisories.ts';
 import { advisoryJson, UpstreamError } from './sources.ts';
-import { vendorFeedStatus, vendorSignal } from './vendor-signals.ts';
+import { packageFeedSchema } from './package-advisories.ts';
+import { publisherFeedStatus, vendorFeedStatus, vendorSignal } from './vendor-signals.ts';
 
 export const projectZero = 'https://projectzero.google/0day.html';
 
@@ -21,6 +22,7 @@ export const zeroDay = Schema.Struct({
   epss: Schema.optional(Schema.NullOr(Schema.Number)),
   epssDate: Schema.optional(observation),
   euvd: Schema.optional(Schema.Boolean),
+  archived: Schema.optional(Schema.Boolean),
 });
 export const zeroDayView = Schema.Struct({
   entries: Schema.Array(zeroDay),
@@ -28,6 +30,8 @@ export const zeroDayView = Schema.Struct({
   current: Schema.Boolean,
   seen: Schema.optional(Schema.Array(Schema.Struct({ id: cveIdentity, observedAt: observation }))),
   publisher: Schema.optional(Schema.NullOr(vendorFeedStatus)),
+  publishers: Schema.optional(Schema.Array(publisherFeedStatus)),
+  packages: Schema.optional(packageFeedSchema),
 });
 export const exploitationReport = Schema.Struct({
   zeroDay: Schema.NullOr(zeroDay),
@@ -36,6 +40,13 @@ export const exploitationReport = Schema.Struct({
 export type ExploitationReport = typeof exploitationReport.Type;
 export type ZeroDay = typeof zeroDay.Type;
 export type ZeroDayView = typeof zeroDayView.Type;
+
+export function watchedPublishers(feed: ZeroDayView | null) {
+  return (
+    feed?.publishers ??
+    (feed?.publisher ? [{ ...feed.publisher, provider: 'Chrome Releases' }] : [])
+  );
+}
 
 const spreadsheet =
   'https://docs.google.com/spreadsheets/d/1lkNJ0uQwbeC1ZTRrxdtuPLCIl7mlUreoKfSIgajnSyY/gviz/tq';

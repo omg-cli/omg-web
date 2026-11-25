@@ -13,7 +13,9 @@ import {
   archiveOrigin,
   dashboardSnapshot,
   isIntakeEvent,
+  streamName,
   streamPath,
+  type DashboardBinding,
   type EvidenceBinding,
   type TailEvent,
 } from './stream.ts';
@@ -26,11 +28,8 @@ interface CacheStorage {
   open(name: string): Promise<Cache>;
 }
 
-interface DashboardEnvironment extends EvidenceBinding {
+interface DashboardEnvironment extends EvidenceBinding, DashboardBinding {
   ASSETS: { fetch(request: Request): Promise<Response> };
-  ADVISORY_STREAM: {
-    getByName(name: string): { fetch(request: Request): Promise<Response> };
-  };
 }
 
 interface DashboardContext {
@@ -86,7 +85,7 @@ async function loadPublic<A, I>(
 }
 
 function stream(environment: DashboardEnvironment) {
-  return environment.ADVISORY_STREAM.getByName('public-dashboard');
+  return environment.ADVISORY_STREAM.getByName(streamName);
 }
 
 async function readSnapshot(environment: DashboardEnvironment) {

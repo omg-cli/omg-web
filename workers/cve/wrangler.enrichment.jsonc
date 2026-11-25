@@ -8,7 +8,11 @@
   "workers_dev": false,
   "preview_urls": false,
   "triggers": { "crons": ["* * * * *"] },
-  "tail_consumers": [{ "service": "omg-cve" }],
+  "durable_objects": {
+    "bindings": [
+      { "name": "ADVISORY_STREAM", "class_name": "AdvisoryStream", "script_name": "omg-cve" },
+    ],
+  },
   "hyperdrive": [{ "binding": "ADVISORY_DATABASE", "id": "edb12adb4d9941ffa291ca95285dfb24" }],
   "observability": { "enabled": true },
 }

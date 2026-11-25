@@ -9,8 +9,10 @@ import {
   type Revision,
 } from './advisories.ts';
 import type { DashboardSnapshot } from './stream.ts';
+import type { PackageFeed } from './package-advisories.ts';
 import {
   projectZero,
+  watchedPublishers,
   type ExploitationReport,
   type ZeroDay,
   type ZeroDayView,
@@ -22,6 +24,12 @@ const projectSecurity = `${project}/blob/main/docs/security.md`;
 const canonical = 'https://cve.getomg.dev';
 const siteSecurity = 'https://getomg.dev/security/';
 const kevCatalog = 'https://www.cisa.gov/known-exploited-vulnerabilities-catalog';
+const githubAdvisories = 'https://github.com/advisories';
+const publisherDirectory = new Map([
+  ['Chrome Releases', { url: chromeSite, cadence: 1 }],
+  ['Microsoft MSRC', { url: 'https://msrc.microsoft.com/update-guide/', cadence: 2 }],
+  ['ENISA EUVD', { url: 'https://euvd.enisa.europa.eu/', cadence: 10 }],
+]);
 const release = `${project}/releases/tag/v0.1.226`;
 const releaseSbom = `${project}/releases/download/v0.1.226/omg-v0.1.226.cdx.json`;
 const number = new Intl.NumberFormat('en-US');
@@ -56,7 +64,7 @@ const feeds = [
     'https://security.archlinux.org/',
   ],
   ['kev', 'CISA KEV', 'Known exploited vulnerabilities', kevCatalog],
-];
+] as const;
 
 const checks = [
   [
@@ -143,6 +151,10 @@ function time(value: string | null, compact = false) {
   return `<time datetime="${value}">${day} <span class="time-hour">${hour} UTC</span></time>`;
 }
 
+function calendarDay(value: string, prefix = '') {
+  return `<time datetime="${escape(value.slice(0, 10))}">${prefix}${shortDate.format(Date.parse(value))}</time>`;
+}
+
 function duration(minutes: number | null) {
   if (minutes === null) return '—';
   if (minutes < 1) return `${Math.floor(minutes * 60)}s`;
@@ -193,20 +205,63 @@ function sourceState(feed: FeedStatus['feeds'][number] | undefined, now: number)
   return feed.complete ? 'Current' : 'Partial';
 }
 
-function sources(status: FeedStatus | null, publisher: ZeroDayView['publisher'], now: number) {
-  const publisherCurrent =
-    publisher?.complete && now - Date.parse(publisher.checkedAt) < 5 * 60_000;
+function checkState(checkedAt: string | null, complete: boolean, now: number, cadence: number) {
+  if (!checkedAt) return 'Awaiting check';
+  const age = now - Date.parse(checkedAt);
+  if (age < 0 || age > (2 * cadence + 2) * 60_000) return 'Stale';
+  return complete ? 'Current' : 'Partial';
+}
+
+function sourceRow(
+  label: string,
+  url: string,
+  description: string,
+  state: string,
+  checkedAt: string | null
+) {
+  return `<li><div class="feed-top"><a href="${escape(url)}">${escape(label)} <span aria-hidden="true">↗</span></a><span class="status-label ${state === 'Current' ? 'ok' : 'warn'}">${state}</span></div><p>${description}</p><div class="feed-time">Checked ${time(checkedAt, true)}</div></li>`;
+}
+
+function sources(status: FeedStatus | null, evidence: ZeroDayView | null, now: number) {
+  const publishers = watchedPublishers(evidence);
   return `<aside id="feed-status" class="sources" aria-labelledby="sources-title" data-live-region>
-<div class="panel-heading"><div><h2 id="sources-title">Source status</h2><p>Last successful checks from the OMG advisory service.</p></div></div>
+<div class="panel-heading"><div><h2 id="sources-title">Source status</h2><p>Feed checks run independently. Open pages receive changes as OMG commits them.</p></div></div>
 <ul>${feeds
     .map(([key, label, summary, url]) => {
       const feed = status?.feeds.find(item => item.source === key);
-      const state = sourceState(feed, now);
-      return `<li><div class="feed-top"><a href="${url}">${label} <span aria-hidden="true">↗</span></a><span class="status-label ${state === 'Current' ? 'ok' : 'warn'}">${state}</span></div>
-<p>${summary}</p><div class="feed-time">Checked ${time(feed?.checked_at ?? null, true)}</div></li>`;
+      return sourceRow(label, url, summary, sourceState(feed, now), feed?.checked_at ?? null);
     })
     .join('')}
-${publisher ? `<li><div class="feed-top"><a href="${chromeSite}">Chrome Releases</a><span class="status-label ${publisherCurrent ? 'ok' : 'warn'}">${publisherCurrent ? 'Current' : publisher.complete ? 'Stale' : 'Check failed'}</span></div><p>${number.format(publisher.signals)} CVE IDs observed · ${number.format(publisher.knownExploited)} reported exploited</p><div class="feed-time">Checked ${time(publisher.checkedAt, true)}</div></li>` : ''}
+${sourceRow('Google Project Zero', projectZero, 'Documented zero-days · 1 min checks', checkState(evidence?.checkedAt ?? null, evidence?.current ?? false, now, 1), evidence?.checkedAt ?? null)}
+${publishers
+  .map(publisher => {
+    const input = publisherDirectory.get(publisher.provider);
+    if (!input) return '';
+    const description = `${number.format(publisher.signals)} CVE IDs · ${number.format(publisher.knownExploited)} exploited · ${input.cadence} min checks`;
+    return sourceRow(
+      publisher.provider,
+      input.url,
+      description,
+      checkState(publisher.checkedAt, publisher.complete, now, input.cadence),
+      publisher.checkedAt
+    );
+  })
+  .join('')}
+${
+  evidence?.packages?.sources
+    .map(source => {
+      const cadence = source.provider === 'OSV' ? 5 : 15;
+      const label = `${source.provider ?? 'GitHub'} ${source.kind === 'malware' ? 'package malware' : 'package advisories'}`;
+      return sourceRow(
+        label,
+        source.provider === 'OSV' ? 'https://google.github.io/osv.dev/data/' : githubAdvisories,
+        `${number.format(source.total)} advisories stored · ${cadence} min checks`,
+        checkState(source.checkedAt, source.complete, now, cadence),
+        source.checkedAt
+      );
+    })
+    .join('') ?? ''
+}
 </ul>
 <a class="text-link api-link" href="${advisoryOrigin}/v1/status">Feed status JSON <span aria-hidden="true">↗</span></a>
 </aside>`;
@@ -268,7 +323,7 @@ export function renderLive(snapshot: DashboardSnapshot | null, now: number) {
 <div class="hero-copy">
 <h1 id="title">Vulnerability<br><span>intake.</span></h1>
 <p class="lede">Follow advisories as OMG receives them. See when zero-days are documented and what the CLI checks before installation.</p>
-<a class="button" href="#recent">Browse advisories</a>
+<div class="hero-actions"><a class="button" href="#recent">Browse CVEs</a><a class="button subtle" href="#package-advisories">Package advisories</a></div>
 <div class="hero-meta"><span id="stream-status" role="status" hidden></span><span id="cve-status" data-live-region><span class="status-label hero-status ${complete ? 'ok' : 'warn'}">${complete ? 'CVE feed current' : `CVE feed ${cveState === 'Current' ? 'partial' : cveState.toLowerCase()}`}</span><span class="last-check">Last checked ${time(cve?.checked_at ?? page?.checked_at ?? null, true)}</span></span></div>
 </div>
 <section class="activity" id="intake-chart" aria-labelledby="activity-title" data-live-region>
@@ -281,7 +336,8 @@ ${metricsCard('95th-percentile lag', duration(sample?.p95 ?? null), sampleNote)}
 ${metricsCard('Archive records imported', status ? number.format(status.baseline.imported) : '—', status ? archiveStatus : 'Archive status unavailable')}
 ${metricsCard('New CVEs · 24h', publicationCount, sample?.lowerBound || (sample && !complete) ? 'Minimum from latest revisions' : 'Publication timestamps')}
 </dl>
-<div class="monitor-layout">${exploitation(snapshot?.zeroDays ?? null)}${sources(status, snapshot?.zeroDays.publisher, now)}</div>
+<div class="monitor-layout">${exploitation(snapshot?.zeroDays ?? null)}${sources(status, snapshot?.zeroDays ?? null, now)}</div>
+${packageAdvisories(snapshot?.zeroDays.packages)}
 <section class="section" id="recent">
 <div class="section-heading"><div><h2>Recent CVE records</h2><p>Newest by publisher revision time. Each row shows when OMG received that revision.</p></div><a class="button subtle" href="/archive">Browse 30-day archive <span aria-hidden="true">→</span></a></div>
 ${lookup()}
@@ -307,32 +363,62 @@ function table(records: readonly Revision[]) {
 function zeroDayRows(entries: readonly ZeroDay[]) {
   return `<ul class="evidence-list">${entries
     .map(
-      ({ id, product, patched, observedAt, evidence, source }) =>
-        `<li><div><a href="/cves/${escape(id)}">${escape(id)}</a><span>${escape(product || 'Product in CVE record')}</span></div><div><a class="text-link" href="${escape(evidence)}">${source}</a>${observedAt ? `<time datetime="${escape(observedAt)}">Added ${shortDate.format(Date.parse(observedAt))}</time>` : patched ? `<time datetime="${escape(patched)}">Patched ${shortDate.format(Date.parse(patched + 'T00:00:00Z'))}</time>` : ''}</div></li>`
+      ({ id, product, patched, observedAt, evidence, source, archived }) =>
+        `<li><div><a href="${archived === false ? escape(evidence) : `/cves/${escape(id)}`}">${escape(id)}</a><span>${escape(product || 'Product in CVE record')}${archived === false ? ' · CVE record pending' : ''}</span></div><div><a class="text-link" href="${escape(evidence)}">${source}</a>${observedAt ? `<time datetime="${escape(observedAt)}">Added ${shortDate.format(Date.parse(observedAt))}</time>` : patched ? `<time datetime="${escape(patched)}">Patched ${shortDate.format(Date.parse(patched + 'T00:00:00Z'))}</time>` : ''}</div></li>`
     )
     .join('')}</ul>`;
 }
 
 function exploitation(feed: ZeroDayView | null) {
   const entries = feed?.entries ?? [];
-  const chromeReports = feed?.publisher?.recentExploitation ?? [];
+  const reports = watchedPublishers(feed).flatMap(publisher =>
+    (publisher.recentExploitation ?? [])
+      .slice(0, 3)
+      .map(report => ({ ...report, provider: publisher.provider }))
+  );
   return `<section id="exploitation" class="zero-days" data-live-region>
-<div class="section-heading"><div><h2>Documented zero-days</h2><p>Recent public reports of exploitation before a fix, matched to records in the OMG archive.</p></div></div>
+<div class="section-heading"><div><h2>Documented zero-days</h2><p>Public evidence of exploitation before a fix, including reports awaiting a published CVE record.</p></div></div>
 ${feed?.current ? '' : `<p class="notice">${entries.length ? 'Showing the last confirmed entries. The evidence source is temporarily unavailable.' : 'Zero-day evidence is unavailable.'}</p>`}
 ${entries.length ? zeroDayRows(entries.slice(0, 5)) : feed?.current ? '<p class="notice">There are no matching records from these sources yet.</p>' : ''}
-${entries.length > 5 ? `<details class="more-evidence"><summary>Show ${entries.length - 5} more documented zero-days</summary>${zeroDayRows(entries.slice(5))}</details>` : ''}
+${entries.length > 5 ? `<details id="more-zero-days" class="more-evidence"><summary>Show ${entries.length - 5} more documented zero-days</summary>${zeroDayRows(entries.slice(5))}</details>` : ''}
 <p class="section-note">Evidence comes from <a href="${projectZero}">Google Project Zero</a> and verified vendor disclosures. <a href="${kevCatalog}">CISA KEV</a> tracks known exploitation, including cases after a fix.</p>
 ${feed?.checkedAt ? `<p class="feed-time">Evidence checked ${time(feed.checkedAt, true)}</p>` : ''}
 ${
-  chromeReports.length
-    ? `<div class="publisher-watch"><h3>Exploitation reported by Chrome</h3><ul class="evidence-list">${chromeReports
+  reports.length
+    ? `<div class="publisher-watch"><h3>Reported exploitation</h3><p class="section-note">Publisher and catalog reports of exploitation. Dates reflect what each source reports.</p><ul class="evidence-list">${reports
         .map(
-          ({ id, advisoryUrl, published, archived }) =>
-            `<li><div>${archived ? `<a href="/cves/${escape(id)}">${escape(id)}</a>` : `<a href="${escape(advisoryUrl)}">${escape(id)}</a><span>CVE record pending</span>`}</div><div><a class="text-link" href="${escape(advisoryUrl)}">Chrome advisory</a>${time(published)}</div></li>`
+          ({ id, advisoryUrl, published, archived, provider, exploitedSince }) =>
+            `<li><div>${archived ? `<a href="/cves/${escape(id)}">${escape(id)}</a>` : `<a href="${escape(advisoryUrl)}">${escape(id)}</a><span>CVE record pending</span>`}</div><div><a class="text-link" href="${escape(advisoryUrl)}">${escape(provider)}</a>${exploitedSince ? calendarDay(exploitedSince, 'Exploited since ') : calendarDay(published)}</div></li>`
         )
         .join('')}</ul></div>`
     : ''
 }
+</section>`;
+}
+
+function packageAdvisories(feed: PackageFeed | undefined) {
+  const lists = [
+    ['malware', 'Package malware'],
+    ['reviewed', 'Package vulnerabilities'],
+  ] as const;
+  return `<section class="section" id="package-advisories" data-live-region>
+<div class="section-heading"><div><h2>Package advisories</h2><p>Registry version ranges for recently reported vulnerabilities and malware, including reports without a CVE.</p></div></div>
+<div class="package-advisory-grid">${lists
+    .map(([kind, title]) => {
+      const rows = feed?.recent.filter(row => row.kind === kind) ?? [];
+      return `<div><h3>${title}</h3>${
+        rows.length
+          ? `<ul class="evidence-list">${rows
+              .map(({ id, cveId, advisoryUrl, publishedAt, packages }) => {
+                const first = packages[0];
+                return `<li><div><a href="${escape(advisoryUrl)}">${first ? escape(first.name) : escape(id)}</a><span>${first ? `${escape(first.ecosystem)} · ${escape(first.range || 'View affected versions')}${first.fixed ? ` · Fixed in ${escape(first.fixed)}` : ''}${packages.length > 1 ? ' · More ranges in advisory' : ''}` : 'See publisher advisory'}</span></div><div><a class="text-link" href="${escape(advisoryUrl)}">${escape(cveId ?? id)}</a>${time(publishedAt)}</div></li>`;
+              })
+              .join('')}</ul>`
+          : '<p class="notice">No recent records loaded for this feed.</p>'
+      }</div>`;
+    })
+    .join('')}</div>
+<p class="section-note">Package data from <a href="https://google.github.io/osv.dev/data/">OSV and its upstream sources</a> and <a href="https://github.com/github/advisory-database#license">GitHub Advisory Database under CC BY 4.0</a>.</p>
 </section>`;
 }
 
@@ -353,7 +439,7 @@ ${evidence.vendorAdvisory ? `<p><a class="text-link" href="${escape(evidence.ven
 
 function publisherReports(signals: readonly VendorSignal[]) {
   if (!signals.length) return '';
-  return `<div class="publisher-reports"><h2>Publisher reports</h2><ul class="evidence-facts">${signals.map(signal => `<li><a class="text-link" href="${escape(signal.advisoryUrl)}">${escape(signal.provider)} advisory</a> · ${signal.exploited ? 'Reported exploited in the wild' : 'Vendor disclosure'} · Advisory published ${time(signal.published, true)} · ${signal.exploited && signal.exploitationReceived ? `Exploitation first recorded by OMG ${time(signal.exploitationReceived, true)}` : `Received by OMG ${time(signal.received, true)}`}</li>`).join('')}</ul></div>`;
+  return `<div class="publisher-reports"><h2>Publisher and catalog reports</h2><ul class="evidence-facts">${signals.map(signal => `<li><a class="text-link" href="${escape(signal.advisoryUrl)}">${escape(signal.provider)} advisory</a> · ${signal.exploited ? 'Reported exploited in the wild' : 'Vendor disclosure'} · Advisory published ${signal.provider === 'ENISA EUVD' ? calendarDay(signal.published) : time(signal.published, true)} · ${signal.exploitedSince ? calendarDay(signal.exploitedSince, 'Exploited since ') : signal.exploited && signal.exploitationReceived ? `Exploitation first recorded by OMG ${time(signal.exploitationReceived, true)}` : `Received by OMG ${time(signal.received, true)}`}</li>`).join('')}</ul></div>`;
 }
 
 function auditEvidence() {
