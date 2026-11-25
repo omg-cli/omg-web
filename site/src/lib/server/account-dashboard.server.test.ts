@@ -108,8 +108,8 @@ describe('loadAccountDashboardContext', () => {
     expect(queries).toHaveLength(2);
     expect(queries.map(query => query.bindings)).toEqual([['user-1'], ['user-1']]);
     expect(queries.map(query => query.sql)).toEqual([
-      'SELECT id, token, ip_address AS ipAddress, user_agent AS userAgent, created_at AS createdAt, expires_at AS expiresAt FROM auth_session WHERE user_id = ?',
-      'SELECT provider_id AS providerId, account_id AS accountId FROM auth_account WHERE user_id = ?',
+      'SELECT id, token, ip_address AS "ipAddress", user_agent AS "userAgent", created_at AS "createdAt", expires_at AS "expiresAt" FROM auth_session WHERE user_id = ?',
+      'SELECT provider_id AS "providerId", account_id AS "accountId" FROM auth_account WHERE user_id = ?',
     ]);
     expect(result?.dashboard).toEqual({
       accounts: [{ provider: 'github' }],

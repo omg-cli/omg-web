@@ -14,8 +14,8 @@ const INVITATION_FORM_LIMIT = 8 * 1024;
 const ACTIVE_ORGANIZATION_QUERY = `SELECT COALESCE(
   (SELECT active_organization_id FROM auth_session WHERE user_id = ? AND token = ? LIMIT 1),
   (SELECT organization_id FROM auth_member WHERE user_id = ? ORDER BY created_at, id LIMIT 1)
-) AS organizationId`;
-const INVITATION_ORGANIZATION_QUERY = `SELECT invitation.organization_id AS organizationId
+) AS "organizationId"`;
+const INVITATION_ORGANIZATION_QUERY = `SELECT invitation.organization_id AS "organizationId"
 FROM auth_invitation AS invitation
 JOIN auth_user AS identity
   ON identity.id = ?

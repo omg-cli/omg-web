@@ -77,7 +77,7 @@ function database(options: MemberDatabaseOptions = {}): AuthEnvironment['DB'] {
           if (sql.includes('targetUser')) {
             return target;
           }
-          if (sql.includes('created_at AS createdAt')) {
+          if (sql.includes('created_at AS "createdAt"')) {
             return { createdAt: options.recentSessionAt ?? TRANSFER_NOW.getTime() };
           }
           if (sql.includes('COALESCE')) {

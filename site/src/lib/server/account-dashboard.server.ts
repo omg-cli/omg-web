@@ -9,9 +9,9 @@ import {
 import { normalizedOptionalText } from './optional-text.server';
 
 const SESSION_QUERY =
-  'SELECT id, token, ip_address AS ipAddress, user_agent AS userAgent, created_at AS createdAt, expires_at AS expiresAt FROM auth_session WHERE user_id = ?';
+  'SELECT id, token, ip_address AS "ipAddress", user_agent AS "userAgent", created_at AS "createdAt", expires_at AS "expiresAt" FROM auth_session WHERE user_id = ?';
 const ACCOUNT_QUERY =
-  'SELECT provider_id AS providerId, account_id AS accountId FROM auth_account WHERE user_id = ?';
+  'SELECT provider_id AS "providerId", account_id AS "accountId" FROM auth_account WHERE user_id = ?';
 
 const SessionRowSchema = Schema.Struct({
   id: Schema.String.check(Schema.isMaxLength(256)),

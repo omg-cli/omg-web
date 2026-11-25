@@ -5,14 +5,14 @@ import { BoundedFormRejected, readBoundedUrlEncodedForm } from './bounded-form.s
 import type { AuthEnvironment } from './auth.server';
 
 const MEMBERSHIP_QUERY = `SELECT
-  organization.billing_customer_id AS billingCustomerId,
+  organization.billing_customer_id AS "billingCustomerId",
   organization.name,
   organization.slug,
   member.role,
   license.tier,
   license.status,
-  license.max_seats AS maxSeats,
-  (SELECT COUNT(*) FROM auth_member AS seat WHERE seat.organization_id = organization.id) AS usedSeats
+  license.max_seats AS "maxSeats",
+  (SELECT COUNT(*) FROM auth_member AS seat WHERE seat.organization_id = organization.id) AS "usedSeats"
 FROM auth_member AS member
 JOIN auth_organization AS organization ON organization.id = member.organization_id
 LEFT JOIN licenses AS license ON license.customer_id = organization.billing_customer_id
@@ -20,10 +20,10 @@ WHERE member.user_id = ?
 ORDER BY member.created_at
 LIMIT 2`;
 const ENTITLEMENT_QUERY = `SELECT
-  customer.id AS customerId,
+  customer.id AS "customerId",
   license.tier,
   license.status,
-  license.max_seats AS maxSeats
+  license.max_seats AS "maxSeats"
 FROM customers AS customer
 JOIN licenses AS license ON license.customer_id = customer.id
 WHERE lower(customer.email) = ?
@@ -32,16 +32,16 @@ const USER_MEMBERSHIP_QUERY = 'SELECT id FROM auth_member WHERE user_id = ? LIMI
 const ACTIVE_ORGANIZATION_QUERY = `SELECT COALESCE(
   (SELECT active_organization_id FROM auth_session WHERE user_id = ? AND token = ? LIMIT 1),
   (SELECT organization_id FROM auth_member WHERE user_id = ? ORDER BY created_at, id LIMIT 1)
-) AS organizationId`;
+) AS "organizationId"`;
 const ORGANIZATION_SUMMARY_QUERY = `SELECT
-  organization.billing_customer_id AS billingCustomerId,
+  organization.billing_customer_id AS "billingCustomerId",
   organization.name,
   organization.slug,
   member.role,
   license.tier,
   license.status,
-  license.max_seats AS maxSeats,
-  (SELECT COUNT(*) FROM auth_member AS seat WHERE seat.organization_id = organization.id) AS usedSeats
+  license.max_seats AS "maxSeats",
+  (SELECT COUNT(*) FROM auth_member AS seat WHERE seat.organization_id = organization.id) AS "usedSeats"
 FROM auth_member AS member
 JOIN auth_organization AS organization ON organization.id = member.organization_id
 LEFT JOIN licenses AS license ON license.customer_id = organization.billing_customer_id
@@ -49,11 +49,11 @@ WHERE organization.id = ? AND member.user_id = ?
 LIMIT 1`;
 const ORGANIZATION_MEMBER_ROWS_QUERY = `SELECT
   member.id,
-  member.user_id AS userId,
+  member.user_id AS "userId",
   auth_user.name,
   auth_user.email,
   member.role,
-  member.created_at AS joinedAt
+  member.created_at AS "joinedAt"
 FROM auth_member AS member
 JOIN auth_user ON auth_user.id = member.user_id
 WHERE member.organization_id = ?
@@ -63,7 +63,7 @@ const ORGANIZATION_INVITATION_ROWS_QUERY = `SELECT
   invitation.id,
   invitation.email,
   invitation.role,
-  invitation.expires_at AS expiresAt
+  invitation.expires_at AS "expiresAt"
 FROM auth_invitation AS invitation
 WHERE invitation.organization_id = ? AND invitation.status = 'pending'
 ORDER BY invitation.created_at, invitation.id
@@ -78,7 +78,7 @@ VALUES (?, ?, ?, 'owner', ?)`;
 const SET_ACTIVE_ORGANIZATION_QUERY = `UPDATE auth_session
 SET active_organization_id = ?, updated_at = ?
 WHERE user_id = ? AND token = ?`;
-const MEMBERSHIP_LIMIT_QUERY = `SELECT license.max_seats AS maxSeats
+const MEMBERSHIP_LIMIT_QUERY = `SELECT license.max_seats AS "maxSeats"
 FROM auth_organization AS organization
 JOIN licenses AS license ON license.customer_id = organization.billing_customer_id
 WHERE organization.id = ?
