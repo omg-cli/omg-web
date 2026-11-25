@@ -1,6 +1,6 @@
 /** Presentation for the operator traffic report. Thresholds match web.dev Core Web Vitals. */
 
-export interface SiteWebVitals {
+interface SiteWebVitals {
   readonly samples: number;
   readonly lcp_p75_ms: number | null;
   readonly inp_p75_ms: number | null;
@@ -11,7 +11,7 @@ export interface SiteWebVitals {
 
 type VitalTone = 'good' | 'needs-improvement' | 'poor';
 
-export interface VitalReading {
+interface VitalReading {
   readonly label: string;
   readonly detail: string;
   readonly value: string;

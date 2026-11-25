@@ -26,8 +26,8 @@ const LivePayloadSchema = Schema.Struct({
   refreshedAt: Text,
 });
 
-export type LiveEvent = Schema.Schema.Type<typeof LivePayloadSchema>['events'][number];
-export type LiveFeedState = 'current' | 'refreshing' | 'paused' | 'unavailable';
+type LiveEvent = Schema.Schema.Type<typeof LivePayloadSchema>['events'][number];
+type LiveFeedState = 'current' | 'refreshing' | 'paused' | 'unavailable';
 
 class LiveResponseInvalid extends Error {
   readonly _tag = 'LiveResponseInvalid';
