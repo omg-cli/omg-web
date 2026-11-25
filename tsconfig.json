@@ -19,6 +19,11 @@
     "noFallthroughCasesInSwitch": true,
     "noPropertyAccessFromIndexSignature": true
   },
-  "include": ["oxlint.config.ts", "tools/check-npm-audits.ts", "tools/oxlint/**/*.ts"],
-  "exclude": ["node_modules", "dist", "tools/oxlint/anti-slop"]
+  "include": [
+    "oxlint.config.ts",
+    "tools/check-npm-audits.ts",
+    "tools/oxlint/**/*.ts",
+    "workers/cve/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "tools/oxlint/anti-slop", "workers/cve/.wrangler"]
 }
