@@ -114,7 +114,7 @@ function normalizeParams(values: readonly unknown[]): SqlParam[] {
   });
 }
 
-export interface PgQueryTags {
+interface PgQueryTags {
   readonly application: string;
   readonly route: string;
 }
@@ -142,7 +142,7 @@ async function execQuery<T>(
   return { rows, changes };
 }
 
-export interface PgD1Handle {
+interface PgD1Handle {
   readonly db: D1Database;
   close(): Promise<void>;
 }
