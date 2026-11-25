@@ -12,6 +12,7 @@
   "keep_vars": true,
   "vars": {
     "DEPLOYMENT_STAGE": "prod",
+    "DB_BACKEND": "postgres",
   },
   "assets": {
     "directory": ".svelte-kit/cloudflare",
@@ -24,6 +25,12 @@
       "binding": "DB",
       "database_id": "fee8ddab-fb4a-4be4-b8d2-8abb7c2db188",
       "database_name": "omg-platform",
+    },
+  ],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "887f3a75bde54f119d244cd32a8eb7da",
     },
   ],
   "services": [

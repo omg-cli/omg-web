@@ -7,7 +7,11 @@ const requireFromSite = createRequire(new URL('../site/package.json', import.met
 const ts = requireFromSite('typescript');
 const productionRoots = ['shared', 'site/src', 'workers/api/src'];
 const consumerRoots = [...productionRoots, 'site/e2e', 'site/tools', 'workers/api/tests'];
-const consumerEntryFiles = ['site/alchemy.run.ts', 'tools/check-source-policy.mjs'];
+const consumerEntryFiles = [
+  'site/alchemy.run.ts',
+  'site/worker.js',
+  'tools/check-source-policy.mjs',
+];
 const sourceExtensions = ['.js', '.mjs', '.svelte', '.ts'];
 const sourceExtensionSet = new Set(sourceExtensions);
 const frameworkEntries = new Set(['site/src/hooks.server.ts', 'workers/api/src/worker.ts']);

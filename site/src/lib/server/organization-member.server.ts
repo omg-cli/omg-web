@@ -15,7 +15,7 @@ import type { OrganizationWorkspaceIdentity } from './organization-workspace.ser
 
 const TARGET_MEMBER_QUERY = `SELECT
   target.id,
-  target.user_id AS userId,
+  target.user_id AS "userId",
   target.role
 FROM auth_member AS target
 JOIN auth_session AS session
@@ -28,7 +28,7 @@ JOIN auth_member AS actor
 JOIN auth_user AS targetUser ON targetUser.id = target.user_id
 WHERE lower(targetUser.email) = ?
 LIMIT 2`;
-const CURRENT_SESSION_QUERY = `SELECT created_at AS createdAt
+const CURRENT_SESSION_QUERY = `SELECT created_at AS "createdAt"
 FROM auth_session
 WHERE user_id = ? AND token = ? AND expires_at > ?
 LIMIT 2`;
