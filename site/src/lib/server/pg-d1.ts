@@ -21,6 +21,25 @@ const isString = Schema.is(Schema.String);
 const isNumber = Schema.is(Schema.Number);
 const isBoolean = Schema.is(Schema.Boolean);
 
+const timestampColumns = new Set([
+  'created_at',
+  'updated_at',
+  'expires_at',
+  'access_token_expires_at',
+  'refresh_token_expires_at',
+  'createdAt',
+  'expiresAt',
+  'joinedAt',
+]);
+
+/** Older D1 rows store Unix milliseconds as PostgreSQL text. Better Auth expects date strings. */
+export function normalizePostgresTimestamp<Value>(value: Value, column: string): Value | string {
+  if (timestampColumns.has(column) && isString(value) && /^\d{13}$/.test(value)) {
+    return new Date(Number(value)).toISOString();
+  }
+  return value;
+}
+
 interface PreparedQuery {
   readonly sql: string;
   readonly params: SqlParam[];
@@ -157,6 +176,9 @@ export function createPgD1(connectionString: string, tags?: PgQueryTags): PgD1Ha
     max: 1,
     prepare: false,
     fetch_types: false,
+    transform: {
+      value: { from: (value, column) => normalizePostgresTimestamp(value, column.name) },
+    },
     types: {
       bigint: {
         to: 20,
