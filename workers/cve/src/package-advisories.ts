@@ -7,7 +7,7 @@ const githubAdvisory = 'https://github.com/advisories/';
 const ghsaId = Schema.String.pipe(Schema.pattern(/^GHSA-[a-z0-9]{4}(?:-[a-z0-9]{4}){2}$/u));
 const cveAlias = Schema.NullOr(Schema.String.pipe(Schema.pattern(cveId)));
 const timestamp = Schema.String.pipe(
-  Schema.pattern(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/u),
+  Schema.pattern(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/u),
   Schema.filter(value => Number.isFinite(Date.parse(value)))
 );
 const ecosystem = Schema.String.pipe(Schema.minLength(1), Schema.maxLength(64));

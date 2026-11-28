@@ -7,12 +7,19 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "preview_urls": false,
+  "placement": { "mode": "smart" },
   "triggers": { "crons": ["* * * * *"] },
   "durable_objects": {
     "bindings": [
       { "name": "ADVISORY_STREAM", "class_name": "AdvisoryStream", "script_name": "omg-cve" },
     ],
   },
-  "hyperdrive": [{ "binding": "ADVISORY_DATABASE", "id": "edb12adb4d9941ffa291ca95285dfb24" }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "omg-advisories",
+      "database_id": "98202f8c-7d5f-4de9-8ddd-cea35fd95d09",
+    },
+  ],
   "observability": { "enabled": true },
 }

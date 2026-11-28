@@ -1,12 +1,15 @@
-import postgres from 'postgres';
+import { Schema } from 'effect';
+import { batchInChunks, type D1Bound, type D1Executor } from './d1.ts';
 import {
   fetchPackagePage,
   GitHubAdvisoryError,
+  packageFeedSchema,
   type PackageFeed,
   type PackageKind,
   type PackageWindow,
-  type parsePackagePage,
 } from './package-advisories.ts';
+
+const packagesArray = packageFeedSchema.fields.recent.value.fields.packages;
 
 const kinds: readonly PackageKind[] = ['reviewed', 'malware'];
 const bootstrap = 7 * 24 * 60 * 60_000;
@@ -19,99 +22,150 @@ interface Checkpoint extends PackageWindow {
   retryAt: Date | null;
 }
 
-async function readCheckpoint(sql: postgres.Sql, kind: PackageKind, now: Date) {
-  await sql`
-    INSERT INTO public.cve_package_advisory_source (kind, window_from, window_until)
-    VALUES (${kind}, ${new Date(now.getTime() - bootstrap)}, ${now})
-    ON CONFLICT (kind) DO NOTHING
-  `;
-  const [saved] = await sql<Checkpoint[]>`
-    SELECT window_from AS "from", window_until AS until, cursor, revision, complete,
-           retry_at AS "retryAt"
-      FROM public.cve_package_advisory_source WHERE kind = ${kind}
-  `;
-  if (!saved) throw new Error('Package advisory checkpoint is missing');
-  return saved;
+interface CheckpointRow {
+  from: string;
+  until: string;
+  cursor: string | null;
+  revision: number;
+  complete: number;
+  retryAt: string | null;
 }
 
-async function storePage(
-  transaction: postgres.TransactionSql,
-  advisories: ReturnType<typeof parsePackagePage>,
-  observed: Date
-) {
-  if (advisories.length === 0) return;
-  await transaction`
-    WITH page AS (
-      SELECT DISTINCT ON (id) *
-        FROM jsonb_to_recordset(${JSON.stringify(advisories)}::text::jsonb) AS wire(
-          id text, "cveId" text, kind text, "advisoryUrl" text, "publishedAt" timestamptz,
-          "updatedAt" timestamptz, "withdrawnAt" timestamptz, packages jsonb
-        )
-       ORDER BY id, "updatedAt" DESC
+function toCheckpoint(row: CheckpointRow): Checkpoint {
+  return {
+    from: new Date(row.from),
+    until: new Date(row.until),
+    cursor: row.cursor,
+    revision: row.revision,
+    complete: row.complete === 1,
+    retryAt: row.retryAt ? new Date(row.retryAt) : null,
+  };
+}
+
+async function readCheckpoint(db: D1Executor, kind: PackageKind, now: Date): Promise<Checkpoint> {
+  const fromIso = new Date(now.getTime() - bootstrap).toISOString();
+  const nowIso = now.toISOString();
+  await db
+    .prepare(
+      `INSERT INTO cve_package_advisory_source (kind, window_from, window_until)
+       VALUES (?, ?, ?)
+       ON CONFLICT (kind) DO NOTHING`
     )
-    INSERT INTO public.cve_package_advisory AS existing (
-      id, cve_id, kind, advisory_url, published_at, updated_at, withdrawn_at, observed_at, packages
+    .bind(kind, fromIso, nowIso)
+    .run();
+  const saved = await db
+    .prepare(
+      `SELECT window_from AS "from", window_until AS until, cursor, revision, complete, retry_at AS retryAt
+         FROM cve_package_advisory_source
+        WHERE kind = ?`
     )
-    SELECT id, "cveId", kind, "advisoryUrl", "publishedAt", "updatedAt", "withdrawnAt",
-           ${observed}, packages
-      FROM page ORDER BY id
-    ON CONFLICT (id) DO UPDATE SET
-      cve_id = excluded.cve_id, kind = excluded.kind, published_at = excluded.published_at,
-      updated_at = excluded.updated_at, withdrawn_at = excluded.withdrawn_at,
-      packages = excluded.packages
-    WHERE excluded.updated_at >= existing.updated_at
-      AND (existing.cve_id, existing.kind, existing.published_at, existing.updated_at,
-           existing.withdrawn_at, existing.packages) IS DISTINCT FROM
-          (excluded.cve_id, excluded.kind, excluded.published_at, excluded.updated_at,
-           excluded.withdrawn_at, excluded.packages)
-  `;
+    .bind(kind)
+    .first<CheckpointRow>();
+  if (!saved) throw new Error('Package advisory checkpoint is missing');
+  return toCheckpoint(saved);
 }
 
 async function savePage(
-  sql: postgres.Sql,
+  db: D1Executor,
   kind: PackageKind,
   before: Checkpoint,
   period: PackageWindow,
   page: Awaited<ReturnType<typeof fetchPackagePage>>
-) {
-  return sql.begin(async transaction => {
-    await transaction`SET LOCAL statement_timeout = '8s'`;
-    await transaction`SET LOCAL lock_timeout = '1s'`;
-    const observed = new Date();
-    const complete = page.cursor === null;
-    const [saved] = await transaction<Checkpoint[]>`
-      UPDATE public.cve_package_advisory_source
-         SET window_from = ${period.from}, window_until = ${period.until}, cursor = ${page.cursor},
-             revision = revision + 1, checked_at = ${observed}, retry_at = NULL,
-             complete = ${complete},
-             successful_at = CASE WHEN ${complete} THEN ${observed}::timestamptz ELSE successful_at END
-       WHERE kind = ${kind} AND revision = ${before.revision}
-       RETURNING window_from AS "from", window_until AS until, cursor, revision, complete,
-                 retry_at AS "retryAt"
-    `;
-    if (saved) await storePage(transaction, page.advisories, observed);
-    return saved;
-  });
+): Promise<Checkpoint | null> {
+  const observed = new Date().toISOString();
+  const complete = page.cursor === null ? 1 : 0;
+
+  // Write advisories before advancing the checkpoint so a partial failure never skips a page.
+  if (page.advisories.length > 0) {
+    const distinct = new Map<string, (typeof page.advisories)[number]>();
+    for (const item of page.advisories) {
+      const existing = distinct.get(item.id);
+      if (!existing || item.updatedAt > existing.updatedAt) {
+        distinct.set(item.id, item);
+      }
+    }
+    const statements: D1Bound[] = [...distinct.values()].map(item =>
+      db
+        .prepare(
+          `INSERT INTO cve_package_advisory (
+             id, cve_id, kind, advisory_url, published_at, updated_at, withdrawn_at, observed_at, packages_json
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT (id) DO UPDATE SET
+             cve_id = excluded.cve_id,
+             kind = excluded.kind,
+             published_at = excluded.published_at,
+             updated_at = excluded.updated_at,
+             withdrawn_at = excluded.withdrawn_at,
+             packages_json = excluded.packages_json
+           WHERE excluded.updated_at >= cve_package_advisory.updated_at`
+        )
+        .bind(
+          item.id,
+          item.cveId,
+          item.kind,
+          item.advisoryUrl,
+          item.publishedAt,
+          item.updatedAt,
+          item.withdrawnAt,
+          observed,
+          JSON.stringify(item.packages)
+        )
+    );
+    await batchInChunks(db, statements);
+  }
+
+  const updated = await db
+    .prepare(
+      `UPDATE cve_package_advisory_source
+          SET window_from = ?, window_until = ?, cursor = ?,
+              revision = revision + 1, checked_at = ?, retry_at = NULL,
+              complete = ?,
+              successful_at = CASE WHEN ? = 1 THEN ? ELSE successful_at END
+        WHERE kind = ? AND revision = ?
+        RETURNING window_from AS "from", window_until AS until, cursor, revision, complete, retry_at AS retryAt`
+    )
+    .bind(
+      period.from.toISOString(),
+      period.until.toISOString(),
+      page.cursor,
+      observed,
+      complete,
+      complete,
+      observed,
+      kind,
+      before.revision
+    )
+    .first<CheckpointRow>();
+  return updated ? toCheckpoint(updated) : null;
 }
 
 async function recordFailure(
-  sql: postgres.Sql,
+  db: D1Executor,
   kind: PackageKind,
   before: Checkpoint,
   upstream: GitHubAdvisoryError | null
 ) {
-  const keepCursor = upstream?.status !== 422;
-  await sql`
-    UPDATE public.cve_package_advisory_source
-       SET revision = revision + 1, checked_at = ${new Date()}, retry_at = ${upstream?.retryAt ?? null},
-           cursor = CASE WHEN ${keepCursor} THEN cursor ELSE NULL END
-     WHERE kind = ${kind} AND revision = ${before.revision}
-  `;
+  const keepCursor = upstream?.status !== 422 ? 1 : 0;
+  await db
+    .prepare(
+      `UPDATE cve_package_advisory_source
+          SET revision = revision + 1, checked_at = ?, retry_at = ?,
+              cursor = CASE WHEN ? = 1 THEN cursor ELSE NULL END
+        WHERE kind = ? AND revision = ?`
+    )
+    .bind(
+      new Date().toISOString(),
+      upstream?.retryAt?.toISOString() ?? null,
+      keepCursor,
+      kind,
+      before.revision
+    )
+    .run();
 }
 
-async function collectKind(sql: postgres.Sql, kind: PackageKind) {
+async function collectKind(db: D1Executor, kind: PackageKind) {
   const now = new Date();
-  let before = await readCheckpoint(sql, kind, now);
+  let before = await readCheckpoint(db, kind, now);
   if (before.retryAt && before.retryAt > now) return;
   let period: PackageWindow = before.complete
     ? {
@@ -125,56 +179,99 @@ async function collectKind(sql: postgres.Sql, kind: PackageKind) {
     try {
       const data = await fetchPackagePage(kind, period);
       stage = 'commit';
-      const saved = await savePage(sql, kind, before, period, data);
+      const saved = await savePage(db, kind, before, period, data);
       if (!saved || saved.complete) return;
       before = saved;
       period = saved;
     } catch (error) {
       const upstream = error instanceof GitHubAdvisoryError ? error : null;
-      const reason =
-        upstream?.status ??
-        (error instanceof postgres.PostgresError
-          ? error.code
-          : error instanceof Error
-            ? error.name
-            : 'unknown');
+      const reason = upstream?.status ?? (error instanceof Error ? error.name : 'unknown');
       console.warn('package_advisory_check_failed', kind, stage, reason);
-      await recordFailure(sql, kind, before, upstream);
+      await recordFailure(db, kind, before, upstream);
       return;
     }
   }
 }
 
-export async function collectPackageAdvisories(sql: postgres.Sql): Promise<void> {
-  for (const kind of kinds) await collectKind(sql, kind);
+export async function collectPackageAdvisories(db: D1Executor): Promise<void> {
+  for (const kind of kinds) await collectKind(db, kind);
 }
 
-export async function packageFeed(sql: postgres.Sql): Promise<PackageFeed> {
-  const [sources, recent] = await Promise.all([
-    sql<PackageFeed['sources'][number][]>`
-      SELECT s.kind,
-             to_char(s.checked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "checkedAt",
-             (s.complete AND s.successful_at = s.checked_at) AS complete,
-             (SELECT count(*)::int FROM public.cve_package_advisory a
-               WHERE a.kind = s.kind AND a.withdrawn_at IS NULL) AS total
-        FROM public.cve_package_advisory_source s
-       WHERE s.checked_at IS NOT NULL
-       ORDER BY s.kind
-    `,
-    sql<PackageFeed['recent'][number][]>`
-      SELECT a.id, a.cve_id AS "cveId", a.kind, a.advisory_url AS "advisoryUrl",
-             to_char(a.published_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "publishedAt",
-             to_char(a.observed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "observedAt",
-             jsonb_path_query_array(a.packages, '$[0 to 7]') AS packages
-        FROM (VALUES ('reviewed'), ('malware')) AS feeds(kind)
-        CROSS JOIN LATERAL (
-          SELECT * FROM public.cve_package_advisory
-           WHERE kind = feeds.kind AND withdrawn_at IS NULL
-           ORDER BY published_at DESC, id DESC
-           LIMIT 4
-        ) a
-       ORDER BY a.published_at DESC, a.id DESC
-    `,
+interface RecentPackageRow {
+  id: string;
+  cveId: string | null;
+  kind: PackageKind;
+  advisoryUrl: string;
+  publishedAt: string;
+  observedAt: string;
+  packagesJson: string;
+}
+
+export async function packageFeed(db: D1Executor): Promise<PackageFeed> {
+  const [sourcesResult, reviewedResult, malwareResult] = await Promise.all([
+    db
+      .prepare(
+        `SELECT s.kind,
+                s.checked_at AS checkedAt,
+                CASE WHEN s.complete = 1 AND s.successful_at = s.checked_at THEN 1 ELSE 0 END AS complete,
+                (SELECT COUNT(*) FROM cve_package_advisory a
+                  WHERE a.kind = s.kind AND a.withdrawn_at IS NULL) AS total
+           FROM cve_package_advisory_source s
+          WHERE s.checked_at IS NOT NULL
+          ORDER BY s.kind`
+      )
+      .bind()
+      .all<{ kind: PackageKind; checkedAt: string; complete: number; total: number }>(),
+    db
+      .prepare(
+        `SELECT id, cve_id AS cveId, kind, advisory_url AS advisoryUrl,
+                published_at AS publishedAt, observed_at AS observedAt, packages_json AS packagesJson
+           FROM cve_package_advisory
+          WHERE kind = 'reviewed' AND withdrawn_at IS NULL
+          ORDER BY published_at DESC, id DESC
+          LIMIT 4`
+      )
+      .bind()
+      .all<RecentPackageRow>(),
+    db
+      .prepare(
+        `SELECT id, cve_id AS cveId, kind, advisory_url AS advisoryUrl,
+                published_at AS publishedAt, observed_at AS observedAt, packages_json AS packagesJson
+           FROM cve_package_advisory
+          WHERE kind = 'malware' AND withdrawn_at IS NULL
+          ORDER BY published_at DESC, id DESC
+          LIMIT 4`
+      )
+      .bind()
+      .all<RecentPackageRow>(),
   ]);
+
+  const sources: PackageFeed['sources'][number][] = sourcesResult.results.map(row => ({
+    kind: row.kind,
+    checkedAt: row.checkedAt,
+    complete: row.complete === 1,
+    total: Number(row.total ?? 0),
+  }));
+
+  const recent: PackageFeed['recent'][number][] = [
+    ...reviewedResult.results,
+    ...malwareResult.results,
+  ]
+    .toSorted((left, right) => {
+      if (left.publishedAt !== right.publishedAt) {
+        return right.publishedAt < left.publishedAt ? -1 : 1;
+      }
+      return right.id < left.id ? -1 : right.id > left.id ? 1 : 0;
+    })
+    .map(row => ({
+      id: row.id,
+      cveId: row.cveId,
+      kind: row.kind,
+      advisoryUrl: row.advisoryUrl,
+      publishedAt: row.publishedAt,
+      observedAt: row.observedAt,
+      packages: Schema.decodeUnknownSync(packagesArray)(JSON.parse(row.packagesJson)).slice(0, 8),
+    }));
+
   return { sources, recent };
 }

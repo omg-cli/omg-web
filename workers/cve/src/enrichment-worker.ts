@@ -1,4 +1,14 @@
-import postgres from 'postgres';
+import { Schema } from 'effect';
+import {
+  batchInChunks,
+  chunkArray,
+  readDb,
+  sha256Hex,
+  writeDb,
+  type D1Bound,
+  type D1Client,
+  type D1Executor,
+} from './d1.ts';
 import { cveId } from './advisories.ts';
 import { collectEuvd } from './euvd.ts';
 import { collectMsrc } from './msrc.ts';
@@ -6,7 +16,7 @@ import { collectOsvPackages, osvPackageFeed } from './osv-packages.ts';
 import { mergePackageFeeds } from './package-advisories.ts';
 import { collectPackageAdvisories, packageFeed } from './package-store.ts';
 import { streamName, streamPath, type DashboardBinding } from './stream.ts';
-import { loadEvidence, type ZeroDay, type ZeroDayView } from './zero-days.ts';
+import { loadEvidence, zeroDayView, type ZeroDay, type ZeroDayView } from './zero-days.ts';
 import {
   collectChrome,
   recentPublisherExploitation,
@@ -15,21 +25,10 @@ import {
 } from './vendor-store.ts';
 
 interface Environment extends DashboardBinding {
-  ADVISORY_DATABASE: { connectionString: string };
+  DB: D1Client;
 }
 
 type Feed = Awaited<ReturnType<typeof loadEvidence>>[number];
-
-function client(connectionString: string) {
-  return postgres(connectionString, {
-    max: 1,
-    connect_timeout: 5,
-    idle_timeout: 5,
-    fetch_types: false,
-    prepare: false,
-    connection: { application_name: 'omg-cve-enrichment' },
-  });
-}
 
 function toInput(feed: Feed) {
   const distinct = new Map<
@@ -61,147 +60,289 @@ function toInput(feed: Feed) {
   return [...distinct.values()];
 }
 
-async function ingest(transaction: postgres.TransactionSql, feed: Feed, checkedAt: string) {
+const pendingEvidenceList = zeroDayView.fields.entries;
+
+function parsePendingEvidence(raw: string | null | undefined): ZeroDay[] {
+  if (!raw) return [];
+  try {
+    return [...Schema.decodeUnknownSync(pendingEvidenceList)(JSON.parse(raw))];
+  } catch {
+    return [];
+  }
+}
+
+async function ingest(db: D1Executor, feed: Feed, checkedAt: string) {
   const input = toInput(feed);
-  const [previous] = await transaction<
-    { baseline: boolean; checkedAt: Date; pending: ZeroDay[] }[]
-  >`
-    SELECT successful_at IS NULL AS baseline, checked_at AS "checkedAt", pending_evidence AS pending
-      FROM public.cve_exploitation_source WHERE source = ${feed.source}
-  `;
-  if (previous && previous.checkedAt.toISOString() > checkedAt) return;
-  const before = new Map(previous?.pending.map(entry => [entry.id, entry]));
+  const previous = await db
+    .prepare(
+      `SELECT CASE WHEN successful_at IS NULL THEN 1 ELSE 0 END AS baseline,
+              checked_at AS checkedAt,
+              pending_evidence_json AS pendingJson
+         FROM cve_exploitation_source
+        WHERE source = ?`
+    )
+    .bind(feed.source)
+    .first<{ baseline: number; checkedAt: string; pendingJson: string }>();
+  if (previous && previous.checkedAt > checkedAt) return;
+
+  const previousPending = parsePendingEvidence(previous?.pendingJson);
+  const before = new Map(previousPending.map(entry => [entry.id, entry]));
   const pending = feed.complete ? new Map<string, ZeroDay>() : new Map(before);
   for (const row of feed.rows) pending.delete(row.id);
+
   let matchedCount = 0;
+  const statements: D1Bound[] = [];
+
   if (input.length > 0) {
-    const [result] = await transaction<{ matched: number; unmatched: string[] }[]>`
-      WITH input AS MATERIALIZED (
-        SELECT * FROM jsonb_to_recordset(${JSON.stringify(input)}::text::jsonb)
-          AS incoming(cve_id text, vendor text, product text, discovered date, patched date,
-                 evidence text, vendor_url text, catalog_year smallint)
-      ), matched AS MATERIALIZED (
-        SELECT i.*, r.payload_sha256 AS archive_sha256,
-               encode(sha256(convert_to(row_to_json(i)::text, 'UTF8')), 'hex') AS evidence_sha256
-          FROM input i LEFT JOIN public.source_record r ON r.id = i.cve_id AND r.state = 'PUBLISHED'
-      ), previous_pending AS (
-        SELECT id, "observedAt" FROM jsonb_to_recordset(${JSON.stringify(previous?.pending ?? [])}::text::jsonb)
-          AS entry(id text, "observedAt" timestamptz)
-      ), stored AS (
-        INSERT INTO public.cve_exploitation_evidence AS evidence (
-          cve_id, source, vendor, product, discovered_on, patched_on, evidence_url, vendor_url,
-          catalog_year, archive_revision_sha256, evidence_sha256, first_seen_at, last_changed_at, baseline
-        )
-        SELECT cve_id, ${feed.source}, vendor, product, discovered, patched, evidence, vendor_url,
-               catalog_year, archive_sha256, evidence_sha256, coalesce(previous_pending."observedAt", ${checkedAt}::timestamptz),
-               ${checkedAt}::timestamptz, ${previous?.baseline ?? true}
-          FROM matched LEFT JOIN previous_pending ON previous_pending.id=matched.cve_id
-         WHERE archive_sha256 IS NOT NULL
-         ORDER BY cve_id
-        ON CONFLICT (cve_id, source) DO UPDATE SET
-          vendor = excluded.vendor, product = excluded.product, discovered_on = excluded.discovered_on,
-          patched_on = excluded.patched_on, evidence_url = excluded.evidence_url, vendor_url = excluded.vendor_url,
-          catalog_year = excluded.catalog_year, archive_revision_sha256 = excluded.archive_revision_sha256,
-          evidence_sha256 = excluded.evidence_sha256, last_changed_at = excluded.last_changed_at,
-          withdrawn_at = NULL
-        WHERE evidence.evidence_sha256 IS DISTINCT FROM excluded.evidence_sha256
-           OR evidence.archive_revision_sha256 IS DISTINCT FROM excluded.archive_revision_sha256
-           OR evidence.withdrawn_at IS NOT NULL
+    const archiveShaById = new Map<string, string>();
+    const chunks = chunkArray(input, 200);
+    const pages = await Promise.all(
+      chunks.map(chunk =>
+        db
+          .prepare(
+            `SELECT id, payload_sha256
+               FROM source_record
+              WHERE state = 'PUBLISHED' AND id IN (SELECT value FROM json_each(?))`
+          )
+          .bind(JSON.stringify(chunk.map(item => item.cve_id)))
+          .all<{ id: string; payload_sha256: string }>()
       )
-      SELECT COUNT(archive_sha256)::int AS matched,
-             coalesce(jsonb_agg(cve_id) FILTER (WHERE archive_sha256 IS NULL), '[]'::jsonb) AS unmatched
-        FROM matched
-    `;
-    matchedCount = result?.matched ?? 0;
-    const unmatched = new Set(result?.unmatched);
+    );
+    for (const page of pages) {
+      for (const row of page.results) archiveShaById.set(row.id, row.payload_sha256);
+    }
+
+    const baseline = previous?.baseline ?? 1;
+    const unmatched = new Set<string>();
+    const matchedInputs = input.filter(item => {
+      if (archiveShaById.has(item.cve_id)) return true;
+      unmatched.add(item.cve_id);
+      return false;
+    });
+    matchedCount = matchedInputs.length;
+
+    const evidenceHashes = await Promise.all(
+      matchedInputs.map(item => sha256Hex(JSON.stringify(item)))
+    );
+
+    for (let index = 0; index < matchedInputs.length; index++) {
+      const item = matchedInputs[index]!;
+      const archiveSha = archiveShaById.get(item.cve_id)!;
+      const evidenceSha = evidenceHashes[index]!;
+      const firstSeen = before.get(item.cve_id)?.observedAt ?? checkedAt;
+      statements.push(
+        db
+          .prepare(
+            `INSERT INTO cve_exploitation_evidence (
+               cve_id, source, vendor, product, discovered_on, patched_on, evidence_url, vendor_url,
+               catalog_year, archive_revision_sha256, evidence_sha256, first_seen_at, last_changed_at, baseline
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT (cve_id, source) DO UPDATE SET
+               vendor = excluded.vendor,
+               product = excluded.product,
+               discovered_on = excluded.discovered_on,
+               patched_on = excluded.patched_on,
+               evidence_url = excluded.evidence_url,
+               vendor_url = excluded.vendor_url,
+               catalog_year = excluded.catalog_year,
+               archive_revision_sha256 = excluded.archive_revision_sha256,
+               evidence_sha256 = excluded.evidence_sha256,
+               last_changed_at = excluded.last_changed_at,
+               withdrawn_at = NULL
+             WHERE cve_exploitation_evidence.evidence_sha256 <> excluded.evidence_sha256
+                OR cve_exploitation_evidence.archive_revision_sha256 <> excluded.archive_revision_sha256
+                OR cve_exploitation_evidence.withdrawn_at IS NOT NULL`
+          )
+          .bind(
+            item.cve_id,
+            feed.source,
+            item.vendor,
+            item.product,
+            item.discovered,
+            item.patched,
+            item.evidence,
+            item.vendor_url,
+            item.catalog_year,
+            archiveSha,
+            evidenceSha,
+            firstSeen,
+            checkedAt,
+            baseline
+          )
+      );
+    }
+
     for (const row of feed.rows) {
-      if (unmatched.has(row.id))
+      if (unmatched.has(row.id)) {
         pending.set(row.id, {
           ...row,
           archived: false,
           observedAt: before.get(row.id)?.observedAt ?? checkedAt,
         });
+      }
     }
   }
 
   if (feed.complete && feed.coverageYears.length > 0) {
-    await transaction`
-      UPDATE public.cve_exploitation_evidence
-         SET withdrawn_at = ${checkedAt}::timestamptz
-       WHERE source = ${feed.source} AND withdrawn_at IS NULL
-         AND catalog_year IN (SELECT value::smallint FROM jsonb_array_elements_text(${JSON.stringify(feed.coverageYears)}::text::jsonb))
-         AND cve_id NOT IN (SELECT value FROM jsonb_array_elements_text(${JSON.stringify(input.map(entry => entry.cve_id))}::text::jsonb))
-    `;
+    const activeIds = new Set(input.map(entry => entry.cve_id));
+    const { results: existingRows } = await db
+      .prepare(
+        `SELECT cve_id
+           FROM cve_exploitation_evidence
+          WHERE source = ? AND withdrawn_at IS NULL
+            AND catalog_year IN (SELECT CAST(value AS INTEGER) FROM json_each(?))`
+      )
+      .bind(feed.source, JSON.stringify(feed.coverageYears))
+      .all<{ cve_id: string }>();
+    const toWithdraw = existingRows.map(row => row.cve_id).filter(cve => !activeIds.has(cve));
+    for (const chunk of chunkArray(toWithdraw, 200)) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE cve_exploitation_evidence
+                SET withdrawn_at = ?
+              WHERE source = ? AND withdrawn_at IS NULL
+                AND cve_id IN (SELECT value FROM json_each(?))`
+          )
+          .bind(checkedAt, feed.source, JSON.stringify(chunk))
+      );
+    }
   }
 
-  await transaction`
-    INSERT INTO public.cve_exploitation_source AS previous (
-      source, checked_at, successful_at, coverage_years, observed_count, matched_count, complete, error_code, pending_evidence
-    ) VALUES (
-      ${feed.source}, ${checkedAt}::timestamptz, ${feed.complete ? checkedAt : null}::timestamptz,
-      ARRAY(SELECT value::smallint FROM jsonb_array_elements_text(${JSON.stringify(feed.coverageYears)}::text::jsonb)), ${input.length}, ${matchedCount},
-      ${feed.complete}, ${feed.complete ? null : 'source_unavailable'}, ${JSON.stringify([...pending.values()])}::text::jsonb
-    )
-    ON CONFLICT (source) DO UPDATE SET
-      checked_at = excluded.checked_at, complete = excluded.complete, error_code = excluded.error_code,
-      successful_at = coalesce(excluded.successful_at, previous.successful_at),
-      coverage_years = excluded.coverage_years, observed_count = excluded.observed_count,
-      matched_count = excluded.matched_count, pending_evidence = excluded.pending_evidence
-  `;
+  statements.push(
+    db
+      .prepare(
+        `INSERT INTO cve_exploitation_source (
+           source, checked_at, successful_at, coverage_years_json, observed_count, matched_count, complete, error_code, pending_evidence_json
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (source) DO UPDATE SET
+           checked_at = excluded.checked_at,
+           complete = excluded.complete,
+           error_code = excluded.error_code,
+           successful_at = COALESCE(excluded.successful_at, cve_exploitation_source.successful_at),
+           coverage_years_json = excluded.coverage_years_json,
+           observed_count = excluded.observed_count,
+           matched_count = excluded.matched_count,
+           pending_evidence_json = excluded.pending_evidence_json`
+      )
+      .bind(
+        feed.source,
+        checkedAt,
+        feed.complete ? checkedAt : null,
+        JSON.stringify(feed.coverageYears),
+        input.length,
+        matchedCount,
+        feed.complete ? 1 : 0,
+        feed.complete ? null : 'source_unavailable',
+        JSON.stringify([...pending.values()])
+      )
+  );
+
+  await batchInChunks(db, statements);
 }
 
-async function persist(sql: postgres.Sql) {
+async function persist(db: D1Executor) {
   const now = new Date();
   const feeds = await loadEvidence(now);
-  await sql.begin(async transaction => {
-    await transaction`SET LOCAL statement_timeout = '8s'`;
-    await transaction`SET LOCAL lock_timeout = '1s'`;
-    const [lock] = await transaction<{ locked: boolean }[]>`
-      SELECT pg_try_advisory_xact_lock(213770071, 1) AS locked
-    `;
-    if (!lock?.locked) return;
-    for (const feed of feeds) await ingest(transaction, feed, now.toISOString());
-  });
+  const checkedAt = now.toISOString();
+  for (const feed of feeds) await ingest(db, feed, checkedAt);
 }
 
-async function entries(sql: postgres.Sql, id: string | null) {
-  return sql<ZeroDay[]>`
-    WITH best AS (
-      SELECT DISTINCT ON (e.cve_id)
-             e.*, r.published_at
-        FROM public.cve_exploitation_evidence e
-        JOIN public.source_record r ON r.id = e.cve_id AND r.state = 'PUBLISHED'
-       WHERE e.withdrawn_at IS NULL AND (${id}::text IS NULL OR e.cve_id = ${id})
-       ORDER BY e.cve_id, (e.source = 'Project Zero'), e.first_seen_at DESC
+interface EntryRow {
+  id: string;
+  vendor: string | null;
+  product: string;
+  discovered: string | null;
+  patched: string | null;
+  evidence: string;
+  vendorAdvisory: string | null;
+  source: ZeroDay['source'];
+  observedAt: string | null;
+  kevAdded: string | null;
+  epss: number | null;
+  epssDate: string | null;
+  euvd: number;
+}
+
+async function entries(db: D1Executor, id: string | null): Promise<ZeroDay[]> {
+  const { results } = await db
+    .prepare(
+      `WITH ranked AS (
+         SELECT e.*,
+                r.published_at,
+                ROW_NUMBER() OVER (
+                  PARTITION BY e.cve_id
+                  ORDER BY CASE WHEN e.source = 'Project Zero' THEN 0 ELSE 1 END, e.first_seen_at DESC
+                ) AS rank_num
+           FROM cve_exploitation_evidence e
+           JOIN source_record r ON r.id = e.cve_id AND r.state = 'PUBLISHED'
+          WHERE e.withdrawn_at IS NULL AND (? IS NULL OR e.cve_id = ?)
+       )
+       SELECT b.cve_id AS id,
+              b.vendor,
+              b.product,
+              b.discovered_on AS discovered,
+              b.patched_on AS patched,
+              b.evidence_url AS evidence,
+              b.vendor_url AS vendorAdvisory,
+              b.source,
+              CASE WHEN b.baseline = 0 THEN b.first_seen_at END AS observedAt,
+              json_extract(k.payload_json, '$.dateAdded') AS kevAdded,
+              ep.epss,
+              ep.score_date AS epssDate,
+              CASE WHEN ev.cve_id IS NOT NULL THEN 1 ELSE 0 END AS euvd
+         FROM ranked b
+         LEFT JOIN kev_annotation k ON k.cve_id = b.cve_id
+         LEFT JOIN epss_scores ep ON ep.cve_id = b.cve_id
+         LEFT JOIN euvd_exploited ev ON ev.cve_id = b.cve_id
+        WHERE b.rank_num = 1
+        ORDER BY b.baseline ASC,
+                 CASE WHEN b.baseline = 0 THEN b.first_seen_at END DESC NULLS LAST,
+                 COALESCE(b.patched_on, substr(b.published_at, 1, 10)) DESC NULLS LAST,
+                 b.cve_id DESC
+        LIMIT 40`
     )
-    SELECT b.cve_id AS id, b.vendor, b.product, b.discovered_on::text AS discovered,
-           b.patched_on::text AS patched, b.evidence_url AS evidence, b.vendor_url AS "vendorAdvisory",
-           b.source, CASE WHEN NOT b.baseline THEN to_char(b.first_seen_at AT TIME ZONE 'UTC',
-             'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') END AS "observedAt",
-           k.payload_json::jsonb->>'dateAdded' AS "kevAdded",
-           ep.epss, ep.model_date AS "epssDate",
-           EXISTS (SELECT 1 FROM public.euvd_exploited n WHERE n.cve_id=b.cve_id AND n.exploited) AS euvd
-      FROM best b
-      LEFT JOIN public.kev_annotation k ON k.cve_id=b.cve_id
-      LEFT JOIN public.epss_scores ep ON ep.cve_id=b.cve_id
-     ORDER BY b.baseline, CASE WHEN NOT b.baseline THEN b.first_seen_at END DESC NULLS LAST,
-              coalesce(b.patched_on::text, left(b.published_at, 10)) DESC NULLS LAST, b.cve_id DESC
-     LIMIT 40
-  `;
+    .bind(id, id)
+    .all<EntryRow>();
+  return results.map(row => ({
+    id: row.id,
+    vendor: row.vendor,
+    product: row.product,
+    discovered: row.discovered,
+    patched: row.patched,
+    evidence: row.evidence,
+    vendorAdvisory: row.vendorAdvisory,
+    source: row.source,
+    observedAt: row.observedAt,
+    kevAdded: row.kevAdded,
+    epss: row.epss,
+    epssDate: row.epssDate,
+    euvd: row.euvd === 1,
+  }));
 }
 
-async function view(sql: postgres.Sql): Promise<ZeroDayView> {
-  const [sources, records, publishers, reports, github, osv] = await Promise.all([
-    sql<{ source: string; complete: boolean; checked: Date | null; pending: ZeroDay[] }[]>`
-      SELECT source, complete, successful_at AS checked, pending_evidence AS pending
-        FROM public.cve_exploitation_source ORDER BY source
-    `,
-    entries(sql, null),
-    watchStatuses(sql),
-    recentPublisherExploitation(sql),
-    packageFeed(sql),
-    osvPackageFeed(sql),
+async function view(db: D1Executor): Promise<ZeroDayView> {
+  const [sourcesResult, records, publishers, reports, github, osv] = await Promise.all([
+    db
+      .prepare(
+        `SELECT source, complete, successful_at AS checked, pending_evidence_json AS pendingJson
+           FROM cve_exploitation_source
+          ORDER BY source`
+      )
+      .bind()
+      .all<{ source: string; complete: number; checked: string | null; pendingJson: string }>(),
+    entries(db, null),
+    watchStatuses(db),
+    recentPublisherExploitation(db),
+    packageFeed(db),
+    osvPackageFeed(db),
   ]);
+  const sources = sourcesResult.results.map(row => ({
+    source: row.source,
+    complete: row.complete === 1,
+    checked: row.checked,
+    pending: parsePendingEvidence(row.pendingJson),
+  }));
   const source = sources.find(feed => feed.source === 'Project Zero');
   const entriesById = new Map(
     sources.flatMap(feed => feed.pending).map(entry => [entry.id, entry])
@@ -209,7 +350,7 @@ async function view(sql: postgres.Sql): Promise<ZeroDayView> {
   for (const entry of records) entriesById.set(entry.id, entry);
   return {
     entries: [...entriesById.values()].slice(0, 40),
-    checkedAt: source?.checked?.toISOString() ?? null,
+    checkedAt: source?.checked ?? null,
     current: source?.complete ?? false,
     publishers: publishers.map(publisher => ({
       ...publisher,
@@ -219,26 +360,34 @@ async function view(sql: postgres.Sql): Promise<ZeroDayView> {
   };
 }
 
-async function packagesDue(sql: postgres.Sql, minute: number) {
+async function packagesDue(db: D1Executor, minute: number) {
   if (minute % 15 === 0) return true;
-  const [checkpoint] = await sql`
-    SELECT 1 FROM public.cve_package_advisory_source
-     WHERE checked_at > now() - interval '3 minutes'
-        OR EXISTS (SELECT 1 FROM public.cve_package_advisory)
-     LIMIT 1
-  `;
+  const cutoff = new Date(Date.now() - 3 * 60_000).toISOString();
+  const checkpoint = await db
+    .prepare(
+      `SELECT 1 AS ok
+         FROM cve_package_advisory_source
+        WHERE checked_at > ?
+           OR EXISTS (SELECT 1 FROM cve_package_advisory LIMIT 1)
+        LIMIT 1`
+    )
+    .bind(cutoff)
+    .first<{ ok: number }>();
   return !checkpoint;
 }
 
-async function osvDue(sql: postgres.Sql, minute: number) {
+async function osvDue(db: D1Executor, minute: number) {
   if (minute % 5 === 0) return true;
-  const [checkpoint] = await sql`SELECT 1 FROM public.cve_osv_package_source LIMIT 1`;
+  const checkpoint = await db
+    .prepare('SELECT 1 AS ok FROM cve_osv_package_source LIMIT 1')
+    .bind()
+    .first<{ ok: number }>();
   return !checkpoint;
 }
 
 export default {
   async scheduled(event: { scheduledTime: number }, env: Environment) {
-    const sql = client(env.ADVISORY_DATABASE.connectionString);
+    const db = writeDb(env.DB);
     const minute = Math.floor(event.scheduledTime / 60_000);
     const stream = env.ADVISORY_STREAM.getByName(streamName);
     let delivery = Promise.resolve();
@@ -250,7 +399,7 @@ export default {
         .catch(() => undefined)
         .then(async () => {
           const generation = Date.now();
-          const zeroDays = await view(sql);
+          const zeroDays = await view(db);
           const result = await stream.fetch(
             new Request(streamPath + '/evidence', {
               method: 'POST',
@@ -262,24 +411,18 @@ export default {
       await delivery;
     }
 
-    try {
-      const work = [
-        publishAfter([persist(sql), collectChrome(sql)]),
-        packagesDue(sql, minute).then(due =>
-          due ? publishAfter([collectPackageAdvisories(sql)]) : undefined
-        ),
-        osvDue(sql, minute).then(due =>
-          due ? publishAfter([collectOsvPackages(sql)]) : undefined
-        ),
-      ];
-      if (minute % 2 === 0) work.push(publishAfter([collectMsrc(sql)]));
-      if (minute % 10 === 0) work.push(publishAfter([collectEuvd(sql)]));
-      const results = await Promise.allSettled(work);
-      if (results.some(result => result.status === 'rejected'))
-        throw new Error('Advisory publication failed');
-    } finally {
-      await sql.end({ timeout: 1 });
-    }
+    const work = [
+      publishAfter([persist(db), collectChrome(db)]),
+      packagesDue(db, minute).then(due =>
+        due ? publishAfter([collectPackageAdvisories(db)]) : undefined
+      ),
+      osvDue(db, minute).then(due => (due ? publishAfter([collectOsvPackages(db)]) : undefined)),
+    ];
+    if (minute % 2 === 0) work.push(publishAfter([collectMsrc(db)]));
+    if (minute % 10 === 0) work.push(publishAfter([collectEuvd(db)]));
+    const results = await Promise.allSettled(work);
+    if (results.some(result => result.status === 'rejected'))
+      throw new Error('Advisory publication failed');
   },
   async fetch(request: Request, env: Environment) {
     const path = new URL(request.url).pathname;
@@ -289,22 +432,19 @@ export default {
     const record = request.method === 'GET' && id && cveId.test(id);
     if (!legacy && !read && !record) return new Response(null, { status: 404 });
 
-    const sql = client(env.ADVISORY_DATABASE.connectionString);
+    const db = readDb(env.DB);
     try {
       if (record) {
-        const [documented, vendor] = await Promise.all([entries(sql, id), vendorSignals(sql, id)]);
+        const [documented, vendor] = await Promise.all([entries(db, id), vendorSignals(db, id)]);
         return Response.json({ zeroDay: documented[0] ?? null, vendor });
       }
-      return Response.json(await view(sql), { headers: { 'Cache-Control': 'no-store' } });
+      return Response.json(await view(db), { headers: { 'Cache-Control': 'no-store' } });
     } catch (error) {
       console.error('advisory_evidence_sync_failed', {
         operation: 'read',
-        code: error instanceof postgres.PostgresError ? error.code : null,
         error: error instanceof Error ? error.name : 'Unexpected failure',
       });
       return new Response(null, { status: 503 });
-    } finally {
-      await sql.end({ timeout: 1 });
     }
   },
 };

@@ -1,5 +1,5 @@
 import { Schema } from 'effect';
-import type postgres from 'postgres';
+import { batchInChunks, chunkArray, type D1Bound, type D1Executor } from './d1.ts';
 import { readLimitedText } from './sources.ts';
 
 export const msrcProvider = 'Microsoft MSRC';
@@ -131,27 +131,49 @@ async function readAdvisory(change: Change) {
   return parseMsrcAdvisory(JSON.parse(raw), change);
 }
 
-async function pendingChanges(sql: postgres.Sql, entries: readonly Change[]) {
-  return sql<Change[]>`
-    SELECT candidate.id, candidate.path, candidate.modified
-      FROM jsonb_to_recordset(${JSON.stringify(entries)}::text::jsonb)
-           AS candidate(id text, path text, modified text)
-      LEFT JOIN public.cve_vendor_signal stored
-        ON stored.provider = ${msrcProvider}
-       AND stored.cve_id = candidate.id
-       AND stored.advisory_url = 'https://msrc.microsoft.com/update-guide/vulnerability/' || candidate.id
-     WHERE stored.publisher_modified_at IS NULL OR stored.publisher_modified_at < candidate.modified::timestamptz
-     ORDER BY candidate.modified, candidate.path
-     LIMIT ${batchSize + 1}
-  `;
+async function pendingChanges(db: D1Executor, entries: readonly Change[]): Promise<Change[]> {
+  if (entries.length === 0) return [];
+  const storedByKey = new Map<string, string>();
+  const chunks = chunkArray(entries, 200);
+  const results = await Promise.all(
+    chunks.map(chunk =>
+      db
+        .prepare(
+          `SELECT cve_id, advisory_url, publisher_modified_at
+             FROM cve_vendor_signal
+            WHERE provider = ? AND cve_id IN (SELECT value FROM json_each(?))`
+        )
+        .bind(msrcProvider, JSON.stringify(chunk.map(entry => entry.id)))
+        .all<{ cve_id: string; advisory_url: string; publisher_modified_at: string }>()
+    )
+  );
+  for (const page of results) {
+    for (const row of page.results) {
+      storedByKey.set(`${row.cve_id}\0${row.advisory_url}`, row.publisher_modified_at);
+    }
+  }
+  return entries
+    .filter(candidate => {
+      const url = 'https://msrc.microsoft.com/update-guide/vulnerability/' + candidate.id;
+      const stored = storedByKey.get(`${candidate.id}\0${url}`);
+      return stored === undefined || stored < candidate.modified;
+    })
+    .toSorted((left, right) => {
+      if (left.modified !== right.modified) return left.modified < right.modified ? -1 : 1;
+      return left.path < right.path ? -1 : left.path > right.path ? 1 : 0;
+    })
+    .slice(0, batchSize + 1);
 }
 
-export async function collectMsrc(sql: postgres.Sql): Promise<void> {
+export async function collectMsrc(db: D1Executor): Promise<void> {
   const started = new Date();
+  const startedIso = started.toISOString();
+  let committed = false;
   try {
-    const [before] = await sql<{ etag: string | null }[]>`
-      SELECT etag FROM public.cve_vendor_signal_source WHERE provider = ${msrcProvider}
-    `;
+    const before = await db
+      .prepare('SELECT etag FROM cve_vendor_signal_source WHERE provider = ?')
+      .bind(msrcProvider)
+      .first<{ etag: string | null }>();
     let window = await manifest(8192);
     const latest = window.changes.at(0);
     const baseline = window.changes.at(baselineSize - 1) ?? window.changes.at(-1);
@@ -171,7 +193,7 @@ export async function collectMsrc(sql: postgres.Sql): Promise<void> {
       throw new Error('Microsoft CSAF manifest does not cover the saved checkpoint');
     }
     const pending = await pendingChanges(
-      sql,
+      db,
       window.changes.filter(change => change.modified >= state.since)
     );
     const records: (Awaited<ReturnType<typeof readAdvisory>> & {
@@ -199,59 +221,78 @@ export async function collectMsrc(sql: postgres.Sql): Promise<void> {
       baselineThrough: state.baselineThrough,
     };
     const checked = new Date().toISOString();
-    await sql.begin(async transaction => {
-      await transaction`SET LOCAL statement_timeout = '8s'`;
-      const [lock] = await transaction<{ locked: boolean }[]>`
-        SELECT pg_try_advisory_xact_lock(213770071, 3) AS locked
-      `;
-      if (!lock?.locked) return;
-      const [moreRecent] = await transaction<{ checked: Date }[]>`
-        SELECT checked_at AS checked FROM public.cve_vendor_signal_source
-         WHERE provider = ${msrcProvider} AND checked_at >= ${started.toISOString()}::timestamptz
-      `;
-      if (moreRecent) return;
-      if (records.length) {
-        await transaction`
-          INSERT INTO public.cve_vendor_signal AS stored (
-            provider, cve_id, advisory_url, publisher_published_at, publisher_modified_at,
-            reported_exploited, first_received_at, first_exploitation_received_at, baseline
+    const moreRecent = await db
+      .prepare(
+        'SELECT checked_at AS checked FROM cve_vendor_signal_source WHERE provider = ? AND checked_at >= ?'
+      )
+      .bind(msrcProvider, startedIso)
+      .first<{ checked: string }>();
+    if (!moreRecent) {
+      const statements: D1Bound[] = records.map(record => {
+        const exploited = record.exploited ? 1 : 0;
+        return db
+          .prepare(
+            `INSERT INTO cve_vendor_signal (
+               provider, cve_id, advisory_url, publisher_published_at, publisher_modified_at,
+               reported_exploited, first_received_at, first_exploitation_received_at, baseline
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT (provider, advisory_url, cve_id) DO UPDATE SET
+               publisher_published_at = excluded.publisher_published_at,
+               publisher_modified_at = excluded.publisher_modified_at,
+               reported_exploited = excluded.reported_exploited,
+               first_exploitation_received_at = COALESCE(
+                 cve_vendor_signal.first_exploitation_received_at,
+                 excluded.first_exploitation_received_at
+               )
+             WHERE excluded.publisher_modified_at > cve_vendor_signal.publisher_modified_at`
           )
-          SELECT ${msrcProvider}, cve_id, advisory_url, published, modified,
-                 exploited, received, CASE WHEN exploited THEN received END, baseline
-            FROM jsonb_to_recordset(${JSON.stringify(records)}::text::jsonb)
-                 AS incoming(cve_id text, advisory_url text, published timestamptz, modified timestamptz,
-                             exploited boolean, received timestamptz, baseline boolean)
-          ON CONFLICT (provider, advisory_url, cve_id) DO UPDATE
-            SET publisher_published_at = excluded.publisher_published_at,
-                publisher_modified_at = excluded.publisher_modified_at,
-                reported_exploited = excluded.reported_exploited,
-                first_exploitation_received_at = coalesce(
-                  stored.first_exploitation_received_at, excluded.first_exploitation_received_at
-                )
-          WHERE excluded.publisher_modified_at > stored.publisher_modified_at
-        `;
-      }
-      await transaction`
-        INSERT INTO public.cve_vendor_signal_source AS source (
-          provider, etag, checked_at, successful_at, complete
-        ) VALUES (
-          ${msrcProvider}, ${JSON.stringify(saved)}, ${checked}::timestamptz,
-          CASE WHEN ${complete} THEN ${checked}::timestamptz END, ${complete}
-        )
-        ON CONFLICT (provider) DO UPDATE
-           SET etag = excluded.etag, checked_at = excluded.checked_at,
-               successful_at = coalesce(excluded.successful_at, source.successful_at),
-               complete = excluded.complete
-      `;
-    });
+          .bind(
+            msrcProvider,
+            record.cve_id,
+            record.advisory_url,
+            record.published,
+            record.modified,
+            exploited,
+            record.received,
+            exploited ? record.received : null,
+            record.baseline ? 1 : 0
+          );
+      });
+      statements.push(
+        db
+          .prepare(
+            `INSERT INTO cve_vendor_signal_source (provider, etag, checked_at, successful_at, complete)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT (provider) DO UPDATE SET
+               etag = excluded.etag,
+               checked_at = excluded.checked_at,
+               successful_at = COALESCE(excluded.successful_at, cve_vendor_signal_source.successful_at),
+               complete = excluded.complete`
+          )
+          .bind(
+            msrcProvider,
+            JSON.stringify(saved),
+            checked,
+            complete ? checked : null,
+            complete ? 1 : 0
+          )
+      );
+      await batchInChunks(db, statements);
+      committed = true;
+    }
     if (failure) throw failure;
   } catch (error) {
-    await sql`
-      INSERT INTO public.cve_vendor_signal_source AS source (provider, checked_at, complete)
-      VALUES (${msrcProvider}, now(), FALSE)
-      ON CONFLICT (provider) DO UPDATE SET checked_at = excluded.checked_at, complete = FALSE
-      WHERE source.checked_at < ${started.toISOString()}::timestamptz
-    `;
+    if (!committed) {
+      await db
+        .prepare(
+          `INSERT INTO cve_vendor_signal_source (provider, checked_at, complete)
+           VALUES (?, ?, 0)
+           ON CONFLICT (provider) DO UPDATE SET checked_at = excluded.checked_at, complete = 0
+           WHERE cve_vendor_signal_source.checked_at < ?`
+        )
+        .bind(msrcProvider, new Date().toISOString(), startedIso)
+        .run();
+    }
     throw error;
   }
 }
