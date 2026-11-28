@@ -203,22 +203,25 @@ function loadOrganizationUsage(
       return yield* Effect.fail(new OrganizationUsageStoreUnavailable('contextCardinality'));
     }
 
-    const [memberResult, unattributedValue, fleetValue, versionResult] = yield* Effect.all([
-      queryAll(
-        env.DB,
-        ORGANIZATION_MEMBER_USAGE_QUERY,
-        [context.licenseId, context.organizationId],
-        'members'
-      ),
-      queryFirst(
-        env.DB,
-        ORGANIZATION_UNATTRIBUTED_QUERY,
-        [context.organizationId, context.licenseId],
-        'unattributed'
-      ),
-      queryFirst(env.DB, ORGANIZATION_FLEET_QUERY, [context.licenseId], 'fleet'),
-      queryAll(env.DB, ORGANIZATION_VERSION_QUERY, [context.licenseId], 'versions'),
-    ]);
+    const [memberResult, unattributedValue, fleetValue, versionResult] = yield* Effect.all(
+      [
+        queryAll(
+          env.DB,
+          ORGANIZATION_MEMBER_USAGE_QUERY,
+          [context.licenseId, context.organizationId],
+          'members'
+        ),
+        queryFirst(
+          env.DB,
+          ORGANIZATION_UNATTRIBUTED_QUERY,
+          [context.organizationId, context.licenseId],
+          'unattributed'
+        ),
+        queryFirst(env.DB, ORGANIZATION_FLEET_QUERY, [context.licenseId], 'fleet'),
+        queryAll(env.DB, ORGANIZATION_VERSION_QUERY, [context.licenseId], 'versions'),
+      ],
+      { concurrency: 'unbounded' }
+    );
 
     const memberRows = yield* decodeOrganizationUsageRows(
       OrganizationUsageMemberRowSchema,

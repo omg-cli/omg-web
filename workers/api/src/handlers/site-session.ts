@@ -116,14 +116,14 @@ function mintSiteSession(
     }
 
     if (customer.admin !== admin) {
-      yield* storeOperation('syncRole', () =>
-        env.DB.prepare(`UPDATE customers SET admin = ? WHERE id = ?`).bind(admin, customerId).run()
-      );
-      // A privilege change revokes outstanding sessions: the stored Bearer [REDACTED]
-      // would otherwise survive demotion until expiry. The fresh session
+      // Atomically update role and revoke outstanding sessions so a stored
+      // Bearer token cannot survive demotion until expiry. The fresh session
       // minted below keeps the current login working.
-      yield* storeOperation('revokeSessionsOnRoleChange', () =>
-        env.DB.prepare('DELETE FROM sessions WHERE customer_id = ?').bind(customerId).run()
+      yield* storeOperation('syncRole', () =>
+        env.DB.batch([
+          env.DB.prepare(`UPDATE customers SET admin = ? WHERE id = ?`).bind(admin, customerId),
+          env.DB.prepare('DELETE FROM sessions WHERE customer_id = ?').bind(customerId),
+        ])
       );
       customer = { ...customer, admin };
     }

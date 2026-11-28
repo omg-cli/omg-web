@@ -840,7 +840,10 @@ export async function handleAdminUpdateNote(request: Request, env: Env): Promise
         ...(body.isPinned !== undefined && { isPinned: body.isPinned }),
       }),
       storeFailure('Failed to update note'),
-      async () => {
+      async result => {
+        if (result === 'not-found') {
+          return errorResponse('Note not found', 404);
+        }
         await logAdminAudit(env.DB, {
           action: 'admin.note_updated',
           userId: context.user.id,
@@ -871,7 +874,10 @@ export async function handleAdminDeleteNote(request: Request, env: Env): Promise
     return storeResponse(
       deleteNote(env.DB, noteId),
       storeFailure('Failed to delete note'),
-      async () => {
+      async result => {
+        if (result === 'not-found') {
+          return errorResponse('Note not found', 404);
+        }
         await logAdminAudit(env.DB, {
           action: 'admin.note_deleted',
           userId: context.user.id,
@@ -1009,7 +1015,10 @@ export async function handleAdminRemoveTag(request: Request, env: Env): Promise<
     return storeResponse(
       removeTag(env.DB, customerId, tagId),
       storeFailure('Failed to remove tag'),
-      async () => {
+      async result => {
+        if (result === 'not-found') {
+          return errorResponse('Tag assignment not found', 404);
+        }
         await logAdminAudit(env.DB, {
           action: 'admin.tag_removed',
           userId: context.user.id,

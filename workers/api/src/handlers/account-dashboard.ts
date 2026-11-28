@@ -156,7 +156,9 @@ function queryDashboardReads(db: D1Database, customerId: string, licenseId: stri
        LIMIT 1`
           )
           .bind(licenseId),
-        db.prepare(`SELECT COUNT(DISTINCT license_id) as count FROM usage_daily`),
+        db.prepare(
+          `SELECT COUNT(DISTINCT license_id) as count FROM usage_daily WHERE date >= date('now', '-30 days')`
+        ),
         db.prepare(
           `SELECT SUBSTR(c.email, 1, 1) || '***' as user, SUM(u.time_saved_ms) as time_saved
        FROM usage_daily u
@@ -379,7 +381,9 @@ function getAccountDashboard(
     const rankRow = yield* queryFirst(
       env.DB,
       `SELECT COUNT(*) as better_users FROM (
-         SELECT SUM(commands_run) as total FROM usage_daily GROUP BY license_id HAVING total > ?
+         SELECT SUM(commands_run) as total FROM usage_daily
+         WHERE date >= date('now', '-30 days')
+         GROUP BY license_id HAVING total > ?
        )`,
       [usageStats.total_commands],
       'percentileRank'

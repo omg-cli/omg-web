@@ -956,19 +956,18 @@ function ingestAnalytics(
         statements.push(incrementDailyMetric(env.DB, today, 'errors', errorType, 1));
       }
     }
+    const uniqueMachines = [...new Set(events.map(event => event.machine_id))];
+    for (const machineId of uniqueMachines) {
+      statements.push(
+        env.DB.prepare(
+          `INSERT OR IGNORE INTO analytics_active_users (date, machine_id) VALUES (?, ?)`
+        ).bind(today, machineId)
+      );
+    }
     yield* Effect.tryPromise({
       try: () => env.DB.batch(statements),
       catch: cause => storeUnavailable('analyticsBatch', cause),
     });
-    const uniqueMachines = [...new Set(events.map(event => event.machine_id))];
-    for (const machineId of uniqueMachines) {
-      yield* runSql(
-        env.DB,
-        `INSERT OR IGNORE INTO analytics_active_users (date, machine_id) VALUES (?, ?)`,
-        [today, machineId],
-        'analyticsActiveUser'
-      );
-    }
     return { success: true as const, processed: events.length };
   });
 }
