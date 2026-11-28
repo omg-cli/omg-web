@@ -140,24 +140,21 @@ export async function handleTrackEvent(request: Request, env: Env): Promise<Resp
       new Date(now).getUTCMonth(),
       new Date(now).getUTCDate()
     );
-    // One atomic conditional insert establishes a single salt for the UTC day.
+    // One batched round-trip establishes or reads the single salt for the UTC day.
     // D1 serializes writes, so concurrent cold starts either create the row or
     // observe the winner instead of fragmenting visitor identity.
-    const insertedSalt = await env.DB.prepare(
-      `INSERT INTO analytics_salts (salt, inserted_at)
-       SELECT randomblob(16), ?
-       WHERE NOT EXISTS (SELECT 1 FROM analytics_salts WHERE inserted_at >= ?)
-       RETURNING salt`
-    )
-      .bind(now, dayStart)
-      .first();
-    const saltResult =
-      insertedSalt ??
-      (await env.DB.prepare(
+    const [insertedSaltRes, selectedSaltRes] = await env.DB.batch([
+      env.DB.prepare(
+        `INSERT INTO analytics_salts (salt, inserted_at)
+         SELECT randomblob(16), ?
+         WHERE NOT EXISTS (SELECT 1 FROM analytics_salts WHERE inserted_at >= ?)
+         RETURNING salt`
+      ).bind(now, dayStart),
+      env.DB.prepare(
         `SELECT salt FROM analytics_salts WHERE inserted_at >= ? ORDER BY inserted_at ASC LIMIT 1`
-      )
-        .bind(dayStart)
-        .first());
+      ).bind(dayStart),
+    ]);
+    const saltResult = insertedSaltRes?.results[0] ?? selectedSaltRes?.results[0] ?? null;
     const saltLookup = await readOptionalExtraRow(
       AnalyticsSaltRowSchema,
       'Analytics salt row has an invalid shape',
@@ -189,7 +186,13 @@ export async function handleTrackEvent(request: Request, env: Env): Promise<Resp
 
     const country = request.headers.get('CF-IPCountry') || 'XX';
     const city = request.headers.get('CF-City') || 'Unknown';
-    const statements = boundedEvents.flatMap(event => {
+    let lastRealtime: {
+      readonly sessionId: string;
+      readonly pagePath: string;
+      readonly referrerDomain: string;
+    } | null = null;
+    const statements: Array<D1PreparedStatement> = [];
+    for (const event of boundedEvents) {
       const properties = event.properties || {};
       const referrer = optionalStringField(properties['referrer']);
       let referrerDomain = 'direct';
@@ -203,8 +206,12 @@ export async function handleTrackEvent(request: Request, env: Env): Promise<Resp
           // Invalid referrers are grouped with direct traffic.
         }
       }
-
-      const eventStatements = [
+      lastRealtime = {
+        sessionId: event.session_id,
+        pagePath: (optionalStringField(properties['path']) ?? '/').slice(0, MAX_PATH_LENGTH),
+        referrerDomain,
+      };
+      statements.push(
         env.DB.prepare(
           `INSERT INTO site_analytics_events
            (id, event_type, event_name, properties, timestamp, session_id, visitor_id, country_code, city, duration_ms, created_at)
@@ -227,28 +234,32 @@ export async function handleTrackEvent(request: Request, env: Env): Promise<Resp
           city,
           event.duration_ms || null,
           now
-        ),
+        )
+      );
+    }
+    if (lastRealtime !== null) {
+      const realtime = lastRealtime;
+      statements.push(
         env.DB.prepare(
           `INSERT INTO site_analytics_realtime (visitor_id, session_id, page_path, country_code, city, referrer, last_seen_at, page_count)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(visitor_id) DO UPDATE SET
              session_id = excluded.session_id,
              page_path = excluded.page_path,
              last_seen_at = excluded.last_seen_at,
-             page_count = page_count + 1`
+             page_count = page_count + excluded.page_count`
         ).bind(
           visitorId,
-          event.session_id,
-          (optionalStringField(properties['path']) ?? '/').slice(0, MAX_PATH_LENGTH),
+          realtime.sessionId,
+          realtime.pagePath,
           country,
           city,
-          referrerDomain,
-          now
-        ),
-      ];
-
-      return eventStatements;
-    });
+          realtime.referrerDomain,
+          now,
+          boundedEvents.length
+        )
+      );
+    }
     if (statements.length > 0) {
       await env.DB.batch(statements);
     }
