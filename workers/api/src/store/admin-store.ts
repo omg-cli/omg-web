@@ -111,6 +111,16 @@ const statement = (db: D1Database, sql: string, values: ReadonlyArray<BindValue>
   return values.length === 0 ? prepared : prepared.bind(...values);
 };
 
+const batchStatements = (
+  db: D1Database,
+  operation: string,
+  statements: ReadonlyArray<D1PreparedStatement>
+) =>
+  Effect.tryPromise({
+    try: () => db.batch([...statements]),
+    catch: fail(operation),
+  });
+
 const rows = <S extends import('effect/Schema').Schema.AnyNoContext>(
   db: D1Database,
   schema: S,
@@ -413,35 +423,51 @@ export const listUsers = (db: D1Database, input: ListUsersInput) =>
 /** Load one customer, their license, machines, and recent usage. */
 export const loadUserDetail = (db: D1Database, userId: string) =>
   Effect.gen(function* () {
-    const user = yield* optionalRow(
-      db,
+    const [userResult, licenseResult] = yield* batchStatements(db, 'loadUserDetail', [
+      statement(
+        db,
+        'SELECT id, email, company, tier, admin, stripe_customer_id, telemetry_opt_out, created_at, updated_at FROM customers WHERE id = ?',
+        [userId]
+      ),
+      statement(
+        db,
+        'SELECT id, customer_id, license_key, tier, status, max_seats, max_machines, expires_at, created_at FROM licenses WHERE customer_id = ?',
+        [userId]
+      ),
+    ]);
+    const user = yield* decodeOptionalExtraRow(
       AdminCustomerDetailRowSchema,
       'Admin customer detail has an invalid shape',
-      'SELECT id, email, company, tier, admin, stripe_customer_id, telemetry_opt_out, created_at, updated_at FROM customers WHERE id = ?',
-      [userId]
+      userResult?.results[0] ?? null
     );
     if (user === undefined) return { _tag: 'user-missing' } as const;
-    const license = yield* optionalRow(
-      db,
+    const license = yield* decodeOptionalExtraRow(
       AdminLicenseDetailRowSchema,
       'Admin license detail has an invalid shape',
-      'SELECT id, customer_id, license_key, tier, status, max_seats, max_machines, expires_at, created_at FROM licenses WHERE customer_id = ?',
-      [userId]
+      licenseResult?.results[0] ?? null
     );
     if (license === undefined) return { _tag: 'license-missing' } as const;
-    const machines = yield* rows(
-      db,
+    const [machinesResult, usageResult] = yield* batchStatements(db, 'loadUserDetail', [
+      statement(
+        db,
+        'SELECT id, license_id, machine_id, hostname, os, arch, omg_version, user_name, user_email, is_active, first_seen_at, last_seen_at FROM machines WHERE license_id = ?',
+        [license.id]
+      ),
+      statement(
+        db,
+        'SELECT date, license_id, commands_run, packages_installed, packages_searched, runtimes_switched, sbom_generated, vulnerabilities_found, time_saved_ms FROM usage_daily WHERE license_id = ? ORDER BY date DESC LIMIT 30',
+        [license.id]
+      ),
+    ]);
+    const machines = yield* decodeExtraRowArray(
       AdminMachineRowSchema,
       'Admin machine row has an invalid shape',
-      'SELECT id, license_id, machine_id, hostname, os, arch, omg_version, user_name, user_email, is_active, first_seen_at, last_seen_at FROM machines WHERE license_id = ?',
-      [license.id]
+      machinesResult?.results ?? []
     );
-    const usage = yield* rows(
-      db,
+    const usage = yield* decodeExtraRowArray(
       AdminUsageDailyRowSchema,
       'Admin usage daily row has an invalid shape',
-      'SELECT date, license_id, commands_run, packages_installed, packages_searched, runtimes_switched, sbom_generated, vulnerabilities_found, time_saved_ms FROM usage_daily WHERE license_id = ? ORDER BY date DESC LIMIT 30',
-      [license.id]
+      usageResult?.results ?? []
     );
     return { _tag: 'found', user, license, machines, usage } as const;
   });
@@ -532,78 +558,117 @@ export const exportAudit = (db: D1Database) =>
 /** Load product, growth, performance, and usage analytics. */
 export const loadAnalytics = (db: D1Database) =>
   Effect.gen(function* () {
-    const commandsByType = yield* rows(
-      db,
+    const [
+      commandsRes,
+      errorsRes,
+      growthRes,
+      growthRateRes,
+      timeSavedRes,
+      funnelRes,
+      churnRiskRes,
+      retentionRateRes,
+      performanceRes,
+      sessionsRes,
+      userJourneyRes,
+      runtimeUsageRes,
+    ] = yield* batchStatements(db, 'loadAnalytics', [
+      db.prepare(
+        "SELECT json_extract(properties, '$.command') as command, COUNT(*) as count FROM analytics_events WHERE event_type = 'command' GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+      ),
+      db.prepare(
+        "SELECT json_extract(properties, '$.error_type') as error_type, COUNT(*) as count FROM analytics_events WHERE event_type = 'error' GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+      ),
+      db.prepare(
+        "SELECT (SELECT COUNT(*) FROM customers WHERE created_at >= datetime('now', '-7 days')) as new_users_7d, (SELECT COUNT(*) FROM subscriptions WHERE status = 'active' AND created_at >= datetime('now', '-7 days')) as new_paid_7d"
+      ),
+      // Week-over-week signup growth in whole percent, comparing this week to the prior one.
+      db.prepare(
+        "SELECT CASE WHEN prev.count = 0 THEN 0 ELSE CAST((curr.count - prev.count) * 100.0 / prev.count AS INTEGER) END as rate FROM (SELECT COUNT(*) as count FROM customers WHERE created_at >= datetime('now', '-7 days')) curr, (SELECT COUNT(*) as count FROM customers WHERE created_at >= datetime('now', '-14 days') AND created_at < datetime('now', '-7 days')) prev"
+      ),
+      db.prepare(
+        'SELECT COALESCE(SUM(time_saved_ms), 0) / 3600000.0 as total_hours FROM usage_daily'
+      ),
+      db.prepare(
+        "SELECT (SELECT COUNT(*) FROM install_stats WHERE created_at >= datetime('now', '-30 days')) as installs, (SELECT COUNT(DISTINCT u.license_id) FROM usage_daily u WHERE u.date >= datetime('now', '-30 days') AND u.commands_run > 0) as activated, (SELECT COUNT(*) FROM (SELECT u.license_id FROM usage_daily u WHERE u.date >= datetime('now', '-30 days') GROUP BY u.license_id HAVING SUM(u.commands_run) > 1000)) as power_users"
+      ),
+      db.prepare(
+        "WITH activity AS (SELECT l.customer_id, COALESCE((SELECT SUM(commands_run) FROM usage_daily WHERE license_id = l.id AND date >= date('now', '-3 days')), 0) as cmds_3d, COALESCE((SELECT SUM(commands_run) FROM usage_daily WHERE license_id = l.id AND date >= date('now', '-10 days') AND date < date('now', '-3 days')), 0) as cmds_prev_7d, (SELECT MAX(date) FROM usage_daily WHERE license_id = l.id) as last_activity FROM licenses l WHERE l.status = 'active') SELECT COUNT(*) as at_risk_users FROM activity WHERE (cmds_prev_7d > 10 AND (cmds_3d / 3.0) / (cmds_prev_7d / 7.0 + 0.001) < 0.2) OR last_activity < date('now', '-7 days')"
+      ),
+      db.prepare(
+        "SELECT CASE WHEN (SELECT COUNT(*) FROM customers WHERE created_at >= datetime('now', '-90 days')) = 0 THEN 0 ELSE CAST((SELECT COUNT(DISTINCT u.license_id) FROM usage_daily u WHERE u.date >= datetime('now', '-7 days')) * 100.0 / (SELECT COUNT(*) FROM customers WHERE created_at >= datetime('now', '-90 days')) AS INTEGER) END as rate"
+      ),
+      db.prepare(
+        "SELECT COALESCE(AVG(duration_ms), 0) as avg_ms, COALESCE(MIN(duration_ms), 0) as min_ms, COALESCE(MAX(duration_ms), 0) as max_ms, COUNT(*) as count FROM analytics_events WHERE event_type = 'performance' AND created_at >= datetime('now', '-7 days')"
+      ),
+      db.prepare(
+        "SELECT COUNT(DISTINCT session_id) as total_sessions, COUNT(CASE WHEN event_type = 'session_start' THEN 1 END) as sessions_started, COUNT(CASE WHEN event_type = 'heartbeat' THEN 1 END) as heartbeats_sent, COALESCE(AVG(CASE WHEN event_type = 'session_end' THEN json_extract(properties, '$.duration_seconds') END), 0) as avg_duration_seconds, COALESCE(MAX(CASE WHEN event_type = 'session_end' THEN json_extract(properties, '$.duration_seconds') END), 0) as max_duration_seconds FROM analytics_events WHERE event_type IN ('session_start', 'heartbeat', 'session_end') AND created_at >= datetime('now', '-30 days')"
+      ),
+      db.prepare(
+        "WITH latest_stages AS (SELECT COALESCE(l.customer_id, e.session_id) as actor_id, MAX(CASE json_extract(e.properties, '$.to_stage') WHEN 'installed' THEN 1 WHEN 'activated' THEN 2 WHEN 'first_command' THEN 3 WHEN 'exploring' THEN 4 WHEN 'engaged' THEN 5 WHEN 'power_user' THEN 6 WHEN 'at_risk' THEN 7 WHEN 'churned' THEN 8 ELSE 0 END) as stage_order FROM analytics_events e LEFT JOIN licenses l ON e.license_key = l.license_key WHERE e.event_type = 'feature' AND e.event_name = 'stage_transition' AND e.created_at >= datetime('now', '-30 days') GROUP BY COALESCE(l.customer_id, e.session_id)) SELECT COALESCE(SUM(CASE WHEN stage_order = 1 THEN 1 END), 0) as installed, COALESCE(SUM(CASE WHEN stage_order = 2 THEN 1 END), 0) as activated, COALESCE(SUM(CASE WHEN stage_order = 3 THEN 1 END), 0) as first_command, COALESCE(SUM(CASE WHEN stage_order = 4 THEN 1 END), 0) as exploring, COALESCE(SUM(CASE WHEN stage_order = 5 THEN 1 END), 0) as engaged, COALESCE(SUM(CASE WHEN stage_order = 6 THEN 1 END), 0) as power_user FROM latest_stages"
+      ),
+      db.prepare(
+        "SELECT json_extract(properties, '$.runtime') as runtime, COUNT(*) as count, COUNT(DISTINCT machine_id) as machines FROM analytics_events WHERE (event_name = 'runtime_switch' OR event_name = 'runtime_use') AND created_at >= datetime('now', '-30 days') GROUP BY 1 ORDER BY 2 DESC"
+      ),
+    ]);
+    const commandsByType = yield* decodeExtraRowArray(
       AdminCommandCountRowSchema,
       'Admin command count row has an invalid shape',
-      "SELECT json_extract(properties, '$.command') as command, COUNT(*) as count FROM analytics_events WHERE event_type = 'command' GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+      commandsRes?.results ?? []
     );
-    const errorsByType = yield* rows(
-      db,
+    const errorsByType = yield* decodeExtraRowArray(
       AdminErrorTypeCountRowSchema,
       'Admin error type row has an invalid shape',
-      "SELECT json_extract(properties, '$.error_type') as error_type, COUNT(*) as count FROM analytics_events WHERE event_type = 'error' GROUP BY 1 ORDER BY 2 DESC LIMIT 10"
+      errorsRes?.results ?? []
     );
-    const growth = yield* optionalRow(
-      db,
+    const growth = yield* decodeOptionalExtraRow(
       GrowthRowSchema,
       'Admin growth row has an invalid shape',
-      "SELECT (SELECT COUNT(*) FROM customers WHERE created_at >= datetime('now', '-7 days')) as new_users_7d, (SELECT COUNT(*) FROM subscriptions WHERE status = 'active' AND created_at >= datetime('now', '-7 days')) as new_paid_7d"
+      growthRes?.results[0] ?? null
     );
-    // Week-over-week signup growth in whole percent, comparing this week to the prior one.
-    const growthRate = yield* optionalRow(
-      db,
+    const growthRate = yield* decodeOptionalExtraRow(
       RateRowSchema,
       'Admin growth rate row has an invalid shape',
-      "SELECT CASE WHEN prev.count = 0 THEN 0 ELSE CAST((curr.count - prev.count) * 100.0 / prev.count AS INTEGER) END as rate FROM (SELECT COUNT(*) as count FROM customers WHERE created_at >= datetime('now', '-7 days')) curr, (SELECT COUNT(*) as count FROM customers WHERE created_at >= datetime('now', '-14 days') AND created_at < datetime('now', '-7 days')) prev"
+      growthRateRes?.results[0] ?? null
     );
-    const timeSaved = yield* optionalRow(
-      db,
+    const timeSaved = yield* decodeOptionalExtraRow(
       HoursSavedRowSchema,
       'Admin hours-saved row has an invalid shape',
-      'SELECT COALESCE(SUM(time_saved_ms), 0) / 3600000.0 as total_hours FROM usage_daily'
+      timeSavedRes?.results[0] ?? null
     );
-    const funnel = yield* optionalRow(
-      db,
+    const funnel = yield* decodeOptionalExtraRow(
       FunnelRowSchema,
       'Admin funnel row has an invalid shape',
-      "SELECT (SELECT COUNT(*) FROM install_stats WHERE created_at >= datetime('now', '-30 days')) as installs, (SELECT COUNT(DISTINCT u.license_id) FROM usage_daily u WHERE u.date >= datetime('now', '-30 days') AND u.commands_run > 0) as activated, (SELECT COUNT(*) FROM (SELECT u.license_id FROM usage_daily u WHERE u.date >= datetime('now', '-30 days') GROUP BY u.license_id HAVING SUM(u.commands_run) > 1000)) as power_users"
+      funnelRes?.results[0] ?? null
     );
-    const churnRisk = yield* optionalRow(
-      db,
+    const churnRisk = yield* decodeOptionalExtraRow(
       AtRiskRowSchema,
       'Admin at-risk row has an invalid shape',
-      "WITH activity AS (SELECT l.customer_id, COALESCE((SELECT SUM(commands_run) FROM usage_daily WHERE license_id = l.id AND date >= date('now', '-3 days')), 0) as cmds_3d, COALESCE((SELECT SUM(commands_run) FROM usage_daily WHERE license_id = l.id AND date >= date('now', '-10 days') AND date < date('now', '-3 days')), 0) as cmds_prev_7d, (SELECT MAX(date) FROM usage_daily WHERE license_id = l.id) as last_activity FROM licenses l WHERE l.status = 'active') SELECT COUNT(*) as at_risk_users FROM activity WHERE (cmds_prev_7d > 10 AND (cmds_3d / 3.0) / (cmds_prev_7d / 7.0 + 0.001) < 0.2) OR last_activity < date('now', '-7 days')"
+      churnRiskRes?.results[0] ?? null
     );
-    const retentionRate = yield* optionalRow(
-      db,
+    const retentionRate = yield* decodeOptionalExtraRow(
       RateRowSchema,
       'Admin retention rate row has an invalid shape',
-      "SELECT CASE WHEN (SELECT COUNT(*) FROM customers WHERE created_at >= datetime('now', '-90 days')) = 0 THEN 0 ELSE CAST((SELECT COUNT(DISTINCT u.license_id) FROM usage_daily u WHERE u.date >= datetime('now', '-7 days')) * 100.0 / (SELECT COUNT(*) FROM customers WHERE created_at >= datetime('now', '-90 days')) AS INTEGER) END as rate"
+      retentionRateRes?.results[0] ?? null
     );
-    const performance = yield* optionalRow(
-      db,
+    const performance = yield* decodeOptionalExtraRow(
       PerformanceStatsRowSchema,
       'Admin performance row has an invalid shape',
-      "SELECT COALESCE(AVG(duration_ms), 0) as avg_ms, COALESCE(MIN(duration_ms), 0) as min_ms, COALESCE(MAX(duration_ms), 0) as max_ms, COUNT(*) as count FROM analytics_events WHERE event_type = 'performance' AND created_at >= datetime('now', '-7 days')"
+      performanceRes?.results[0] ?? null
     );
-    const sessions = yield* optionalRow(
-      db,
+    const sessions = yield* decodeOptionalExtraRow(
       SessionStatsRowSchema,
       'Admin session stats row has an invalid shape',
-      "SELECT COUNT(DISTINCT session_id) as total_sessions, COUNT(CASE WHEN event_type = 'session_start' THEN 1 END) as sessions_started, COUNT(CASE WHEN event_type = 'heartbeat' THEN 1 END) as heartbeats_sent, COALESCE(AVG(CASE WHEN event_type = 'session_end' THEN json_extract(properties, '$.duration_seconds') END), 0) as avg_duration_seconds, COALESCE(MAX(CASE WHEN event_type = 'session_end' THEN json_extract(properties, '$.duration_seconds') END), 0) as max_duration_seconds FROM analytics_events WHERE event_type IN ('session_start', 'heartbeat', 'session_end') AND created_at >= datetime('now', '-30 days')"
+      sessionsRes?.results[0] ?? null
     );
-    const userJourney = yield* optionalRow(
-      db,
+    const userJourney = yield* decodeOptionalExtraRow(
       JourneyRowSchema,
       'Admin journey row has an invalid shape',
-      "WITH latest_stages AS (SELECT COALESCE(l.customer_id, e.session_id) as actor_id, MAX(CASE json_extract(e.properties, '$.to_stage') WHEN 'installed' THEN 1 WHEN 'activated' THEN 2 WHEN 'first_command' THEN 3 WHEN 'exploring' THEN 4 WHEN 'engaged' THEN 5 WHEN 'power_user' THEN 6 WHEN 'at_risk' THEN 7 WHEN 'churned' THEN 8 ELSE 0 END) as stage_order FROM analytics_events e LEFT JOIN licenses l ON e.license_key = l.license_key WHERE e.event_type = 'feature' AND e.event_name = 'stage_transition' AND e.created_at >= datetime('now', '-30 days') GROUP BY COALESCE(l.customer_id, e.session_id)) SELECT COALESCE(SUM(CASE WHEN stage_order = 1 THEN 1 END), 0) as installed, COALESCE(SUM(CASE WHEN stage_order = 2 THEN 1 END), 0) as activated, COALESCE(SUM(CASE WHEN stage_order = 3 THEN 1 END), 0) as first_command, COALESCE(SUM(CASE WHEN stage_order = 4 THEN 1 END), 0) as exploring, COALESCE(SUM(CASE WHEN stage_order = 5 THEN 1 END), 0) as engaged, COALESCE(SUM(CASE WHEN stage_order = 6 THEN 1 END), 0) as power_user FROM latest_stages"
+      userJourneyRes?.results[0] ?? null
     );
-    const runtimeUsage = yield* rows(
-      db,
+    const runtimeUsage = yield* decodeExtraRowArray(
       AdminRuntimeUsageRowSchema,
       'Admin runtime usage row has an invalid shape',
-      "SELECT json_extract(properties, '$.runtime') as runtime, COUNT(*) as count, COUNT(DISTINCT machine_id) as machines FROM analytics_events WHERE (event_name = 'runtime_switch' OR event_name = 'runtime_use') AND created_at >= datetime('now', '-30 days') GROUP BY 1 ORDER BY 2 DESC"
+      runtimeUsageRes?.results ?? []
     );
     return {
       commandsByType,
@@ -642,23 +707,29 @@ export const listCohorts = (db: D1Database) =>
 /** Load revenue history, tier totals, and active paid-tier counts. */
 export const loadRevenue = (db: D1Database) =>
   Effect.gen(function* () {
-    const monthly = yield* rows(
-      db,
+    const [monthlyRes, byTierRes, mrrTiersRes] = yield* batchStatements(db, 'loadRevenue', [
+      db.prepare(
+        "SELECT strftime('%Y-%m', created_at) as month, SUM(amount_cents) / 100.0 as revenue, COUNT(*) as transactions FROM invoices WHERE status = 'paid' GROUP BY month ORDER BY month DESC LIMIT 12"
+      ),
+      db.prepare(
+        "SELECT l.tier, SUM(i.amount_cents) / 100.0 as total_revenue, COUNT(DISTINCT l.customer_id) as customers FROM invoices i JOIN licenses l ON i.customer_id = l.customer_id WHERE i.status = 'paid' GROUP BY l.tier"
+      ),
+      db.prepare(ACTIVE_TIER_COUNTS_SQL),
+    ]);
+    const monthly = yield* decodeExtraRowArray(
       AdminMonthlyRevenueRowSchema,
       'Admin monthly revenue row has an invalid shape',
-      "SELECT strftime('%Y-%m', created_at) as month, SUM(amount_cents) / 100.0 as revenue, COUNT(*) as transactions FROM invoices WHERE status = 'paid' GROUP BY month ORDER BY month DESC LIMIT 12"
+      monthlyRes?.results ?? []
     );
-    const byTier = yield* rows(
-      db,
+    const byTier = yield* decodeExtraRowArray(
       AdminRevenueByTierRowSchema,
       'Admin revenue-by-tier row has an invalid shape',
-      "SELECT l.tier, SUM(i.amount_cents) / 100.0 as total_revenue, COUNT(DISTINCT l.customer_id) as customers FROM invoices i JOIN licenses l ON i.customer_id = l.customer_id WHERE i.status = 'paid' GROUP BY l.tier"
+      byTierRes?.results ?? []
     );
-    const mrrTiers = yield* rows(
-      db,
+    const mrrTiers = yield* decodeExtraRowArray(
       TierCountRowSchema,
       'Admin revenue tier row has an invalid shape',
-      ACTIVE_TIER_COUNTS_SQL
+      mrrTiersRes?.results ?? []
     );
     return { monthly, byTier, mrrTiers };
   });
