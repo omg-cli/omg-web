@@ -147,7 +147,6 @@ export function authEntryDestination(url: URL): string {
     next.length === 0 ||
     next.length > 256 ||
     !next.startsWith('/dashboard/') ||
-    next.startsWith('//') ||
     next.includes('\\')
   ) {
     return DEFAULT_AUTH_DESTINATION;

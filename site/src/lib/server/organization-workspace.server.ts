@@ -579,6 +579,10 @@ export async function bootstrapOrganization(
         .bind(organizationId, createdAt, identity.id, identity.sessionToken),
     ]);
   } catch (cause) {
+    const message = cause instanceof Error ? cause.message : String(cause);
+    if (message.includes('UNIQUE') || message.includes('23505')) {
+      throw new OrganizationBootstrapConflict();
+    }
     throw new OrganizationBootstrapUnavailable(cause);
   }
 }
