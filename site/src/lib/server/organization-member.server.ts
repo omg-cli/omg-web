@@ -96,10 +96,6 @@ interface OrganizationMemberTarget {
   readonly userId: string;
 }
 
-/** Parsed role-change form for an existing organization member. */
-
-/** Parsed removal form for an existing organization member. */
-
 /** The requested member is not in the actor's active organization. */
 export class OrganizationMemberNotFound extends Error {
   readonly _tag = 'OrganizationMemberNotFound';

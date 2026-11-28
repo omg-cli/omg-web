@@ -444,21 +444,14 @@ export async function resendOrganizationInvitationAction(
   if (organizationId === null) {
     return organizationInvitationFailure(new OrganizationInvitationNotFound(), 'resend');
   }
-  const rateLimit = await organizationMutationRateLimit(
+  const limited = await guardOrganizationMutationRate(
     event,
-    `${organizationId}:${identity.user.id}`
+    organizationId,
+    identity.user.id,
+    'organization-invitation-error'
   );
-  if (rateLimit === 'limited') {
-    return fail(429, {
-      kind: 'organization-invitation-error' as const,
-      message: 'Too many membership changes. Try again shortly.',
-    });
-  }
-  if (rateLimit === 'unavailable') {
-    return fail(503, {
-      kind: 'organization-invitation-error' as const,
-      message: 'Organization membership is temporarily unavailable.',
-    });
+  if (limited !== undefined) {
+    return limited;
   }
   try {
     const authGateway = gateway ?? organizationInvitationGateway(event);
