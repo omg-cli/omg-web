@@ -74,30 +74,8 @@ async function savePage(
 ): Promise<Checkpoint | null> {
   const observed = new Date().toISOString();
   const complete = page.cursor === null ? 1 : 0;
-  const updated = await db
-    .prepare(
-      `UPDATE cve_package_advisory_source
-          SET window_from = ?, window_until = ?, cursor = ?,
-              revision = revision + 1, checked_at = ?, retry_at = NULL,
-              complete = ?,
-              successful_at = CASE WHEN ? = 1 THEN ? ELSE successful_at END
-        WHERE kind = ? AND revision = ?
-        RETURNING window_from AS "from", window_until AS until, cursor, revision, complete, retry_at AS retryAt`
-    )
-    .bind(
-      period.from.toISOString(),
-      period.until.toISOString(),
-      page.cursor,
-      observed,
-      complete,
-      complete,
-      observed,
-      kind,
-      before.revision
-    )
-    .first<CheckpointRow>();
-  if (!updated) return null;
 
+  // Write advisories before advancing the checkpoint so a partial failure never skips a page.
   if (page.advisories.length > 0) {
     const distinct = new Map<string, (typeof page.advisories)[number]>();
     for (const item of page.advisories) {
@@ -135,7 +113,30 @@ async function savePage(
     );
     await batchInChunks(db, statements);
   }
-  return toCheckpoint(updated);
+
+  const updated = await db
+    .prepare(
+      `UPDATE cve_package_advisory_source
+          SET window_from = ?, window_until = ?, cursor = ?,
+              revision = revision + 1, checked_at = ?, retry_at = NULL,
+              complete = ?,
+              successful_at = CASE WHEN ? = 1 THEN ? ELSE successful_at END
+        WHERE kind = ? AND revision = ?
+        RETURNING window_from AS "from", window_until AS until, cursor, revision, complete, retry_at AS retryAt`
+    )
+    .bind(
+      period.from.toISOString(),
+      period.until.toISOString(),
+      page.cursor,
+      observed,
+      complete,
+      complete,
+      observed,
+      kind,
+      before.revision
+    )
+    .first<CheckpointRow>();
+  return updated ? toCheckpoint(updated) : null;
 }
 
 async function recordFailure(

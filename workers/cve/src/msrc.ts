@@ -168,6 +168,7 @@ async function pendingChanges(db: D1Executor, entries: readonly Change[]): Promi
 export async function collectMsrc(db: D1Executor): Promise<void> {
   const started = new Date();
   const startedIso = started.toISOString();
+  let committed = false;
   try {
     const before = await db
       .prepare('SELECT etag FROM cve_vendor_signal_source WHERE provider = ?')
@@ -277,18 +278,21 @@ export async function collectMsrc(db: D1Executor): Promise<void> {
           )
       );
       await batchInChunks(db, statements);
+      committed = true;
     }
     if (failure) throw failure;
   } catch (error) {
-    await db
-      .prepare(
-        `INSERT INTO cve_vendor_signal_source (provider, checked_at, complete)
-         VALUES (?, ?, 0)
-         ON CONFLICT (provider) DO UPDATE SET checked_at = excluded.checked_at, complete = 0
-         WHERE cve_vendor_signal_source.checked_at < ?`
-      )
-      .bind(msrcProvider, new Date().toISOString(), startedIso)
-      .run();
+    if (!committed) {
+      await db
+        .prepare(
+          `INSERT INTO cve_vendor_signal_source (provider, checked_at, complete)
+           VALUES (?, ?, 0)
+           ON CONFLICT (provider) DO UPDATE SET checked_at = excluded.checked_at, complete = 0
+           WHERE cve_vendor_signal_source.checked_at < ?`
+        )
+        .bind(msrcProvider, new Date().toISOString(), startedIso)
+        .run();
+    }
     throw error;
   }
 }
