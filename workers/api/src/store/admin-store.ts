@@ -567,7 +567,7 @@ export const loadAnalytics = (db: D1Database) =>
       db,
       FunnelRowSchema,
       'Admin funnel row has an invalid shape',
-      "SELECT (SELECT COUNT(*) FROM install_stats WHERE created_at >= datetime('now', '-30 days')) as installs, (SELECT COUNT(DISTINCT u.license_id) FROM usage_daily u WHERE u.date >= datetime('now', '-30 days') AND u.commands_run > 0) as activated, (SELECT COUNT(*) FROM (SELECT u.license_id FROM usage_daily u WHERE u.date >= datetime('now', '-30 days') GROUP BY u.license_id HAVING SUM(u.commands_run) > 1000)) as power_users"
+      "SELECT (SELECT COUNT(*) FROM install_stats WHERE created_at >= datetime('now', '-30 days')) as installs, (SELECT COUNT(DISTINCT u.license_id) FROM usage_daily u WHERE u.date >= date('now', '-30 days') AND u.commands_run > 0) as activated, (SELECT COUNT(*) FROM (SELECT u.license_id FROM usage_daily u WHERE u.date >= date('now', '-30 days') GROUP BY u.license_id HAVING SUM(u.commands_run) > 1000)) as power_users"
     );
     const churnRisk = yield* optionalRow(
       db,
@@ -579,7 +579,7 @@ export const loadAnalytics = (db: D1Database) =>
       db,
       RateRowSchema,
       'Admin retention rate row has an invalid shape',
-      "SELECT CASE WHEN (SELECT COUNT(*) FROM customers WHERE created_at >= datetime('now', '-90 days')) = 0 THEN 0 ELSE CAST((SELECT COUNT(DISTINCT u.license_id) FROM usage_daily u WHERE u.date >= datetime('now', '-7 days')) * 100.0 / (SELECT COUNT(*) FROM customers WHERE created_at >= datetime('now', '-90 days')) AS INTEGER) END as rate"
+      "SELECT CASE WHEN (SELECT COUNT(*) FROM customers WHERE created_at >= datetime('now', '-90 days')) = 0 THEN 0 ELSE CAST((SELECT COUNT(DISTINCT u.license_id) FROM usage_daily u WHERE u.date >= date('now', '-7 days')) * 100.0 / (SELECT COUNT(*) FROM customers WHERE created_at >= datetime('now', '-90 days')) AS INTEGER) END as rate"
     );
     const performance = yield* optionalRow(
       db,
@@ -783,9 +783,12 @@ export const loadAdvancedMetrics = (db: D1Database) =>
         db,
         AdminChurnRiskSegmentRowSchema,
         'Admin churn-risk row has an invalid shape',
-        `SELECT l.tier, COUNT(*) as user_count,
-        CASE WHEN MAX(u.date) < date('now', '-14 days') THEN 'critical' WHEN MAX(u.date) < date('now', '-7 days') THEN 'high' ELSE 'healthy' END as risk_segment
-        FROM licenses l LEFT JOIN usage_daily u ON l.id = u.license_id WHERE l.status = 'active' GROUP BY l.id`
+        `WITH license_risk AS (
+          SELECT l.tier,
+          CASE WHEN MAX(u.date) < date('now', '-14 days') THEN 'critical' WHEN MAX(u.date) < date('now', '-7 days') THEN 'high' ELSE 'healthy' END as risk_segment
+          FROM licenses l LEFT JOIN usage_daily u ON l.id = u.license_id WHERE l.status = 'active' GROUP BY l.id
+        )
+        SELECT tier, COUNT(*) as user_count, risk_segment FROM license_risk GROUP BY tier, risk_segment`
       ),
       expansion: rows(
         db,

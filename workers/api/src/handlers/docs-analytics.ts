@@ -467,83 +467,50 @@ export async function handleDocsAnalyticsDashboard(request: Request, env: Env): 
 export async function cleanupAnalyticsRetention(db: D1Database): Promise<void> {
   // Compare in the same format CURRENT_TIMESTAMP writes (YYYY-MM-DD HH:MM:SS);
   // an ISO string cutoff deletes up to a day early due to ' ' vs 'T' ordering.
-  await db
-    .prepare(
+  await db.batch([
+    db.prepare(
       `DELETE FROM docs_analytics_events WHERE created_at < datetime('now', '-${DOCS_EVENT_RETENTION_DAYS} days')`
-    )
-    .run();
-  reportInfo('Cleaned up old docs analytics events');
-
-  await db
-    .prepare(
+    ),
+    db.prepare(
       `DELETE FROM docs_analytics_sessions WHERE first_seen_at < datetime('now', '-${DOCS_SESSION_RETENTION_DAYS} days')`
-    )
-    .run();
-  reportInfo('Cleaned up old docs analytics sessions');
-
-  for (const table of ['command_event', 'session', 'performance_metric', 'feature_usage']) {
-    await db
-      .prepare(
+    ),
+    ...['command_event', 'session', 'performance_metric', 'feature_usage'].map(table =>
+      db.prepare(
         `DELETE FROM ${table} WHERE timestamp < datetime('now', '-${CLI_TELEMETRY_RETENTION_DAYS} days')`
       )
-      .run();
-    reportInfo(`Cleaned up expired ${table} rows`);
-  }
-
-  await db
-    .prepare(
+    ),
+    db.prepare(
       `DELETE FROM analytics_events
        WHERE created_at < datetime('now', '-${CLI_TELEMETRY_RETENTION_DAYS} days')`
-    )
-    .run();
-  await db
-    .prepare(
+    ),
+    db.prepare(
       `DELETE FROM analytics_errors
        WHERE last_occurred_at < datetime('now', '-${CLI_TELEMETRY_RETENTION_DAYS} days')`
-    )
-    .run();
-  reportInfo('Cleaned up expired CLI analytics rows');
-
-  for (const table of ['analytics_active_users', 'analytics_daily']) {
-    await db
-      .prepare(`DELETE FROM ${table} WHERE date < date('now', '-${USAGE_RETENTION_MONTHS} months')`)
-      .run();
-  }
-  await db
-    .prepare(
+    ),
+    ...['analytics_active_users', 'analytics_daily'].map(table =>
+      db.prepare(
+        `DELETE FROM ${table} WHERE date < date('now', '-${USAGE_RETENTION_MONTHS} months')`
+      )
+    ),
+    db.prepare(
       `DELETE FROM usage WHERE timestamp < datetime('now', '-${USAGE_RETENTION_MONTHS} months')`
-    )
-    .run();
-  for (const table of [
-    'usage_daily',
-    'usage_member_daily',
-    'usage_package_daily',
-    'usage_runtime_daily',
-  ]) {
-    await db
-      .prepare(`DELETE FROM ${table} WHERE date < date('now', '-${USAGE_RETENTION_MONTHS} months')`)
-      .run();
-  }
-  reportInfo('Cleaned up expired usage statistics');
-
-  await db
-    .prepare(
+    ),
+    ...['usage_daily', 'usage_member_daily', 'usage_package_daily', 'usage_runtime_daily'].map(
+      table =>
+        db.prepare(
+          `DELETE FROM ${table} WHERE date < date('now', '-${USAGE_RETENTION_MONTHS} months')`
+        )
+    ),
+    db.prepare(
       `DELETE FROM site_analytics_events
        WHERE created_at < (unixepoch() - ${CLI_TELEMETRY_RETENTION_DAYS * 24 * 60 * 60}) * 1000`
-    )
-    .run();
-  reportInfo('Cleaned up expired site analytics rows');
-
-  // Keep today's and yesterday's daily salts so the scheduled cleanup cannot
-  // fragment visitor identity during the current UTC day.
-  await db
-    .prepare(`DELETE FROM analytics_salts WHERE inserted_at < (unixepoch() - 172800) * 1000`)
-    .run();
-  reportInfo('Cleaned up rotated analytics salts');
-
-  await db
-    .prepare(`DELETE FROM site_analytics_realtime WHERE last_seen_at < ?`)
-    .bind(Date.now() - REALTIME_STALE_MS)
-    .run();
-  reportInfo('Cleaned up stale realtime analytics rows');
+    ),
+    // Keep today's and yesterday's daily salts so the scheduled cleanup cannot
+    // fragment visitor identity during the current UTC day.
+    db.prepare(`DELETE FROM analytics_salts WHERE inserted_at < (unixepoch() - 172800) * 1000`),
+    db
+      .prepare(`DELETE FROM site_analytics_realtime WHERE last_seen_at < ?`)
+      .bind(Date.now() - REALTIME_STALE_MS),
+  ]);
+  reportInfo('Cleaned up expired analytics, telemetry, usage, and realtime rows');
 }
