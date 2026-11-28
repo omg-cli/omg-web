@@ -148,12 +148,22 @@ async function browse(url: URL, context: DashboardContext) {
   }
 }
 
+const cachedRecordPayload = Schema.Struct({
+  data: recordDetails,
+  evidence: exploitationReport,
+});
+
 async function record(id: string, environment: DashboardEnvironment, context: DashboardContext) {
-  const cacheKey = new Request(new URL(`/cves/${id}`, advisoryOrigin));
+  const cacheKey = new Request(new URL(`/v1/cves/${id}`, advisoryOrigin));
   const cache = await caches.open('omg-cve-v1').catch(() => null);
   const cached = await cache?.match(cacheKey).catch(() => undefined);
   if (cached) {
-    return html(await cached.text(), 200);
+    try {
+      const payload = Schema.decodeUnknownSync(cachedRecordPayload)(await cached.json());
+      return html(detail(payload.data, payload.evidence, Date.now()));
+    } catch {
+      // Fall through to origin fetch if cached payload is invalid or outdated.
+    }
   }
   try {
     const [data, evidence] = await Promise.all([
@@ -163,17 +173,14 @@ async function record(id: string, environment: DashboardEnvironment, context: Da
     if (data.provenance.id !== id || (data.kev && data.kev.cveID !== id)) {
       throw new Error('Advisory ID mismatch');
     }
-    const rendered = detail(data, evidence, Date.now());
     if (cache) {
-      const entry = new Response(rendered, {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'public, max-age=30',
-        },
-      });
+      const entry = Response.json(
+        { data, evidence },
+        { headers: { 'Cache-Control': 'public, max-age=30' } }
+      );
       context.waitUntil(cache.put(cacheKey, entry).catch(() => undefined));
     }
-    return html(rendered);
+    return html(detail(data, evidence, Date.now()));
   } catch (error) {
     if (error instanceof UpstreamError && error.status === notFound) {
       return html(
