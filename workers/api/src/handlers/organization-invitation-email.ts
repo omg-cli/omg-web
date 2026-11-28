@@ -188,7 +188,7 @@ function sendInvitationEmail(
       request,
       OrganizationInvitationEmailRequestSchema,
       PRIVATE_BODY_LIMIT
-    ).pipe(Effect.mapError(error => error));
+    );
     const url = yield* invitationUrl(body.invitationUrl, env);
     const reference = Schema.decodeUnknownEither(OpaqueReference)(url.searchParams.get('token'));
     if (reference._tag === 'Left') {

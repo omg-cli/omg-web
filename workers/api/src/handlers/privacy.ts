@@ -77,17 +77,14 @@ async function withPrivacyPrincipal(
 }
 
 /** Query and decode a repeated privacy-export row set. */
-async function loadPrivacyRows<S extends Schema.Schema.AnyNoContext>(
-  db: D1Database,
-  query: string,
-  customerId: string,
+async function decodePrivacyRows<S extends Schema.Schema.AnyNoContext>(
+  results: ReadonlyArray<unknown>,
   schema: S,
   invalidRowMessage: string,
   failureMessage: string
 ): Promise<ReadonlyArray<Schema.Schema.Type<S>> | Response> {
-  const rows = await db.prepare(query).bind(customerId).all();
   const decoded = await Effect.runPromiseExit(
-    decodeExtraRowArray(schema, invalidRowMessage, rows.results)
+    decodeExtraRowArray(schema, invalidRowMessage, results)
   );
   return Exit.isFailure(decoded) ? errorResponse(failureMessage, 500) : decoded.value;
 }
@@ -324,166 +321,192 @@ export async function handleExportMyData(request: Request, env: Env): Promise<Re
     }
     return await withPrivacyPrincipal(request, env, async ({ customerId }) => {
       const exportDate = new Date().toISOString();
+      const [
+        profileBatch,
+        licensesBatch,
+        machinesBatch,
+        commandsBatch,
+        sessionsBatch,
+        performanceBatch,
+        featureBatch,
+        usageBatch,
+        usageDailyBatch,
+        analyticsEventsBatch,
+        installStatsBatch,
+        customerNotesBatch,
+      ] = await env.DB.batch([
+        env.DB.prepare(
+          'SELECT id, email, company, tier, stripe_customer_id, created_at FROM customers WHERE id = ?'
+        ).bind(customerId),
+        env.DB.prepare(
+          'SELECT tier, status, max_machines, created_at AS activated_at, expires_at, created_at FROM licenses WHERE customer_id = ?'
+        ).bind(customerId),
+        env.DB.prepare(
+          `SELECT m.machine_id, m.hostname, m.os, m.arch, m.omg_version,
+                  m.first_seen_at AS activated_at, m.last_seen_at
+           FROM machines m
+           JOIN licenses l ON l.id = m.license_id
+           WHERE l.customer_id = ?`
+        ).bind(customerId),
+        env.DB.prepare(
+          `SELECT command, subcommand, packages, duration_ms, success, timestamp
+           FROM command_event
+           WHERE license_id IN (SELECT id FROM licenses WHERE customer_id = ?)
+           ORDER BY timestamp DESC
+           LIMIT 1000`
+        ).bind(customerId),
+        env.DB.prepare(
+          `SELECT session_id, event_type, start_time, end_time, commands_run, duration_secs, timestamp
+           FROM session
+           WHERE license_id IN (SELECT id FROM licenses WHERE customer_id = ?)
+           ORDER BY timestamp DESC
+           LIMIT 100`
+        ).bind(customerId),
+        env.DB.prepare(
+          `SELECT metric_type, AVG(duration_ms) as avg_duration_ms, COUNT(*) as sample_count
+           FROM performance_metric
+           WHERE license_id IN (SELECT id FROM licenses WHERE customer_id = ?)
+           GROUP BY metric_type`
+        ).bind(customerId),
+        env.DB.prepare(
+          `SELECT feature, enabled, COUNT(*) as usage_count, MAX(timestamp) as last_used
+           FROM feature_usage
+           WHERE license_id IN (SELECT id FROM licenses WHERE customer_id = ?)
+           GROUP BY feature, enabled`
+        ).bind(customerId),
+        env.DB.prepare(
+          `SELECT feature, count, machine_id, timestamp
+           FROM usage
+           WHERE license_key IN (SELECT license_key FROM licenses WHERE customer_id = ?)
+           ORDER BY timestamp DESC
+           LIMIT 1000`
+        ).bind(customerId),
+        env.DB.prepare(
+          `SELECT date, commands_run, packages_installed, packages_searched,
+                  runtimes_switched, time_saved_ms
+           FROM usage_daily
+           WHERE license_id IN (SELECT id FROM licenses WHERE customer_id = ?)
+           ORDER BY date DESC
+           LIMIT 366`
+        ).bind(customerId),
+        env.DB.prepare(
+          `SELECT event_type, event_name, properties, timestamp, session_id
+           FROM analytics_events
+           WHERE license_key IN (SELECT license_key FROM licenses WHERE customer_id = ?)
+           ORDER BY timestamp DESC
+           LIMIT 200`
+        ).bind(customerId),
+        env.DB.prepare(
+          `SELECT version, platform, backend, created_at
+           FROM install_stats
+           WHERE install_id IN (
+             SELECT m.machine_id
+             FROM machines m
+             JOIN licenses l ON l.id = m.license_id
+             WHERE l.customer_id = ?
+           )`
+        ).bind(customerId),
+        env.DB.prepare(
+          `SELECT note_type, content, is_pinned, created_at, updated_at
+           FROM customer_notes
+           WHERE customer_id = ?
+           ORDER BY created_at DESC
+           LIMIT 500`
+        ).bind(customerId),
+      ]);
+
       const customerLookup = await readOptionalExtraRow(
         PrivacyProfileRowSchema,
         'Privacy profile row has an invalid shape',
-        await env.DB.prepare(
-          'SELECT id, email, company, tier, stripe_customer_id, created_at FROM customers WHERE id = ?'
-        )
-          .bind(customerId)
-          .first()
+        profileBatch?.results[0] ?? null
       );
       if (isInvalidExtraRow(customerLookup) || customerLookup._tag === 'missing') {
         return errorResponse('Failed to load profile', 500);
       }
       const customer = customerLookup.value;
 
-      const licenses = await loadPrivacyRows(
-        env.DB,
-        'SELECT tier, status, max_machines, created_at AS activated_at, expires_at, created_at FROM licenses WHERE customer_id = ?',
-        customerId,
+      const licenses = await decodePrivacyRows(
+        licensesBatch?.results ?? [],
         PrivacyLicenseRowSchema,
         'Privacy license export row has an invalid shape',
         'Failed to export licenses'
       );
       if (licenses instanceof Response) return licenses;
 
-      const machines = await loadPrivacyRows(
-        env.DB,
-        `SELECT m.machine_id, m.hostname, m.os, m.arch, m.omg_version,
-                m.first_seen_at AS activated_at, m.last_seen_at
-         FROM machines m
-         JOIN licenses l ON l.id = m.license_id
-         WHERE l.customer_id = ?`,
-        customerId,
+      const machines = await decodePrivacyRows(
+        machinesBatch?.results ?? [],
         PrivacyMachineRowSchema,
         'Privacy machine export row has an invalid shape',
         'Failed to export machines'
       );
       if (machines instanceof Response) return machines;
 
-      const commands = await loadPrivacyRows(
-        env.DB,
-        `SELECT command, subcommand, packages, duration_ms, success, timestamp
-         FROM command_event
-         WHERE license_id IN (SELECT id FROM licenses WHERE customer_id = ?)
-         ORDER BY timestamp DESC
-         LIMIT 1000`,
-        customerId,
+      const commands = await decodePrivacyRows(
+        commandsBatch?.results ?? [],
         PrivacyCommandRowSchema,
         'Privacy command export row has an invalid shape',
         'Failed to export command history'
       );
       if (commands instanceof Response) return commands;
 
-      const sessions = await loadPrivacyRows(
-        env.DB,
-        `SELECT session_id, event_type, start_time, end_time, commands_run, duration_secs, timestamp
-         FROM session
-         WHERE license_id IN (SELECT id FROM licenses WHERE customer_id = ?)
-         ORDER BY timestamp DESC
-         LIMIT 100`,
-        customerId,
+      const sessions = await decodePrivacyRows(
+        sessionsBatch?.results ?? [],
         PrivacySessionRowSchema,
         'Privacy session export row has an invalid shape',
         'Failed to export sessions'
       );
       if (sessions instanceof Response) return sessions;
 
-      const performanceSummary = await loadPrivacyRows(
-        env.DB,
-        `SELECT metric_type, AVG(duration_ms) as avg_duration_ms, COUNT(*) as sample_count
-         FROM performance_metric
-         WHERE license_id IN (SELECT id FROM licenses WHERE customer_id = ?)
-         GROUP BY metric_type`,
-        customerId,
+      const performanceSummary = await decodePrivacyRows(
+        performanceBatch?.results ?? [],
         PrivacyPerformanceRowSchema,
         'Privacy performance export row has an invalid shape',
         'Failed to export performance summary'
       );
       if (performanceSummary instanceof Response) return performanceSummary;
 
-      const featureUsage = await loadPrivacyRows(
-        env.DB,
-        `SELECT feature, enabled, COUNT(*) as usage_count, MAX(timestamp) as last_used
-         FROM feature_usage
-         WHERE license_id IN (SELECT id FROM licenses WHERE customer_id = ?)
-         GROUP BY feature, enabled`,
-        customerId,
+      const featureUsage = await decodePrivacyRows(
+        featureBatch?.results ?? [],
         PrivacyFeatureRowSchema,
         'Privacy feature export row has an invalid shape',
         'Failed to export feature usage'
       );
       if (featureUsage instanceof Response) return featureUsage;
 
-      const usage = await loadPrivacyRows(
-        env.DB,
-        `SELECT feature, count, machine_id, timestamp
-         FROM usage
-         WHERE license_key IN (SELECT license_key FROM licenses WHERE customer_id = ?)
-         ORDER BY timestamp DESC
-         LIMIT 1000`,
-        customerId,
+      const usage = await decodePrivacyRows(
+        usageBatch?.results ?? [],
         PrivacyUsageRowSchema,
         'Privacy usage export row has an invalid shape',
         'Failed to export usage'
       );
       if (usage instanceof Response) return usage;
 
-      const usageDaily = await loadPrivacyRows(
-        env.DB,
-        `SELECT date, commands_run, packages_installed, packages_searched,
-                runtimes_switched, time_saved_ms
-         FROM usage_daily
-         WHERE license_id IN (SELECT id FROM licenses WHERE customer_id = ?)
-         ORDER BY date DESC
-         LIMIT 366`,
-        customerId,
+      const usageDaily = await decodePrivacyRows(
+        usageDailyBatch?.results ?? [],
         PrivacyUsageDailyRowSchema,
         'Privacy usage aggregate export row has an invalid shape',
         'Failed to export usage aggregates'
       );
       if (usageDaily instanceof Response) return usageDaily;
 
-      const analyticsEvents = await loadPrivacyRows(
-        env.DB,
-        `SELECT event_type, event_name, properties, timestamp, session_id
-         FROM analytics_events
-         WHERE license_key IN (SELECT license_key FROM licenses WHERE customer_id = ?)
-         ORDER BY timestamp DESC
-         LIMIT 200`,
-        customerId,
+      const analyticsEvents = await decodePrivacyRows(
+        analyticsEventsBatch?.results ?? [],
         PrivacyAnalyticsEventRowSchema,
         'Privacy analytics export row has an invalid shape',
         'Failed to export analytics events'
       );
       if (analyticsEvents instanceof Response) return analyticsEvents;
 
-      const installStats = await loadPrivacyRows(
-        env.DB,
-        `SELECT version, platform, backend, created_at
-         FROM install_stats
-         WHERE install_id IN (
-           SELECT m.machine_id
-           FROM machines m
-           JOIN licenses l ON l.id = m.license_id
-           WHERE l.customer_id = ?
-         )`,
-        customerId,
+      const installStats = await decodePrivacyRows(
+        installStatsBatch?.results ?? [],
         PrivacyInstallStatRowSchema,
         'Privacy install export row has an invalid shape',
         'Failed to export install stats'
       );
       if (installStats instanceof Response) return installStats;
 
-      const customerNotes = await loadPrivacyRows(
-        env.DB,
-        `SELECT note_type, content, is_pinned, created_at, updated_at
-         FROM customer_notes
-         WHERE customer_id = ?
-         ORDER BY created_at DESC
-         LIMIT 500`,
-        customerId,
+      const customerNotes = await decodePrivacyRows(
+        customerNotesBatch?.results ?? [],
         PrivacyCustomerNoteRowSchema,
         'Privacy note export row has an invalid shape',
         'Failed to export support notes'
