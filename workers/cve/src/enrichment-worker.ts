@@ -95,19 +95,18 @@ async function ingest(db: D1Executor, feed: Feed, checkedAt: string) {
 
   if (input.length > 0) {
     const archiveShaById = new Map<string, string>();
-    const chunks = chunkArray(input, 60);
+    const chunks = chunkArray(input, 200);
     const pages = await Promise.all(
-      chunks.map(chunk => {
-        const placeholders = chunk.map(() => '?').join(',');
-        return db
+      chunks.map(chunk =>
+        db
           .prepare(
             `SELECT id, payload_sha256
                FROM source_record
-              WHERE state = 'PUBLISHED' AND id IN (${placeholders})`
+              WHERE state = 'PUBLISHED' AND id IN (SELECT value FROM json_each(?))`
           )
-          .bind(...chunk.map(item => item.cve_id))
-          .all<{ id: string; payload_sha256: string }>();
-      })
+          .bind(JSON.stringify(chunk.map(item => item.cve_id)))
+          .all<{ id: string; payload_sha256: string }>()
+      )
     );
     for (const page of pages) {
       for (const row of page.results) archiveShaById.set(row.id, row.payload_sha256);
@@ -186,26 +185,26 @@ async function ingest(db: D1Executor, feed: Feed, checkedAt: string) {
 
   if (feed.complete && feed.coverageYears.length > 0) {
     const activeIds = new Set(input.map(entry => entry.cve_id));
-    const yearPlaceholders = feed.coverageYears.map(() => '?').join(',');
     const { results: existingRows } = await db
       .prepare(
         `SELECT cve_id
            FROM cve_exploitation_evidence
-          WHERE source = ? AND withdrawn_at IS NULL AND catalog_year IN (${yearPlaceholders})`
+          WHERE source = ? AND withdrawn_at IS NULL
+            AND catalog_year IN (SELECT CAST(value AS INTEGER) FROM json_each(?))`
       )
-      .bind(feed.source, ...feed.coverageYears)
+      .bind(feed.source, JSON.stringify(feed.coverageYears))
       .all<{ cve_id: string }>();
     const toWithdraw = existingRows.map(row => row.cve_id).filter(cve => !activeIds.has(cve));
-    for (const chunk of chunkArray(toWithdraw, 60)) {
-      const placeholders = chunk.map(() => '?').join(',');
+    for (const chunk of chunkArray(toWithdraw, 200)) {
       statements.push(
         db
           .prepare(
             `UPDATE cve_exploitation_evidence
                 SET withdrawn_at = ?
-              WHERE source = ? AND withdrawn_at IS NULL AND cve_id IN (${placeholders})`
+              WHERE source = ? AND withdrawn_at IS NULL
+                AND cve_id IN (SELECT value FROM json_each(?))`
           )
-          .bind(checkedAt, feed.source, ...chunk)
+          .bind(checkedAt, feed.source, JSON.stringify(chunk))
       );
     }
   }

@@ -134,19 +134,18 @@ async function readAdvisory(change: Change) {
 async function pendingChanges(db: D1Executor, entries: readonly Change[]): Promise<Change[]> {
   if (entries.length === 0) return [];
   const storedByKey = new Map<string, string>();
-  const chunks = chunkArray(entries, 60);
+  const chunks = chunkArray(entries, 200);
   const results = await Promise.all(
-    chunks.map(chunk => {
-      const placeholders = chunk.map(() => '?').join(',');
-      return db
+    chunks.map(chunk =>
+      db
         .prepare(
           `SELECT cve_id, advisory_url, publisher_modified_at
              FROM cve_vendor_signal
-            WHERE provider = ? AND cve_id IN (${placeholders})`
+            WHERE provider = ? AND cve_id IN (SELECT value FROM json_each(?))`
         )
-        .bind(msrcProvider, ...chunk.map(entry => entry.id))
-        .all<{ cve_id: string; advisory_url: string; publisher_modified_at: string }>();
-    })
+        .bind(msrcProvider, JSON.stringify(chunk.map(entry => entry.id)))
+        .all<{ cve_id: string; advisory_url: string; publisher_modified_at: string }>()
+    )
   );
   for (const page of results) {
     for (const row of page.results) {

@@ -236,17 +236,16 @@ async function collectEcosystem(db: D1Executor, ecosystem: Ecosystem) {
     const knownOnly = ecosystem === '[EMPTY]';
     const candidates = knownOnly ? revisions : revisions.slice(0, monitoredRecords);
     const storedById = new Map<string, string>();
-    const chunks = chunkArray(candidates, 60);
+    const chunks = chunkArray(candidates, 200);
     const pages = await Promise.all(
-      chunks.map(chunk => {
-        const placeholders = chunk.map(() => '?').join(',');
-        return db
+      chunks.map(chunk =>
+        db
           .prepare(
-            `SELECT id, revision FROM cve_osv_package_advisory WHERE id IN (${placeholders})`
+            'SELECT id, revision FROM cve_osv_package_advisory WHERE id IN (SELECT value FROM json_each(?))'
           )
-          .bind(...chunk.map(item => item.id))
-          .all<{ id: string; revision: string }>();
-      })
+          .bind(JSON.stringify(chunk.map(item => item.id)))
+          .all<{ id: string; revision: string }>()
+      )
     );
     for (const page of pages) {
       for (const row of page.results) storedById.set(row.id, row.revision);
