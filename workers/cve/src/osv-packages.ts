@@ -1,8 +1,10 @@
 import { Schema } from 'effect';
-import type postgres from 'postgres';
+import { batchInChunks, chunkArray, type D1Bound, type D1Executor } from './d1.ts';
 import { cveId } from './advisories.ts';
-import type { PackageFeed } from './package-advisories.ts';
+import { packageFeedSchema, type PackageFeed } from './package-advisories.ts';
 import { readLimitedText } from './sources.ts';
+
+const packagesArray = packageFeedSchema.fields.recent.value.fields.packages;
 
 const origin = 'https://osv-vulnerabilities.storage.googleapis.com/';
 const evidenceUrl = 'https://osv.dev/vulnerability/';
@@ -175,115 +177,225 @@ async function readRecord(ecosystem: Ecosystem, revision: Revision) {
 }
 
 async function saveRecords(
-  sql: postgres.Sql,
+  db: D1Executor,
   ecosystem: Ecosystem,
   captured: Date,
   complete: boolean,
   records: readonly ReturnType<typeof parseOsvPackage>[]
 ) {
-  await sql.begin(async transaction => {
-    await transaction`SET LOCAL statement_timeout = '8s'`;
-    if (records.length) {
-      await transaction`
-        INSERT INTO public.cve_osv_package_advisory AS stored (
-          id, cve_id, kind, advisory_url, published_at, revision, withdrawn_at, observed_at, packages
-        )
-        SELECT id, "cveId", kind, "advisoryUrl", published, modified, withdrawn, ${captured}, packages
-          FROM jsonb_to_recordset(${JSON.stringify(records)}::text::jsonb)
-               AS record(id text, "cveId" text, kind text, "advisoryUrl" text, published timestamptz,
-                         modified text, withdrawn timestamptz, packages jsonb)
-         ORDER BY id
-        ON CONFLICT (id) DO UPDATE SET
-          cve_id = excluded.cve_id, kind = excluded.kind, published_at = excluded.published_at,
-          revision = excluded.revision, withdrawn_at = excluded.withdrawn_at, packages = excluded.packages
-        WHERE excluded.revision > stored.revision
-      `;
-    }
-    await transaction`
-      INSERT INTO public.cve_osv_package_source AS stored (ecosystem, checked_at, successful_at, complete)
-      VALUES (${ecosystem}, ${captured}, CASE WHEN ${complete} THEN ${captured}::timestamptz END, ${complete})
-      ON CONFLICT (ecosystem) DO UPDATE SET
-        checked_at = excluded.checked_at, successful_at = coalesce(excluded.successful_at, stored.successful_at),
-        complete = excluded.complete
-      WHERE excluded.checked_at >= stored.checked_at
-    `;
-  });
+  const capturedIso = captured.toISOString();
+  const statements: D1Bound[] = records.map(record =>
+    db
+      .prepare(
+        `INSERT INTO cve_osv_package_advisory (
+           id, cve_id, kind, advisory_url, published_at, revision, withdrawn_at, observed_at, packages_json, package_count
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET
+           cve_id = excluded.cve_id,
+           kind = excluded.kind,
+           published_at = excluded.published_at,
+           revision = excluded.revision,
+           withdrawn_at = excluded.withdrawn_at,
+           packages_json = excluded.packages_json,
+           package_count = excluded.package_count
+         WHERE excluded.revision > cve_osv_package_advisory.revision`
+      )
+      .bind(
+        record.id,
+        record.cveId,
+        record.kind,
+        record.advisoryUrl,
+        record.published,
+        record.modified,
+        record.withdrawn,
+        capturedIso,
+        JSON.stringify(record.packages),
+        record.packages.length
+      )
+  );
+  statements.push(
+    db
+      .prepare(
+        `INSERT INTO cve_osv_package_source (ecosystem, checked_at, successful_at, complete)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT (ecosystem) DO UPDATE SET
+           checked_at = excluded.checked_at,
+           successful_at = COALESCE(excluded.successful_at, cve_osv_package_source.successful_at),
+           complete = excluded.complete
+         WHERE excluded.checked_at >= cve_osv_package_source.checked_at`
+      )
+      .bind(ecosystem, capturedIso, complete ? capturedIso : null, complete ? 1 : 0)
+  );
+  await batchInChunks(db, statements);
 }
 
-async function collectEcosystem(sql: postgres.Sql, ecosystem: Ecosystem) {
+async function collectEcosystem(db: D1Executor, ecosystem: Ecosystem) {
   const captured = new Date();
   try {
     const revisions = await readManifest(ecosystem);
     const knownOnly = ecosystem === '[EMPTY]';
     const candidates = knownOnly ? revisions : revisions.slice(0, monitoredRecords);
-    const pending = await sql<Revision[]>`
-      SELECT candidate.id, candidate.modified
-        FROM jsonb_to_recordset(${JSON.stringify(candidates)}::text::jsonb) AS candidate(id text, modified text)
-        LEFT JOIN public.cve_osv_package_advisory stored ON stored.id = candidate.id
-       WHERE (NOT ${knownOnly} OR stored.id IS NOT NULL)
-         AND (stored.revision IS NULL OR candidate.modified COLLATE "C" > stored.revision)
-       ORDER BY candidate.modified COLLATE "C" DESC, candidate.id
-       LIMIT ${batchSize + 1}
-    `;
+    const storedById = new Map<string, string>();
+    const chunks = chunkArray(candidates, 60);
+    const pages = await Promise.all(
+      chunks.map(chunk => {
+        const placeholders = chunk.map(() => '?').join(',');
+        return db
+          .prepare(
+            `SELECT id, revision FROM cve_osv_package_advisory WHERE id IN (${placeholders})`
+          )
+          .bind(...chunk.map(item => item.id))
+          .all<{ id: string; revision: string }>();
+      })
+    );
+    for (const page of pages) {
+      for (const row of page.results) storedById.set(row.id, row.revision);
+    }
+    const pending = candidates
+      .filter(candidate => {
+        const stored = storedById.get(candidate.id);
+        if (knownOnly && stored === undefined) return false;
+        return stored === undefined || candidate.modified > stored;
+      })
+      .toSorted((left, right) => {
+        if (left.modified !== right.modified) return right.modified < left.modified ? -1 : 1;
+        return left.id < right.id ? -1 : left.id > right.id ? 1 : 0;
+      })
+      .slice(0, batchSize + 1);
+
     const results = await Promise.allSettled(
       pending.slice(0, batchSize).map(revision => readRecord(ecosystem, revision))
     );
     const records = results.flatMap(result =>
       result.status === 'fulfilled' ? [result.value] : []
     );
-    await saveRecords(sql, ecosystem, captured, records.length === pending.length, records);
+    await saveRecords(db, ecosystem, captured, records.length === pending.length, records);
     if (records.length < results.length) console.warn('osv_package_documents_failed', ecosystem);
   } catch (error) {
-    await saveRecords(sql, ecosystem, captured, false, []);
+    await saveRecords(db, ecosystem, captured, false, []);
     throw error;
   }
 }
 
-export async function collectOsvPackages(sql: postgres.Sql) {
+export async function collectOsvPackages(db: D1Executor) {
   const results = await Promise.allSettled(
-    ecosystems.map(ecosystem => collectEcosystem(sql, ecosystem))
+    ecosystems.map(ecosystem => collectEcosystem(db, ecosystem))
   );
   if (results.some(result => result.status === 'rejected')) {
     throw new Error('OSV package collection incomplete');
   }
 }
 
-export async function osvPackageFeed(sql: postgres.Sql) {
-  const [sources, recent] = await Promise.all([
-    sql<(PackageFeed['sources'][number] & { provider: 'OSV' })[]>`
-      WITH status AS (
-        SELECT min(checked_at) AS checked_at, count(*) = 3 AND bool_and(complete) AS complete
-          FROM public.cve_osv_package_source
+interface RecentOsvRow {
+  id: string;
+  cveId: string | null;
+  kind: PackageFeed['recent'][number]['kind'];
+  advisoryUrl: string;
+  publishedAt: string;
+  observedAt: string;
+  packagesJson: string;
+}
+
+export async function osvPackageFeed(db: D1Executor) {
+  const [statusRow, reviewedCount, malwareCount, reviewedRows, malwareRows] = await Promise.all([
+    db
+      .prepare(
+        `SELECT MIN(checked_at) AS checkedAt,
+                COUNT(*) AS sourceCount,
+                MIN(complete) AS allComplete
+           FROM cve_osv_package_source`
       )
-      SELECT feed.kind, 'OSV' AS provider,
-             to_char(status.checked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "checkedAt",
-             status.complete,
-             (SELECT count(*)::int FROM public.cve_osv_package_advisory a
-               WHERE a.kind = feed.kind AND a.withdrawn_at IS NULL AND a.published_at IS NOT NULL
-                 AND jsonb_array_length(a.packages) > 0
-                 AND NOT EXISTS (SELECT 1 FROM public.cve_package_advisory ghsa
-                                  WHERE ghsa.id = a.id AND ghsa.withdrawn_at IS NOT NULL)) AS total
-        FROM (VALUES ('reviewed'), ('malware')) AS feed(kind) CROSS JOIN status
-       WHERE status.checked_at IS NOT NULL
-       ORDER BY feed.kind
-    `,
-    sql<PackageFeed['recent'][number][]>`
-      SELECT a.id, a.cve_id AS "cveId", a.kind, a.advisory_url AS "advisoryUrl",
-             to_char(a.published_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "publishedAt",
-             to_char(a.observed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "observedAt",
-             jsonb_path_query_array(a.packages, '$[0 to 7]') AS packages
-        FROM (VALUES ('reviewed'), ('malware')) AS feeds(kind)
-        CROSS JOIN LATERAL (
-          SELECT osv.* FROM public.cve_osv_package_advisory osv
-           WHERE osv.kind = feeds.kind AND osv.withdrawn_at IS NULL AND osv.published_at IS NOT NULL
-             AND jsonb_array_length(osv.packages) > 0
-             AND NOT EXISTS (SELECT 1 FROM public.cve_package_advisory ghsa
-                              WHERE ghsa.id = osv.id AND ghsa.withdrawn_at IS NOT NULL)
-           ORDER BY osv.published_at DESC, osv.id DESC
-           LIMIT 4
-        ) a
-       ORDER BY a.published_at DESC, a.id DESC
-    `,
+      .bind()
+      .first<{ checkedAt: string | null; sourceCount: number; allComplete: number | null }>(),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS total
+           FROM cve_osv_package_advisory a
+          WHERE a.kind = 'reviewed' AND a.withdrawn_at IS NULL AND a.published_at IS NOT NULL
+            AND a.package_count > 0
+            AND NOT EXISTS (SELECT 1 FROM cve_package_advisory ghsa
+                             WHERE ghsa.id = a.id AND ghsa.withdrawn_at IS NOT NULL)`
+      )
+      .bind()
+      .first<{ total: number }>(),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS total
+           FROM cve_osv_package_advisory a
+          WHERE a.kind = 'malware' AND a.withdrawn_at IS NULL AND a.published_at IS NOT NULL
+            AND a.package_count > 0
+            AND NOT EXISTS (SELECT 1 FROM cve_package_advisory ghsa
+                             WHERE ghsa.id = a.id AND ghsa.withdrawn_at IS NOT NULL)`
+      )
+      .bind()
+      .first<{ total: number }>(),
+    db
+      .prepare(
+        `SELECT a.id, a.cve_id AS cveId, a.kind, a.advisory_url AS advisoryUrl,
+                a.published_at AS publishedAt, a.observed_at AS observedAt,
+                a.packages_json AS packagesJson
+           FROM cve_osv_package_advisory a
+          WHERE a.kind = 'reviewed' AND a.withdrawn_at IS NULL AND a.published_at IS NOT NULL
+            AND a.package_count > 0
+            AND NOT EXISTS (SELECT 1 FROM cve_package_advisory ghsa
+                             WHERE ghsa.id = a.id AND ghsa.withdrawn_at IS NOT NULL)
+          ORDER BY a.published_at DESC, a.id DESC
+          LIMIT 4`
+      )
+      .bind()
+      .all<RecentOsvRow>(),
+    db
+      .prepare(
+        `SELECT a.id, a.cve_id AS cveId, a.kind, a.advisory_url AS advisoryUrl,
+                a.published_at AS publishedAt, a.observed_at AS observedAt,
+                a.packages_json AS packagesJson
+           FROM cve_osv_package_advisory a
+          WHERE a.kind = 'malware' AND a.withdrawn_at IS NULL AND a.published_at IS NOT NULL
+            AND a.package_count > 0
+            AND NOT EXISTS (SELECT 1 FROM cve_package_advisory ghsa
+                             WHERE ghsa.id = a.id AND ghsa.withdrawn_at IS NOT NULL)
+          ORDER BY a.published_at DESC, a.id DESC
+          LIMIT 4`
+      )
+      .bind()
+      .all<RecentOsvRow>(),
   ]);
+
+  const sources: (PackageFeed['sources'][number] & { provider: 'OSV' })[] = statusRow?.checkedAt
+    ? [
+        {
+          kind: 'malware',
+          provider: 'OSV',
+          checkedAt: statusRow.checkedAt,
+          complete: statusRow.sourceCount === 3 && statusRow.allComplete === 1,
+          total: Number(malwareCount?.total ?? 0),
+        },
+        {
+          kind: 'reviewed',
+          provider: 'OSV',
+          checkedAt: statusRow.checkedAt,
+          complete: statusRow.sourceCount === 3 && statusRow.allComplete === 1,
+          total: Number(reviewedCount?.total ?? 0),
+        },
+      ]
+    : [];
+
+  const recent: PackageFeed['recent'][number][] = [...reviewedRows.results, ...malwareRows.results]
+    .toSorted((left, right) => {
+      if (left.publishedAt !== right.publishedAt) {
+        return right.publishedAt < left.publishedAt ? -1 : 1;
+      }
+      return right.id < left.id ? -1 : right.id > left.id ? 1 : 0;
+    })
+    .map(row => ({
+      id: row.id,
+      cveId: row.cveId,
+      kind: row.kind,
+      advisoryUrl: row.advisoryUrl,
+      publishedAt: row.publishedAt,
+      observedAt: row.observedAt,
+      packages: Schema.decodeUnknownSync(packagesArray)(JSON.parse(row.packagesJson)).slice(0, 8),
+    }));
+
   return { sources, recent };
 }

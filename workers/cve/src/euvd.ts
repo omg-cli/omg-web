@@ -1,5 +1,5 @@
 import { Schema } from 'effect';
-import type postgres from 'postgres';
+import { batchInChunks, type D1Bound, type D1Executor } from './d1.ts';
 import { cveId } from './advisories.ts';
 import { readLimitedText } from './sources.ts';
 
@@ -65,7 +65,7 @@ export function parseEuvd(input: typeof feed.Type) {
   return [...signals.values()];
 }
 
-export async function collectEuvd(sql: postgres.Sql): Promise<void> {
+export async function collectEuvd(db: D1Executor): Promise<void> {
   const began = new Date().toISOString();
   try {
     const response = await fetch(feedUrl, {
@@ -78,54 +78,77 @@ export async function collectEuvd(sql: postgres.Sql): Promise<void> {
     }
     const records = parseEuvd(JSON.parse(await readLimitedText(response, 1024 * 1024)));
     const received = new Date().toISOString();
-    await sql.begin(async transaction => {
-      await transaction`SET LOCAL statement_timeout = '8s'`;
-      const [lock] = await transaction<{ locked: boolean }[]>`
-        SELECT pg_try_advisory_xact_lock(213770071, 4) AS locked
-      `;
-      if (!lock?.locked) return;
-      const [source] = await transaction<{ baseline: boolean }[]>`
-        INSERT INTO public.cve_vendor_signal_source AS existing (
-          provider, checked_at, successful_at, complete
-        ) VALUES (${euvdProvider}, ${received}::timestamptz, NULL, TRUE)
-        ON CONFLICT (provider) DO UPDATE SET checked_at=excluded.checked_at, complete=TRUE
-        WHERE existing.checked_at <= ${began}::timestamptz
-        RETURNING successful_at IS NULL AS baseline
-      `;
-      if (!source) return;
-      await transaction`
-        INSERT INTO public.cve_vendor_signal AS existing (
-          provider, cve_id, advisory_url, publisher_published_at, publisher_modified_at,
-          reported_exploited, first_received_at, first_exploitation_received_at, baseline, exploited_since
+    const existing = await db
+      .prepare('SELECT checked_at, successful_at FROM cve_vendor_signal_source WHERE provider = ?')
+      .bind(euvdProvider)
+      .first<{ checked_at: string; successful_at: string | null }>();
+    if (existing && existing.checked_at > began) return;
+    const baseline = existing?.successful_at ? 0 : 1;
+
+    const statements: D1Bound[] = [];
+    for (const record of records) {
+      const publishedIso = `${record.published}T00:00:00.000Z`;
+      const modifiedIso = `${record.modified}T00:00:00.000Z`;
+      statements.push(
+        db
+          .prepare(
+            `INSERT INTO cve_vendor_signal (
+               provider, cve_id, advisory_url, publisher_published_at, publisher_modified_at,
+               reported_exploited, first_received_at, first_exploitation_received_at, baseline, exploited_since
+             ) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
+             ON CONFLICT (provider, advisory_url, cve_id) DO UPDATE SET
+               publisher_published_at = excluded.publisher_published_at,
+               publisher_modified_at = excluded.publisher_modified_at,
+               exploited_since = excluded.exploited_since
+             WHERE excluded.publisher_modified_at >= cve_vendor_signal.publisher_modified_at`
+          )
+          .bind(
+            euvdProvider,
+            record.cve_id,
+            record.advisory_url,
+            publishedIso,
+            modifiedIso,
+            received,
+            received,
+            baseline,
+            record.exploited_since
+          ),
+        db
+          .prepare(
+            `INSERT INTO euvd_exploited (cve_id, euvd_id, updated_at)
+             VALUES (?, ?, ?)
+             ON CONFLICT (cve_id) DO UPDATE SET
+               euvd_id = excluded.euvd_id,
+               updated_at = excluded.updated_at`
+          )
+          .bind(record.cve_id, record.advisory_url.slice(evidenceUrl.length), received)
+      );
+    }
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO cve_vendor_signal_source (provider, checked_at, successful_at, complete)
+           VALUES (?, ?, ?, 1)
+           ON CONFLICT (provider) DO UPDATE SET
+             checked_at = excluded.checked_at,
+             successful_at = excluded.successful_at,
+             complete = 1
+           WHERE cve_vendor_signal_source.checked_at <= ?`
         )
-        SELECT ${euvdProvider}, cve_id, advisory_url,
-               published::timestamp AT TIME ZONE 'UTC', modified::timestamp AT TIME ZONE 'UTC',
-               TRUE, ${received}::timestamptz, ${received}::timestamptz, ${source.baseline}, exploited_since
-          FROM jsonb_to_recordset(${JSON.stringify(records)}::text::jsonb)
-            AS r(cve_id text, advisory_url text, published date, modified date, exploited_since date)
-         ORDER BY advisory_url, cve_id
-        ON CONFLICT (provider, advisory_url, cve_id) DO UPDATE SET
-          publisher_published_at=excluded.publisher_published_at,
-          publisher_modified_at=excluded.publisher_modified_at,
-          exploited_since=excluded.exploited_since
-        WHERE excluded.publisher_modified_at >= existing.publisher_modified_at
-          AND (existing.publisher_published_at, existing.publisher_modified_at, existing.exploited_since)
-                IS DISTINCT FROM
-              (excluded.publisher_published_at, excluded.publisher_modified_at, excluded.exploited_since)
-      `;
-      await transaction`
-        UPDATE public.cve_vendor_signal_source SET successful_at=${received}::timestamptz
-         WHERE provider=${euvdProvider}
-      `;
-    });
+        .bind(euvdProvider, received, received, began)
+    );
+    await batchInChunks(db, statements);
   } catch (error) {
     const checked = new Date().toISOString();
-    await sql`
-      INSERT INTO public.cve_vendor_signal_source AS existing (provider, checked_at, complete)
-        VALUES (${euvdProvider}, ${checked}::timestamptz, FALSE)
-      ON CONFLICT (provider) DO UPDATE SET checked_at=excluded.checked_at, complete=FALSE
-      WHERE existing.checked_at <= ${began}::timestamptz
-    `;
+    await db
+      .prepare(
+        `INSERT INTO cve_vendor_signal_source (provider, checked_at, complete)
+         VALUES (?, ?, 0)
+         ON CONFLICT (provider) DO UPDATE SET checked_at = excluded.checked_at, complete = 0
+         WHERE cve_vendor_signal_source.checked_at <= ?`
+      )
+      .bind(euvdProvider, checked, began)
+      .run();
     throw error;
   }
 }
