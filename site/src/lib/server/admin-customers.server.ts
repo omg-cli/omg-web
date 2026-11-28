@@ -27,7 +27,7 @@ const CUSTOMER_PAGE_LIMIT = 25;
 const CUSTOMER_DIRECTORY_BODY_LIMIT = 512 * 1024;
 const CUSTOMER_DETAIL_BODY_LIMIT = 512 * 1024;
 const CUSTOMER_UPDATE_BODY_LIMIT = 16 * 1024;
-const CUSTOMER_ID_BY_EMAIL_QUERY = 'SELECT id FROM customers WHERE email = ?';
+const CUSTOMER_ID_BY_EMAIL_QUERY = 'SELECT id FROM customers WHERE lower(email) = ?';
 const DirectoryQuerySchema = Schema.Struct({
   page: Schema.String.check(
     Schema.isPattern(/^\d+$/u),
@@ -160,7 +160,7 @@ export function resolveAdminCustomerId(
 ): Effect.Effect<string, LicensingSummaryStoreUnavailable | LicensingSummaryInvalidPayload> {
   return Effect.gen(function* () {
     const value = yield* Effect.tryPromise({
-      try: () => env.DB.prepare(CUSTOMER_ID_BY_EMAIL_QUERY).bind(email).first(),
+      try: () => env.DB.prepare(CUSTOMER_ID_BY_EMAIL_QUERY).bind(email.toLowerCase()).first(),
       catch: cause => new LicensingSummaryStoreUnavailable(cause),
     });
     const row = yield* Schema.decodeUnknownEffect(CustomerIdRowSchema)(value).pipe(

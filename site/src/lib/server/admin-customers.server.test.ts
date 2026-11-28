@@ -62,7 +62,7 @@ function environment(
               expect(bindings).toEqual([identity.id]);
               return { role };
             }
-            expect(sql).toBe('SELECT id FROM customers WHERE email = ?');
+            expect(sql).toBe('SELECT id FROM customers WHERE lower(email) = ?');
             expect(bindings).toEqual(['customer@example.com']);
             return { id: 'private-customer-id' };
           },

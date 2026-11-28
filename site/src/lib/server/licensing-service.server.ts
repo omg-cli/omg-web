@@ -631,24 +631,27 @@ export function loadAdminOverview(
 ): Effect.Effect<AdminOverview, LicensingSummaryError | AdminOverviewForbidden> {
   return Effect.gen(function* () {
     const session = yield* loadAdminServiceSession(identity, env);
-    const [overview, activity] = yield* Effect.all([
-      loadPrivateWorkerPayload(
-        env,
-        session,
-        '/api/admin/dashboard',
-        'admin-overview',
-        DASHBOARD_BODY_LIMIT,
-        AdminOverviewResponseSchema
-      ),
-      loadPrivateWorkerPayload(
-        env,
-        session,
-        '/api/admin/activity?page=1&limit=10',
-        'admin-activity',
-        ADMIN_ACTIVITY_BODY_LIMIT,
-        AdminActivityResponseSchema
-      ),
-    ]);
+    const [overview, activity] = yield* Effect.all(
+      [
+        loadPrivateWorkerPayload(
+          env,
+          session,
+          '/api/admin/dashboard',
+          'admin-overview',
+          DASHBOARD_BODY_LIMIT,
+          AdminOverviewResponseSchema
+        ),
+        loadPrivateWorkerPayload(
+          env,
+          session,
+          '/api/admin/activity?page=1&limit=10',
+          'admin-activity',
+          ADMIN_ACTIVITY_BODY_LIMIT,
+          AdminActivityResponseSchema
+        ),
+      ],
+      { concurrency: 'unbounded' }
+    );
 
     return {
       totalUsers: overview.overview.total_users,

@@ -4,19 +4,19 @@ import { createShadowAuth, type AuthEnvironment } from './auth.server';
 import {
   OrganizationInvitationFormInvalid,
   loadActiveOrganizationId,
+  readOrganizationInvitationEmailForm,
+  readOrganizationInvitationForm,
   recordOrganizationAudit,
 } from './organization-invitation.server';
 import {
   apiErrorCode,
+  guardOrganizationMutationRate,
   organizationMutationRateLimit as organizationMemberRateLimit,
   readActionInput,
   requireActiveOrganizationForGrowth as loadMemberMutationState,
-  type OrganizationActionEvent,
-} from './organization-route-actions.server';
-import {
-  guardOrganizationMutationRate,
   requireVerifiedOrganizationIdentity,
   type IdentityLoader,
+  type OrganizationActionEvent,
 } from './organization-route-actions.server';
 import {
   findOrganizationMemberTarget,
@@ -33,10 +33,6 @@ import {
   transferOrganizationOwnership,
   type OrganizationMemberAuthGateway,
 } from './organization-member.server';
-import {
-  readOrganizationInvitationEmailForm,
-  readOrganizationInvitationForm,
-} from './organization-invitation.server';
 import { loadOrganizationMembersState } from './organization-workspace.server';
 
 type OrganizationMemberGatewayFactory = (
@@ -258,11 +254,16 @@ export async function changeOrganizationMemberRoleAction(
   if ('status' in prepared) {
     return prepared;
   }
-  const target = await findOrganizationMemberTarget(
-    { ...prepared.identity.user, sessionToken: prepared.identity.sessionToken },
-    input.email,
-    prepared.database
-  );
+  let target: Awaited<ReturnType<typeof findOrganizationMemberTarget>>;
+  try {
+    target = await findOrganizationMemberTarget(
+      { ...prepared.identity.user, sessionToken: prepared.identity.sessionToken },
+      input.email,
+      prepared.database
+    );
+  } catch (cause) {
+    return organizationMemberFailure(cause, 'role');
+  }
   if (target === null) {
     return organizationMemberFailure(new OrganizationMemberNotFound(), 'role');
   }
@@ -305,11 +306,16 @@ export async function removeOrganizationMemberAction(
   if ('status' in prepared) {
     return prepared;
   }
-  const target = await findOrganizationMemberTarget(
-    { ...prepared.identity.user, sessionToken: prepared.identity.sessionToken },
-    input.email,
-    prepared.database
-  );
+  let target: Awaited<ReturnType<typeof findOrganizationMemberTarget>>;
+  try {
+    target = await findOrganizationMemberTarget(
+      { ...prepared.identity.user, sessionToken: prepared.identity.sessionToken },
+      input.email,
+      prepared.database
+    );
+  } catch (cause) {
+    return organizationMemberFailure(cause, 'remove');
+  }
   if (target === null) {
     return organizationMemberFailure(new OrganizationMemberNotFound(), 'remove');
   }

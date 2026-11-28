@@ -56,7 +56,7 @@ function environment(service: MutationServiceStub): LicensingSummaryEnvironment 
               expect(bindings).toEqual([identity.id]);
               return { role: 'admin' };
             }
-            if (sql === 'SELECT id FROM customers WHERE email = ?') {
+            if (sql === 'SELECT id FROM customers WHERE lower(email) = ?') {
               expect(bindings).toEqual(['customer@example.com']);
               return { id: 'private-customer-id' };
             }

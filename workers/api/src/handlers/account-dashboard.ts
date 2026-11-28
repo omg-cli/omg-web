@@ -220,7 +220,11 @@ function getAccountDashboard(
   | DashboardStoreUnavailable
 > {
   return Effect.gen(function* () {
-    const auth = yield* requireSession(request, env);
+    const auth = yield* requireSession(request, env).pipe(
+      Effect.catchTag('SessionStoreUnavailableError', error =>
+        Effect.fail(new DashboardStoreUnavailable('session', error))
+      )
+    );
     const user = auth.user;
 
     const isAdmin = yield* isAdminCustomer(env.DB, user.id).pipe(

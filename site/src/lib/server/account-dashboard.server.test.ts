@@ -15,7 +15,7 @@ function createD1Stub(rowsByTable: {
 }) {
   const queries: Array<ExecutedQuery> = [];
   const db: AuthEnvironment['DB'] = {
-    batch: async () => [],
+    batch: async statements => Promise.all(statements.map(statement => statement.all())),
     dump: async () => new ArrayBuffer(0),
     exec: async () => ({ count: 0, duration: 0 }),
     prepare: (sql: string) => ({

@@ -140,41 +140,18 @@ async function runAdminCustomerMutation<I>(
   };
 }
 
-export async function updateAdminCustomerLicenseAction(event: AdminCustomerRequestEvent) {
-  const inputExit = await Effect.runPromiseExit(readAdminCustomerLicenseUpdate(event.request));
-  if (Exit.isFailure(inputExit)) {
-    const failure = Option.getOrNull(Cause.findErrorOption(inputExit.cause));
-    return fail(failure instanceof BoundedFormRejected ? failure.status : 400, {
-      kind: 'error' as const,
-      message: 'Choose valid license values and confirm the change.',
-    });
-  }
-  const { env, identity } = await requireAdminPageContext(event);
-  const updateExit = await Effect.runPromiseExit(
-    updateAdminCustomerLicense(identity, env, inputExit.value)
-  );
-  if (Exit.isFailure(updateExit)) {
-    const failure = Option.getOrNull(Cause.findErrorOption(updateExit.cause));
-    if (failure instanceof AdminOverviewForbidden) {
-      error(403, 'Admin access required');
+export function updateAdminCustomerLicenseAction(event: AdminCustomerRequestEvent) {
+  return runAdminCustomerMutation(
+    event,
+    readAdminCustomerLicenseUpdate(event.request),
+    updateAdminCustomerLicense,
+    input => input.email,
+    {
+      invalid: 'Choose valid license values and confirm the change.',
+      failed: 'License update failed.',
+      succeeded: 'License access updated and recorded in the audit log.',
     }
-    return fail(503, { kind: 'error' as const, message: 'License update failed.' });
-  }
-  const workspaceExit = await Effect.runPromiseExit(
-    loadAdminCustomerWorkspace(identity, env, inputExit.value.email)
   );
-  if (Exit.isFailure(workspaceExit)) {
-    return {
-      kind: 'updated' as const,
-      message: 'License updated. Refresh the customer detail to view current state.',
-    };
-  }
-  return {
-    kind: 'updated' as const,
-    message: 'License access updated and recorded in the audit log.',
-    detail: workspaceExit.value.detail,
-    support: workspaceExit.value.support,
-  };
 }
 
 export function createAdminCustomerNoteAction(event: AdminCustomerRequestEvent) {
