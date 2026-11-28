@@ -219,39 +219,39 @@ export async function handleAdminOrganizations(request: Request, env: Env): Prom
           )`;
     const params = search.length === 0 ? [] : [pattern, pattern, pattern];
     try {
-      const countValue = await env.DB.prepare(
-        `SELECT COUNT(*) AS total FROM auth_organization AS organization ${where}`
-      )
-        .bind(...params)
-        .first();
-      const count = Schema.decodeUnknownSync(CountRowSchema)(countValue);
-      const result = await env.DB.prepare(
-        `SELECT
-          organization.name,
-          organization.slug,
-          license.tier,
-          license.status,
-          license.max_seats AS seatLimit,
-          (SELECT COUNT(*) FROM auth_member AS member
-            WHERE member.organization_id = organization.id) AS seatsUsed,
-          (SELECT COUNT(*) FROM auth_invitation AS invitation
-            WHERE invitation.organization_id = organization.id
-              AND invitation.status = 'pending') AS pendingInvitations,
-          (SELECT COUNT(*) FROM machines AS machine
-            WHERE machine.license_id = license.id AND machine.is_active = 1) AS activeMachines,
-          (SELECT MAX(audit.created_at) FROM audit_log AS audit
-            WHERE audit.customer_id = organization.billing_customer_id
-              AND audit.resource_type = 'organization'
-              AND audit.action LIKE 'organization.%') AS lastAuditAt
-        FROM auth_organization AS organization
-        LEFT JOIN licenses AS license ON license.customer_id = organization.billing_customer_id
-        ${where}
-        ORDER BY organization.created_at DESC, organization.slug
-        LIMIT ? OFFSET ?`
-      )
-        .bind(...params, PAGE_SIZE, (page - 1) * PAGE_SIZE)
-        .all();
-      const rows = Schema.decodeUnknownSync(Schema.Array(DirectoryRowSchema))(result.results);
+      const [countResult, rowsResult] = await env.DB.batch([
+        env.DB.prepare(
+          `SELECT COUNT(*) AS total FROM auth_organization AS organization ${where}`
+        ).bind(...params),
+        env.DB.prepare(
+          `SELECT
+            organization.name,
+            organization.slug,
+            license.tier,
+            license.status,
+            license.max_seats AS seatLimit,
+            (SELECT COUNT(*) FROM auth_member AS member
+              WHERE member.organization_id = organization.id) AS seatsUsed,
+            (SELECT COUNT(*) FROM auth_invitation AS invitation
+              WHERE invitation.organization_id = organization.id
+                AND invitation.status = 'pending') AS pendingInvitations,
+            (SELECT COUNT(*) FROM machines AS machine
+              WHERE machine.license_id = license.id AND machine.is_active = 1) AS activeMachines,
+            (SELECT MAX(audit.created_at) FROM audit_log AS audit
+              WHERE audit.customer_id = organization.billing_customer_id
+                AND audit.resource_type = 'organization'
+                AND audit.action LIKE 'organization.%') AS lastAuditAt
+          FROM auth_organization AS organization
+          LEFT JOIN licenses AS license ON license.customer_id = organization.billing_customer_id
+          ${where}
+          ORDER BY organization.created_at DESC, organization.slug
+          LIMIT ? OFFSET ?`
+        ).bind(...params, PAGE_SIZE, (page - 1) * PAGE_SIZE),
+      ]);
+      const count = Schema.decodeUnknownSync(CountRowSchema)(countResult?.results[0] ?? null);
+      const rows = Schema.decodeUnknownSync(Schema.Array(DirectoryRowSchema))(
+        rowsResult?.results ?? []
+      );
       const directory: AdminOrganizationDirectory = {
         organizations: rows.map(row => ({
           name: row.name.trim(),

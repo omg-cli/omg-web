@@ -10,7 +10,8 @@ import { requireSession, SessionUnauthorizedError } from '../admin-auth';
 /** The CLI pastes only ASCII alphanumeric and "-", at most 128 characters. */
 const LINK_KEY_BYTES = 32;
 const PROVISIONED_TIER = 'free' as const;
-const PROVISIONED_MAX_MACHINES = 5;
+const PROVISIONED_MAX_MACHINES = 1;
+const PROVISIONED_MAX_SEATS = 1;
 
 class DashboardLinkUnavailable extends Error {
   readonly _tag = 'DashboardLinkUnavailable';
@@ -53,6 +54,7 @@ const LicenseRowSchema = Schema.Struct({
   license_key: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(128)),
   tier: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(64)),
   expires_at: Schema.NullOr(Schema.String.pipe(Schema.maxLength(64))),
+  machine_count: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
 });
 
 /** Untrusted D1 row selected for link provisioning. */
@@ -60,7 +62,13 @@ interface LicenseRowInput {
   readonly license_key: unknown;
   readonly tier: unknown;
   readonly expires_at: unknown;
+  readonly machine_count: unknown;
 }
+
+const READ_LICENSE_WITH_MACHINES_SQL = `SELECT l.license_key, l.tier, l.expires_at,
+  (SELECT COUNT(*) FROM machines m WHERE m.license_id = l.id AND m.is_active = 1) AS machine_count
+  FROM licenses l
+  WHERE l.customer_id = ?`;
 
 /**
  * Provision the customer's license if needed and return the CLI link
@@ -73,38 +81,38 @@ function createDashboardLinkCredential(
   customerId: string
 ): Effect.Effect<DashboardLinkResponse, DashboardLinkUnavailable> {
   return Effect.gen(function* () {
-    const existing = yield* queryFirst<{ id: string }>(
+    let row = yield* queryFirst<LicenseRowInput>(
       db,
-      'SELECT id FROM licenses WHERE customer_id = ?',
+      READ_LICENSE_WITH_MACHINES_SQL,
       [customerId],
-      'findLicense'
+      'readLicense'
     );
-    if (existing === null) {
+    if (row === null) {
       yield* Effect.tryPromise({
         try: () =>
           db
             .prepare(
-              `INSERT OR IGNORE INTO licenses (id, customer_id, license_key, tier, status, max_machines)
-               VALUES (?, ?, ?, ?, 'active', ?)`
+              `INSERT OR IGNORE INTO licenses (id, customer_id, license_key, tier, status, max_machines, max_seats)
+               VALUES (?, ?, ?, ?, 'active', ?, ?)`
             )
             .bind(
               crypto.randomUUID(),
               customerId,
               linkKey(),
               PROVISIONED_TIER,
-              PROVISIONED_MAX_MACHINES
+              PROVISIONED_MAX_MACHINES,
+              PROVISIONED_MAX_SEATS
             )
             .first<unknown>(),
         catch: cause => new DashboardLinkUnavailable('provisionLicense', cause),
       });
+      row = yield* queryFirst<LicenseRowInput>(
+        db,
+        READ_LICENSE_WITH_MACHINES_SQL,
+        [customerId],
+        'readLicense'
+      );
     }
-
-    const row = yield* queryFirst<LicenseRowInput>(
-      db,
-      'SELECT license_key, tier, expires_at FROM licenses WHERE customer_id = ?',
-      [customerId],
-      'readLicense'
-    );
     if (row === null) {
       return yield* Effect.fail(new DashboardLinkUnavailable('readLicense', undefined));
     }
@@ -112,19 +120,11 @@ function createDashboardLinkCredential(
       Effect.mapError(cause => new DashboardLinkUnavailable('readLicense', cause))
     );
 
-    const machine = yield* queryFirst<{ count: number }>(
-      db,
-      'SELECT COUNT(*) AS count FROM machines WHERE license_id = (SELECT id FROM licenses WHERE customer_id = ?) AND is_active = 1',
-      [customerId],
-      'countMachines'
-    );
-    const machine_count = machine?.count ?? 0;
-
     return yield* Schema.decodeUnknown(DashboardLinkResponseSchema)({
       license_key: license.license_key,
       tier: license.tier,
       expires_at: license.expires_at,
-      machine_count,
+      machine_count: license.machine_count,
     }).pipe(Effect.mapError(cause => new DashboardLinkUnavailable('projectResponse', cause)));
   });
 }
