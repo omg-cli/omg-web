@@ -585,7 +585,9 @@ export const loadAnalytics = (db: D1Database) =>
       db.prepare(
         "SELECT CASE WHEN prev.count = 0 THEN 0 ELSE CAST((curr.count - prev.count) * 100.0 / prev.count AS INTEGER) END as rate FROM (SELECT COUNT(*) as count FROM customers WHERE created_at >= datetime('now', '-7 days')) curr, (SELECT COUNT(*) as count FROM customers WHERE created_at >= datetime('now', '-14 days') AND created_at < datetime('now', '-7 days')) prev"
       ),
-      db.prepare('SELECT COALESCE(SUM(time_saved_ms), 0) / 3600000.0 as total_hours FROM usage_daily'),
+      db.prepare(
+        'SELECT COALESCE(SUM(time_saved_ms), 0) / 3600000.0 as total_hours FROM usage_daily'
+      ),
       db.prepare(
         "SELECT (SELECT COUNT(*) FROM install_stats WHERE created_at >= datetime('now', '-30 days')) as installs, (SELECT COUNT(DISTINCT u.license_id) FROM usage_daily u WHERE u.date >= datetime('now', '-30 days') AND u.commands_run > 0) as activated, (SELECT COUNT(*) FROM (SELECT u.license_id FROM usage_daily u WHERE u.date >= datetime('now', '-30 days') GROUP BY u.license_id HAVING SUM(u.commands_run) > 1000)) as power_users"
       ),
