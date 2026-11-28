@@ -6,12 +6,7 @@ import * as Schema from 'effect/Schema';
 import { decodeBoundedJsonResponse, decodeJsonBody, readBoundedBodyText } from '../body';
 import { deploymentAccountOrigin } from '../deployment';
 import { EmailAddress } from '../../../../shared/site-session';
-import {
-  authenticateSession,
-  forbiddenUnlessAdminSession,
-  isAdminCustomer,
-  type AuthedSession,
-} from '../admin-auth';
+import { authenticateSession, isAdminCustomer, type AuthedSession } from '../admin-auth';
 import { decodeThrownMessage } from '../contracts/http-bodies';
 import {
   StripeCustomerIdRowSchema,
@@ -581,10 +576,7 @@ export async function handleCreateCheckout(
   }
 
   const email = auth.user.email.toLowerCase();
-  const storedCustomer = await lookupStripeCustomerId(env.DB, email);
-  if (!storedCustomer.ok) {
-    return errorResponse('Failed to load billing account', 500);
-  }
+  const stripeCustomerId = auth.user.stripe_customer_id;
 
   let stripePromotionCodeId: string | null = null;
   if (promotionCode !== undefined) {
@@ -628,10 +620,10 @@ export async function handleCreateCheckout(
   }
   // Known buyers attach the stored Stripe customer so repeated checkouts do
   // not mint a fresh pending Customer object per attempt.
-  if (storedCustomer.stripeCustomerId === null) {
+  if (stripeCustomerId === null) {
     params.set('customer_email', email);
   } else {
-    params.set('customer', storedCustomer.stripeCustomerId);
+    params.set('customer', stripeCustomerId);
   }
 
   const session = await fetchStripeJson(
@@ -771,22 +763,28 @@ export async function handleBillingPortal(request: Request, env: Env): Promise<R
     return errorResponse('Invalid JSON body', 400);
   }
   const requestedEmail = decoded.value.email;
-  let email = auth.user.email.toLowerCase();
-  if (requestedEmail !== undefined && requestedEmail !== email) {
-    const denied = await forbiddenUnlessAdminSession(request, env);
-    if (denied === null) {
+  const selfEmail = auth.user.email.toLowerCase();
+  let email = selfEmail;
+  if (requestedEmail !== undefined && requestedEmail !== selfEmail) {
+    const adminExit = await Effect.runPromiseExit(isAdminCustomer(env.DB, auth.user.id));
+    if (Exit.isSuccess(adminExit) && adminExit.value) {
       email = requestedEmail;
     }
   }
 
-  const storedCustomer = await lookupStripeCustomerId(env.DB, email);
-  if (!storedCustomer.ok) {
-    return errorResponse('Failed to load billing account', 500);
+  let stripeCustomerId: string | null;
+  if (email === selfEmail) {
+    stripeCustomerId = auth.user.stripe_customer_id;
+  } else {
+    const storedCustomer = await lookupStripeCustomerId(env.DB, email);
+    if (!storedCustomer.ok) {
+      return errorResponse('Failed to load billing account', 500);
+    }
+    stripeCustomerId = storedCustomer.stripeCustomerId;
   }
-  if (storedCustomer.stripeCustomerId === null) {
+  if (stripeCustomerId === null) {
     return errorResponse('No billing account found for this email', 404);
   }
-  const stripeCustomerId = storedCustomer.stripeCustomerId;
   if (!env.STRIPE_SECRET_KEY) {
     return errorResponse('Billing is not configured', 503);
   }
@@ -1098,6 +1096,21 @@ export async function handleAdminStripeSync(request: Request, env: Env): Promise
     errors,
   };
 
+  const stripeCustomerIds = new Map<string, string>();
+  const resolveSyncedCustomerId = async (stripeCustomerId: string | null | undefined) => {
+    if (stripeCustomerId) {
+      const cached = stripeCustomerIds.get(stripeCustomerId);
+      if (cached !== undefined) {
+        return { ok: true as const, customerId: cached };
+      }
+    }
+    const resolved = await resolveStripeCustomerId(env.DB, stripeCustomerId);
+    if (resolved.ok && stripeCustomerId) {
+      stripeCustomerIds.set(stripeCustomerId, resolved.customerId);
+    }
+    return resolved;
+  };
+
   try {
     await syncStripeList(
       env.STRIPE_SECRET_KEY,
@@ -1132,18 +1145,21 @@ export async function handleAdminStripeSync(request: Request, env: Env): Promise
         const company = customer.metadata?.company ?? null;
         const existing = optionalRowValue(existingLookup);
         if (existing === undefined) {
+          const customerId = crypto.randomUUID();
           await env.DB.prepare(
             `INSERT INTO customers (id, stripe_customer_id, email, company, created_at)
              VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
           )
-            .bind(crypto.randomUUID(), customer.id, customer.email, company)
+            .bind(customerId, customer.id, customer.email, company)
             .run();
+          stripeCustomerIds.set(customer.id, customerId);
         } else {
           await env.DB.prepare(
             'UPDATE customers SET stripe_customer_id = ?, email = ?, company = COALESCE(?, company) WHERE id = ?'
           )
             .bind(customer.id, customer.email, company, existing.id)
             .run();
+          stripeCustomerIds.set(customer.id, existing.id);
         }
         return true;
       },
@@ -1159,7 +1175,7 @@ export async function handleAdminStripeSync(request: Request, env: Env): Promise
       errors,
       sub => `Subscription ${sub.id}`,
       async sub => {
-        const resolved = await resolveStripeCustomerId(env.DB, sub.customer);
+        const resolved = await resolveSyncedCustomerId(sub.customer);
         if (!resolved.ok) {
           if (resolved.reason === 'invalid-row') {
             errors.push(`Subscription ${sub.id}: customer row has an invalid shape`);
@@ -1196,7 +1212,7 @@ export async function handleAdminStripeSync(request: Request, env: Env): Promise
           return false;
         }
 
-        const resolved = await resolveStripeCustomerId(env.DB, invoice.customer);
+        const resolved = await resolveSyncedCustomerId(invoice.customer);
         if (!resolved.ok) {
           if (resolved.reason === 'invalid-row') {
             errors.push(`Invoice ${invoice.id}: customer row has an invalid shape`);
