@@ -21,7 +21,7 @@ export class SessionUnauthorizedError extends Error {
 }
 
 /** D1 could not verify the Bearer session. */
-export class SessionStoreUnavailableError extends Error {
+class SessionStoreUnavailableError extends Error {
   readonly _tag = 'SessionStoreUnavailableError';
   constructor(override readonly cause?: unknown) {
     super('Authentication service unavailable');
