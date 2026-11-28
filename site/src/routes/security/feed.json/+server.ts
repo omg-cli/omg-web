@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ fetch, platform, url }) => {
           cache: platform.caches.open('omg-security-feed-v1'),
         }
       : undefined;
-  const feed = await securityFeed(fetch, runtime);
+  const feed = await securityFeed(runtime ? globalThis.fetch : fetch, runtime);
   return json(feed, {
     headers: {
       'Cache-Control': feed.stale

@@ -75,6 +75,9 @@ async function lookupDashboardSession({
   headers,
   requestUrl,
 }: AuthSessionLookupInput): Promise<DashboardProviderSession | null> {
+  if (!headers.has('cookie') && !headers.has('authorization')) {
+    return null;
+  }
   return createShadowAuth(env, requestUrl).api.getSession({ headers });
 }
 
@@ -180,9 +183,9 @@ export async function loadAccountDashboardContext(
   let sessionRows: DashboardBoundaryInput;
   let accountRows: DashboardBoundaryInput;
   try {
-    const [sessions, accounts] = await Promise.all([
-      env.DB.prepare(SESSION_QUERY).bind(identity.user.id).all(),
-      env.DB.prepare(ACCOUNT_QUERY).bind(identity.user.id).all(),
+    const [sessions, accounts] = await env.DB.batch([
+      env.DB.prepare(SESSION_QUERY).bind(identity.user.id),
+      env.DB.prepare(ACCOUNT_QUERY).bind(identity.user.id),
     ]);
     sessionRows = sessions.results;
     accountRows = accounts.results;

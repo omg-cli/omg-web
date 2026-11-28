@@ -20,6 +20,14 @@ export class SessionUnauthorizedError extends Error {
   }
 }
 
+/** D1 could not verify the Bearer session. */
+class SessionStoreUnavailableError extends Error {
+  readonly _tag = 'SessionStoreUnavailableError';
+  constructor(override readonly cause?: unknown) {
+    super('Authentication service unavailable');
+  }
+}
+
 /** The session belongs to a non-admin customer. */
 class SessionForbiddenError extends Error {
   readonly _tag = 'SessionForbiddenError';
@@ -52,14 +60,14 @@ export interface AuthedSession {
 export function requireSession(
   request: Request,
   env: Env
-): Effect.Effect<AuthedSession, SessionUnauthorizedError> {
+): Effect.Effect<AuthedSession, SessionUnauthorizedError | SessionStoreUnavailableError> {
   const token = getAuthToken(request);
   if (token === null || token.length === 0) {
     return Effect.fail(new SessionUnauthorizedError('missing'));
   }
   return Effect.tryPromise({
     try: () => validateSession(env.DB, token),
-    catch: cause => new SessionUnauthorizedError('invalid', cause),
+    catch: cause => new SessionStoreUnavailableError(cause),
   }).pipe(
     // `validateSession` already returns the `{ user, session }` pair.
     Effect.flatMap(auth =>
@@ -78,6 +86,9 @@ export async function authenticateSession(
     onSuccess: auth => auth,
     onFailure: cause => {
       const failure = Cause.failureOption(cause);
+      if (Option.isSome(failure) && failure.value._tag === 'SessionStoreUnavailableError') {
+        return errorResponse(failure.value.message, 503);
+      }
       return errorResponse(
         Option.isSome(failure) ? failure.value.message : 'Invalid or expired session',
         401
@@ -115,7 +126,10 @@ function requireAdminSession(
   env: Env
 ): Effect.Effect<
   void,
-  SessionUnauthorizedError | SessionForbiddenError | AdminAuthorizationUnavailable
+  | SessionUnauthorizedError
+  | SessionStoreUnavailableError
+  | SessionForbiddenError
+  | AdminAuthorizationUnavailable
 > {
   return Effect.gen(function* () {
     const auth = yield* requireSession(request, env);
@@ -147,6 +161,8 @@ export async function forbiddenUnlessAdminSession(
             return errorResponse('Forbidden', 403);
           case 'AdminAuthorizationUnavailable':
             return errorResponse('Admin authorization unavailable', 503);
+          case 'SessionStoreUnavailableError':
+            return errorResponse(failure.value.message, 503);
           case 'SessionUnauthorizedError':
             return errorResponse(failure.value.message, 401);
         }

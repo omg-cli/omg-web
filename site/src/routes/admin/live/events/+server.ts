@@ -28,14 +28,17 @@ export const GET: RequestHandler = async event => {
   }
   const rateLimiter = event.platform.env.ADMIN_LIVE_RATE_LIMITER;
   if (rateLimiter === undefined) error(503, 'Live feed unavailable');
-  const rate = await rateLimiter.limit({ key: identity.user.id });
+  let rate: { readonly success: boolean };
+  try {
+    rate = await rateLimiter.limit({ key: identity.user.id });
+  } catch {
+    error(503, 'Live feed unavailable');
+  }
   if (!rate.success) error(429, 'Live feed rate limit exceeded');
 
   const exit = await Effect.runPromiseExit(
     loadInternalAdminFirehose(event.platform.env, since, event.getClientAddress())
   );
   if (Exit.isSuccess(exit)) return Response.json(exit.value);
-  const failure = Option.getOrNull(Cause.findErrorOption(exit.cause));
-  if (failure instanceof AdminOverviewForbidden) error(403, 'Admin access required');
   error(503, 'Live feed unavailable');
 };

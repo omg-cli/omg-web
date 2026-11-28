@@ -127,7 +127,7 @@ function environment(service: SupportServiceStub): LicensingSummaryEnvironment {
               expect(bindings).toEqual([identity.id]);
               return { role: 'admin' };
             }
-            expect(sql).toBe('SELECT id FROM customers WHERE email = ?');
+            expect(sql).toBe('SELECT id FROM customers WHERE lower(email) = ?');
             expect(bindings).toEqual(['customer@example.com']);
             return { id: 'private-customer-id' };
           },

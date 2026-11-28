@@ -115,9 +115,8 @@ async function edgeFeed(fetcher: typeof fetch, runtime: FeedCacheRuntime): Promi
   } catch {
     reportCacheFailure('security_feed.cache_read_failed');
   }
-  let refreshTask = pendingEdgeRefreshes.get(key);
-  if (refreshTask === undefined) {
-    refreshTask = (async () => {
+  if (!pendingEdgeRefreshes.has(key)) {
+    const refreshTask = (async () => {
       try {
         const feed = await refresh(fetcher, previous);
         await (
@@ -136,8 +135,8 @@ async function edgeFeed(fetcher: typeof fetch, runtime: FeedCacheRuntime): Promi
       }
     })();
     pendingEdgeRefreshes.set(key, refreshTask);
+    runtime.ctx.waitUntil(refreshTask);
   }
-  runtime.ctx.waitUntil(refreshTask);
   return { ...previous, stale: true };
 }
 
